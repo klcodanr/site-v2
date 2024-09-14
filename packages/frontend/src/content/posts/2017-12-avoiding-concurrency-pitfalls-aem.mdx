@@ -1,0 +1,102 @@
+---
+title: 2 Common Concurrency Pitfalls in AEM and How to Avoid Them
+description: "Concurrency issues are challenging to identify, but knowing these
+  2 common AEM concurrency issues gives you a starting place to look to make
+  sure your code is not affected by concurrency bugs. "
+hideInNav: false
+tags:
+  - AEM 6
+  - Java
+  - Best Practices
+  - Concurrency
+pubDate: 2017-12-05
+display: post
+image: /images/posts/2017-12-05-avoiding-concurrency-pitfalls-aem/concurrency.jpg
+published: true
+---
+
+Concurrency issues are both disastrous and difficult to detect in non-production loads. They are more difficult to reproduce than most bugs because they specifically rely on multiple operations happening at/around the same time, which is difficult to reproduce in a development or local environment.
+
+Since concurrency bugs are hard to find and diagnose, we should be vigilant to patterns which cause them and be especially careful in writing certain types of code, which is more likely to have concurrency issues. I've done a number of audits and hundreds of code reviews and there are two common patterns where concurrency issues are prevalent. They are:
+
+* Member variables of OSGi Services
+* Repository Updates in Workflows / Async-Tasks
+
+Let's unpack each pattern, understand how it can lead to concurrency issues and discuss the concurrency-issue free replacement.
+
+## Member Variables in OSGi Services
+
+In most Java coding, it's pretty safe to have member variables. Member variables are fields scoped to an Object, which can then have access modifiers so that only the class, it's package members, extending classes or the public ecosystem can modify it. Pretty standard Object Oriented Programming!
+
+When you lay [OSGi Services](https://www.osgi.org/developer/architecture/) over top, this gets a bit more interesting. 
+
+OSGi Services in many ways act like [singletons](https://en.wikipedia.org/wiki/Singleton%5Fpattern) instead of regular classes. When you fetch a Service in OSGi, you are not getting a new instance of the service class, but the Component class instance registered for the Service interface.
+
+This distinction is important! Because the Service instance is shared, any member variables are also shared between invocations of the service. One of the most common places I've seen issues with this is [Sling Servlets](https://sling.apache.org/documentation/the-sling-engine/servlets.html). Since they are registered as OSGi Services, you cannot use member variables in a Sling Servlet.
+
+Let's see a simple example of this issue. I'll create a simple servlet which uses a member variable to store user submitted information:
+
+```java
+@Component(service=Servlet.class,  
+ property={  
+ Constants.SERVICE_DESCRIPTION + "=Concurrency Demo Servlet",  
+ "sling.servlet.methods=" + HttpConstants.METHOD_GET,  
+ "sling.servlet.paths="+ "/bin/concurrencyservlet.dangerzone"  
+ })  
+public class ConcurrentServlet extends SlingSafeMethodsServlet {  
+  
+ private static final long serialVersionUid = 1L;  
+   
+ private String lastValue;  
+  
+ @Override  
+ protected void doGet(final SlingHttpServletRequest req,  
+ final SlingHttpServletResponse resp) throws ServletException, IOException {  
+ String val = req.getParameter("value");  
+ resp.setContentType("text/plain");  
+   
+ resp.getWriter().write("Current Value = " + val+"\\n");  
+ resp.getWriter().write("Last Value = " + lastValue);  
+   
+ lastValue = val;  
+ }  
+}
+```
+
+Here's an example of the servlet in action:
+
+![An Example of Concurrent Member Variable Access in an OSGi Service](/images/posts/2017-12-05-avoiding-concurrency-pitfalls-aem/DangerZone.gif)
+
+As you can see, the lastValue member variable is shared between requests. Imagine instead, this was a credit card number or Personally Identifiable Information!
+
+### Fixing Member Variables in OSGi Service
+
+The simplest fix is to not use member variables in OSGi Services! If you have multiple fields you want to save and pass to methods, creating a simple POJO can help to make this easier so you're not passing in a large number of parameters.
+
+## Repository Updates in Workflows / Async-Tasks
+
+The AEM repository is the ultimate global variable. Its state is shared across all of the code accessing the repository and when you write code which will not execute in predictable order/time and relies on the state of the repository, it can be difficult to ensure that you're not going to run into concurrency issues.
+
+For example, let's say you had a process which worked as follows:
+
+![Page Rename Process Flow](/images/posts/2017-12-05-avoiding-concurrency-pitfalls-aem/Page-Rename-Process.jpg)
+
+This process will work great when each invocation is allowed to complete before the next starts, but what happens if it kicks off by two different workflows at the same time? Or 10? Or 100? Imagine you have this process running on two pages, PageA and PageB, both of which reference each other.
+
+The process starts on PageA which gathers that PageB references PageA, then runs the move. At the same time, PageB starts and notes that PageA references PageB and moves. Now that the move is complete, the process for PageA looks for PageB for references, but the page is no longer at the same path! Same thing with PageB when it tries to update references in PageA.
+
+Depending on the timing and data, this process will work sometimes but fail other times, which makes the diagnosis even more difficult.
+
+### Resolving Repository Update Concurrency Issues
+
+When you are making changes to the repository which may cause concurrency issues like the one described above, you need to make sure the entire process is completed before it starts the next update. There are two ways to ensure this:
+
+* _Synchronize the Code_ \- Add thread synchronization to ensure that the code is not run in parallel. The downside here is that you have to be careful to avoid locking issues which can cause the whole process to get blocked.
+* _Add the Items to a Queue_ \- This will add more code and makes this process asynchronous, but processing the items in a single queue ensures that you will not have concurrent access or locking issues.
+
+The correct approach will depend on your needs and requirements, but the idea is the same -- make sure that only one "item" is processed at a time.
+
+## In Conclusion
+
+Concurrency issues are challenging to identify, but knowing these common issues gives you a starting place to look to make sure your code is not affected by concurrency bugs.   
+  

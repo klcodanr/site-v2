@@ -1,0 +1,68 @@
+---
+title: Resource Streams in Apache Sling
+description: "This new Resource Filter API allows AEM / Sling developers to be
+  significantly more succinct and readable and how they perform common
+  repository traversals. It's not a pure replacement of JCR queries, but for
+  simple content structures you can do a lot more with a lot less code. "
+hideInNav: false
+tags:
+  - Apache Sling
+  - Java
+  - Adobe Experience Manager
+pubDate: 2018-10-09
+display: post
+image: /images/posts/2018-10/resource-stream-hero.jpg
+published: true
+---
+
+  
+Jörg Hoh recently wrote [an interesting post on Content Architecture](https://cqdump.wordpress.com/2018/09/10/content-architecture-dealing-with-relations/) where he discussed how expensive JCR Queries could instead be replaced with targeted content structure traversals to allow finding relevant content without searching the whole AEM repository. Unfortunately, from a developer perspective, this means writing a fair amount of boilerplate code to traverse the AEM repository and then identify the relevant Resources.  
+
+Fortunately, a new API was just released by the Apache Sling team. This API was created by [Jason Bailey](https://www.linkedin.com/in/jason-e-bailey/) and adds support for using Lambda expressions to filter a stream of Resources in from Sling repository.
+
+This new [Resource Filter API](https://github.com/apache/sling-org-apache-sling-resource-filter) allows AEM / Sling developers to be significantly more succinct and readable and how they perform common repository traversals. It's not a pure replacement of JCR queries or or the traditional method of traversing the repository, but for simple content structures you can do a lot more with a lot less code.
+
+  
+## Resource Filter Example  
+
+  
+Here's an example of how one could extract a stream of resources by a page's component type under a cq:Page:
+
+  
+
+```java
+log.info("Filtering by type: {}", type);
+ResourceFilterStream resourceStream = resource.adaptTo(ResourceFilterStream.class);
+resourceStream.setBranchSelector("[jcr:primaryType] == 'sling:Page'")
+	.setChildSelector("[jcr:content/sling:resourceType] == $type")
+	.addParam("type", type).stream()
+	.forEach(r -> {
+		builder.add(r.getPath());
+		log.info(r.getPath());
+	});
+```
+
+  
+In this example, we are just writing the resource to a JSON Array using the javax.json API, but once you have a stream of Resources, you can use any Lambda function to then process or further filter the stream.
+
+  
+## Adding the Resource Filter API in your Project
+
+  
+Adding the Resource Filter API into your project takes two steps. First add the dependency into your project's POM:
+
+  
+
+```xml
+<dependency>
+    <groupId>org.apache.sling</groupId>
+    <artifactId>org.apache.sling.resource.filter</artifactId>
+    <version>1.0.0</version>
+    <scope>provided</scope>
+</dependency>
+```
+
+  
+Once you have your code developed, you can [add the Resource Filter bundle into your package build](https://www.linkedin.com/pulse/how-add-third-party-bundle-you-aem-package-veena-vikraman/).
+
+Please leave a comment below if you have any questions about the Apache Sling Resource Stream API!  

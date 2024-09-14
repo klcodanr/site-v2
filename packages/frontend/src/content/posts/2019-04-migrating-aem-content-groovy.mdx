@@ -1,0 +1,56 @@
+---
+title: Migrating AEM Content with Groovy
+description: Wouldn't it be nice if there were a tool that made it easy to map
+  legacy content into AEM with a simple, flexible and concise templating
+  language? That would be Groovy baby!
+hideInNav: false
+tags:
+  - Adobe Experience Manager
+  - Migration
+  - Groovy
+pubDate: 2019-04-16
+display: post
+image: /images/posts/2019-04/groovy-hero.jpg
+published: true
+---
+
+import Embed from '../../components/Embed.astro';
+
+  
+
+Migrating content into AEM is nobody's idea if fun. Creating experiences and authoring content in the powerful AEM authoring experience is great, but identifying, classifying and mapping legacy content? Not so much.
+
+AEM's repository structure contributes to this challenge. AEM being based on the Java Content Repository (JCR) offers a massively more flexible content taxonomy than relational-based repositories, however, paraphrasing [Uncle Ben](https://66.media.tumblr.com/1664f391b3b865e9069bce72bb18008a/tumblr%5Fpc53053I201uj4riso1%5F400.gif), "with great flexibility, comes great mapping efforts"
+
+Web content generally doesn't deal with _massive_ volumes of content, if your web CMS is the system is record for large amounts of structured content, you should have a discussion about what is the most appropriate system of record. The combination is the complex structure and relatively small volume makes traditional ETL tools such as Pentaho, Kapow or Apache Nifi a poor fit for migrating content to AEM as they are designed for high volume, predictable data.
+
+Wouldn't it be nice if there were a tool that made it easy to map legacy content into AEM with a simple, flexible and concise templating language? That would be
+
+  
+
+![Austin Powers Thinks it's Groovy](/images/posts/2019-04/groovy.gif)
+
+  
+
+I've been working on a migration script which is exactly that. The script allows migration developers to define flexible mappings to convert legacy content to AEM pages and components. From there, the migration team uses CSV spreadsheets to manage how content is migrated. The script is designed for Web content migraine and is best utilized for migrating moderate amounts of content which can be exported as XML. 
+
+Not surprisingly, the script is written in [Groovy](http://groovy-lang.org/) and uses Groovy for the transformation of legacy content to AEM. I've provided a [.commons.groovy](https://github.com/PerficientDigital/AEM-Migration-Script/blob/master/templates/.commons.groovy) file to handle some of the more common mappings such as setting page properties, handling the JCR Namespaces and creating a simple component.
+
+  
+## Using the Migration Script
+
+  
+Using the Migration Script is fairly straight forward. I've written a [quickstart guide](https://github.com/PerficientDigital/AEM-Migration-Script#quickstart) to using the script and have recorded a video to walk through using the AEM Migration tool:
+
+  
+
+<Embed media="https://www.youtube.com/embed/0HMwopPOAos" type="embed" />
+
+  
+
+## Getting Started
+
+  
+The AEM Migration Script is available free on the [Perficient Digital GitHub](https://github.com/PerficientDigital/AEM-Migration-Script) and can be extended and used under the [GPLv3 license](https://github.com/PerficientDigital/AEM-Migration-Script/blob/master/LICENSE).
+
+  

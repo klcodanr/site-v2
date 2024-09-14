@@ -1,0 +1,105 @@
+---
+title: Creating Geolocated Experiences with Adobe Experience Manager
+description: Geolocation is critical to creating a relevant experience, but
+  creating a stellar geolocation experience is more complicated than just a
+  simple development task.
+hideInNav: false
+tags:
+  - Geolocation
+  - Adobe Experience Manager
+  - Architecture
+pubDate: 2018-03-27
+display: post
+image: /images/posts/2018-03/geolocation-splash.jpg
+published: true
+---
+
+Understanding a user's location is a critical piece of information for delivering relevant experiences. Geolocation, however, is usually more complex than initially anticipated. It can be difficult to implement accurately and if the Experience isn't thought out carefully, can be disorienting.
+
+Before embarking on a creating a Geolocated experience, you should understand the experience being created, understand the requirements you need to solve and have an understanding of the technologies at your disposal.
+
+  
+## Designing a Geolocated Experience
+
+  
+Ideally, geolocation should be:
+
+* Accurate
+* Quick
+* Easy to understand
+* Unobtrusive
+
+To find the solution that best fits your needs, you'll need to understand what kind of content and experiences you are creating, what sort of devices and users you will be supporting, and how granular of localization you will be supporting. These questions help inform the best solution by weighing strengths the different options according to the priority of the needs for your solution.
+
+  
+## Geolocation Options
+
+  
+There are a plethora of different options for developers and architects to choose from when deciding on a geolocation solution. These options range in complexity and will have a better feature fit for some solutions that others.
+
+Some of the Geolocation options include:
+
+  
+* HTML5 Geolocation API
+* IP-based Geolocation Services
+* User Selection
+
+  
+Let's explore each option further to understand what each option strengths and weaknesses are and what solution or solutions best fit some example scenarios.
+
+  
+### HTML5 Geolocation API
+
+  
+One of the great additions in HTML5 is the inclusion of a [JavaScript Geolocation API](https://developer.mozilla.org/en-US/docs/Web/API/Geolocation/Using%5Fgeolocation) allowing browsers to access the location of a user. Users must opt-in for this to work, either globally or on a site-by-site basis, but this provides a very accurate and easy to use option for Geolocating a user. Using the API can be as simple as:
+
+```javascript
+ if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position){
+        	alert("Latitude: " + position.coords.latitude + " Longitude: " + position.coords.longitude);
+        });
+    } else {
+        alert("Geolocation is not supported by this browser.");
+    }
+}
+```
+
+  
+The HTML5 Geolocation API is especially useful on mobile devices as it can Leverage the devices physical location as well as Wi-Fi networks to provide an extremely accurate location. Additionally, this method is generally reliable when used on desktop devices as well.
+
+  
+AEM's [ContextHub](https://docs.adobe.com/docs/en/aem/6-1/develop/personalization/contexthub.html) even includes geolocation via the HTML5 Geolocation API as one of its capabilities. However, there are some challenges and issues when relying on this API. Older browsers may not support it, although unsupported browsers are becoming less and less common. Because of the potential security issues, this feature can be disabled at a browser level and users can choose to block the Geolocation request. Once a user blocks to request for a website, the process to opt back in is fairly challenging and requires the user to access the browser settings.
+
+  
+Thus, when using the HTML5 Geolocation API, it is critical to ensure that you invoke the API in response to a user request and not just asking location on first entry or when the user does not expect it. If the user doesn't expect the popup, most users block the service, which given the difficulty to re-enable means it's will be permanently disabled.
+
+  
+### IP-based Geolocation
+
+  
+Sometimes, you don't want to have to have a user opt-in to Geolocate them. Or you may need a fullback if the HTML5 Geolocation isn't enabled. In these use cases, using IP-based server-side geolocation is a great option. There are multiple technologies which can provide this functionality. Some common ones include [Google Maps API](https://developers.google.com/maps/documentation/geolocation/intro), [MaxMind](https://www.maxmind.com/en/home), Akamai EdgeScape. The different solutions each have their strengths and weaknesses.
+
+Akamai is relatively easy to use if you use Akamai is a CDN but is less useful if you are not using a CDN or use a different CDN provider. Google Maps offers an easy to use API, but does have some cost associated with it. MaxMind offers both free and paid options, but requiring some development work and the free option is relatively coarse-grained.
+
+Since users are not required to opt-in to server-side IP geolocation, there's no concerned about concern about this being a blocked, but accuracy is a challenge. If the user is on VPN, or their IP range isn't mapped, or any number of different scenarios, the geolocation may not be overly accurate. Maxmind, for example, [publishes their accuracy ratings](https://www.maxmind.com/en/geoip2-city-database-accuracy?country=United+States&resolution=postal), which indicates that they are only correct at an address level 45% of the time. For more coarsely grained geolocation, the accuracy is [significantly higher](https://www.maxmind.com/en/geoip2-city-database-accuracy?country=United+States&resolution=25). So keep in mind if you need very accurate geolocation, this may not be the best option.
+
+Additionally, since this is a server-side process, you will need to be careful to ensure that the result does not get cached. In the AEM Dispatcher, this can mean either using request parameters, configuring the dispatcher to not cache the URL pattern, or returning [Dispatcher: no-cache headers](https://helpx.adobe.com/experience-manager/kb/DispatcherNoCache.html).
+
+  
+### User Selection
+
+  
+Sometimes when all else fails just ask or sometimes you may want to just ask first. When all else fails, you should have an option for users to override any programmatic geolocation. It doesn't make sense to force people into the wrong segment. Additionally. when accuracy is very important it often makes more sense just to ask the user. You can still use a geolocation request to get a starting address, but display it to the user and allow them to edit it.
+
+Whenever you ask a user for their location, it is important to still validate the location to user enters. This could mean either ensuring that it matches a list of valid locations or if an address the address is valid and maps to a latitude and longitude.
+
+  
+## Creating a Great Geolocated Experience
+
+  
+Ultimately, the best technology will not solve the bad user experience, so when designing a geolocated user experience keep the key principles in mind. This means that your experience should be as accurate as possible, which often means leveraging the right technologies but also be easy to use. You must ensure the user understands where geolocation is being used, where they've been geolocated, and how they can update their location.
+
+A great geolocated experience doesn't feel intrusive, annoying users, but instead starts exactly when you'd expect it, relying on user expectations and interactions to request information when it's needed and should be intelligent enough to provide reasonable defaults when it's not.
+
+  
+Hopefully, this post helps you in your quest to build relevant geolocated experience with Adobe Experience Manager or whatever tool you use. Please leave a comment with your question or thought and location.

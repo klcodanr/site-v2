@@ -1,0 +1,32 @@
+---
+title: "Quick Fix: AEM + Search&Promote Integration Uses Stage"
+description: How to resolve an issue with the AEM+Adobe Search&Promote
+  integration in AEM 6.3.
+hideInNav: false
+tags:
+  - Adobe Experience Manager
+  - AEM 6
+  - Adobe Search&Promote
+pubDate: 2018-02-19
+display: post
+image: /images/posts/2018-02-20-aem-search-promote-stage-issue/stage.jpg
+published: true
+---
+
+[Adobe Search&Promote](https://www.adobe.com/marketing-cloud/target/search-and-promote.html) is a powerful SaaS search offering within the [Adobe Marketing Cloud](https://www.adobe.com/marketing-cloud.html). Adobe offers an integration between Adobe Experience Manager and Adobe Search&Promote using [AEM's Cloud Services](https://helpx.adobe.com/experience-manager/6-3/sites/administering/using/search-and-promote.html). This integration is meant to allow authors to easily deploy and configure basic search experiences with the two tools.
+
+Unfortunately, there is an issue with the integration where AEM would cache the Stage URL for Adobe Search&Promote's API endpoint. While Adobe Search&Promote may even use the Live index with the sp\_staged parameter, it will still use the Stage configuration. This is a serious problem as it means that you may be using configurations which are not tested or not ready yet to be live. 
+
+Unfortunately, this is a known issue with the Adobe Search&Promote integration in AEM 6.3, but can be resolved with the following steps:
+
+1. Open CRX DE and browse to the Cloud Service Configuration (ex: /etc/cloudservices/search-promote/\[myconfig\]/jcr:content)  
+    
+![Open the Search&Promote Cloud Service in CRXDE](/images/posts/2018-02-20-aem-search-promote-stage-issue/open-cloud-service.jpg)
+2. Select the contents of the searchformxml attribute and copy it into a text editor
+3. Replace "http://stage-" with "http://" and then copy the text back into the searchformxml attribute  
+    
+![Replace the staging URL](/images/posts/2018-02-20-aem-search-promote-stage-issue/replace-stage.jpg)
+4. Save your changes
+5. Replicate the Cloud Service Configuration
+
+This will update the URL used by the AEM Search&Promote Search component for retrieving search results, thus resolving the issue. 

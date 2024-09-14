@@ -1,0 +1,24 @@
+---
+title: "CQ5 Upgrade Gotcha: Tag Localization"
+description: Learn what can go wrong with Tags when upgrading CQ5 and how to fix it
+hideInNav: false
+tags:
+  - Adobe CQ
+  - Tag Manager
+  - CQ5.5
+pubDate: 2012-05-24
+display: post
+image: /images/posts/2012-05-24-cq5-upgrade-gotcha-tag-localization/Tag_Language_Error.png
+published: true
+---
+
+ In CQ 5.4, Adobe added the ability to translate tags through the Tag Manager. Unfortunately, due to the way this was implemented, it can cause issues when upgrading from CQ 5.3 or older.
+
+ After performing the upgrade and importing the existing tags, you may find there are no languages available to translate the tags. The Localization section will be visible, however no languages are available.
+
+![Tag Language Error Screenshot](/images/posts/2012-05-24-cq5-upgrade-gotcha-tag-localization/Tag_Language_Error.png) 
+
+ Fortunately, the fix for this issue is easy. Update the node at /etc/tags to have a repeating String attribute called languages with the languages in which you wish to localize the tags. More information can be found on Adobe’s documentation website:
+
+* [Adding a New Language to the Edit Tag Dialog](http://wem.help.adobe.com/enterprise/en%5FUS/10-0/wem/developing/tagging.html#Adding%20a%20New%20Language%20to%20the%20Edit%20Tag%20Dialog)
+* [Managing Tags in Different Languages](http://wem.help.adobe.com/enterprise/en%5FUS/10-0/wem/wcm/tag%5Fadmin.html#Managing%20Tags%20in%20Different%20Languages)

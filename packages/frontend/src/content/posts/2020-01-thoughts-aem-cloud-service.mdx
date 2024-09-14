@@ -1,0 +1,117 @@
+---
+title: Thoughts on AEM as a Cloud Service
+description: Adobe recently announced the availability of AEM as a Cloud
+  Service, a new service offering for Adobe Experience Manager customers to run
+  AEM natively as a Platform as a Service (PaaS) in Adobe's cloud.
+hideInNav: false
+tags:
+  - Adobe Experience Manager
+  - Adobe Experience Cloud
+  - Architecture
+  - AEM as a Cloud Service
+pubDate: 2020-01-13
+display: post
+image: /images/posts/2020-01/AEM-as-a-Cloud-Service-Banner.jpg
+published: true
+---
+
+  
+Today Adobe announced the availability of their newest offering [AEM as a Cloud Service](https://news.adobe.com/press-release/experience-cloud/adobe-announces-availability-adobe-experience-manager-cloud), a new version of AEM running natively in Adobe's cloud as a Platform as a Service (PaaS). To be clear, this is different than their existing Adobe Managed Services or Cloud Manager offerings which run AEM as a standalone app running on Virtual Machines in the cloud. 
+
+Tadd Reves has already written up a great summary of the [technical and architectural differences of AEM as a Cloud Service and Adobe Managed Services / traditional AEM or AEM Classic](http://www.jetteroheller.com/introducing-aem-as-a-cloud-service/) that I'd highly encourage everyone to go read. 
+
+In essence, AEM as a Cloud Service involves Adobe automatically provisioning and managing AEM instances running in Docker containers orchestrated by Kubernetes backed by a shared node / file store and a new provisioning model. For users of the end system, most things will stay the same including the AEM UI (for the most part), Cloud Manager for provisioning and the integration with the Adobe Experience Cloud tools. 
+
+For developers, system engineers and Architects, however this new architecture is a paradigm shift. It enables significantly greater scale and performance, at the cost of flexibility and some of the more unconventional capabilities of AEM. 
+
+All this begs the question, before we all jump on the hype train, is AEM as a Cloud Service right for me?  
+  
+
+![How Adobe Hopes Customers will Respond to AEM as a Cloud Service](/images/posts/2020-01/Adobe-Customers.jpg)
+
+How Adobe hopes customers will respond to AEM as a Cloud Service
+
+  
+## AEM as a Cloud Service Capabilities
+
+  
+Much like [Adobe Campaign Standard vs Classic](https://experienceleaguecommunities.adobe.com/t5/Adobe-Campaign-Standard/Adobe-Campaign-Classic-v6-7-VS-Adobe-Campaign-Standard/qaq-p/314652), AEM as a Cloud Service does not have feature parity with AEM Classic. This is likely partially by design as the flexibility of AEM in itself caused issues as it gave implementors a great deal of room to proverbially shoot themselves in the foot.
+
+Based on a reading of the [release notes](https://docs.adobe.com/content/help/en/experience-manager-cloud-service/release-notes/home.html) and discussions with contacts at Adobe Engineering, here are a few things that will not be supported in AEM as a Cloud Service.  
+  
+
+![AEM as a Cloud Service vs AEM Classic](/images/posts/2020-01/AEM_as_a_Cloud_Service-AEM_Classic-Comparison.png)
+
+  
+
+### AEM Solutions
+
+* On-Premise Deployments - This is the biggest change, AEM as a Cloud Service is only available in Adobe's cloud and will not be available for On-Premise deployments
+* AEM Forms - Not currently supported in AEM as a Cloud Service
+* AEM Screens - Not currently supported in AEM as a Cloud Service
+* AEM Communities - Is not supported, but frankly has been on life support for some time
+
+### Customer Solutions
+
+* Modifying App at Runtime - The /apps and /libs paths as well as the OSGi console are not modifiable at runtime and must be modified only via the standard deployment process
+* User Generated Content - AEM as a Cloud Service does not support modifying content in the AEM Publish instances. You can use the Unified Profile Service, however many use cases will require bringing in a 3rd party data store
+* Complex Dispatcher Setups - AEM as a Cloud Service has [limitations on the dispatcher configuration](https://docs.adobe.com/content/help/en/experience-manager-cloud-service/implementing/dispatcher/overview.html). I am still investigating how to support things like the [Redirect Map Manager](https://adobe-consulting-services.github.io/acs-aem-commons/features/redirect-map-manager/index.html).
+* Complex Deployments - AEM as a Cloud Service has the same severe limitations as Adobe Managed Services in that it uses Cloud Manager for deployments
+
+If your solution needs any of these capabilities, you will either need to figure out a different solution for these needs or avoid AEM as a Cloud Service at the current time. 
+
+If you do not though what kind of benefits could you expect from AEM as a Cloud Service vs On-Premise or Adobe Managed Services deployments?  
+
+* Reduce support / maintenance efforts
+* Increased scalability
+* Continual product updates / enhancements (no more upgrades)
+
+While Adobe has promoted that customers can increase in content velocity with AEM as a Cloud Service, I expect that has more to do with improvements in the custom implementation than any direct result of AEM as a Cloud Service.  
+  
+
+## Where is Adobe Going with AEM?
+
+  
+The bad news for customers is that AEM Classic is now a "legacy" product and not getting the Engineering attention of AEM as a Cloud Service. At this point, Adobe has not started a Beta for AEM 6.6 and to be honest, I'm not expecting one. 
+
+The good news is that there are a lot of customers who are not willing or cannot for various reasons move of AEM Classic. Thus I would expect similar to Campaign Classic vs Standard Adobe will eventually swing back around and support AEM Classic as they realize many of their largest customers aren't moving to the cloud.
+
+My hope is that at some point, Adobe will provide an image or recipe for customers to build out their AEM Clouds based on a prescribed pattern within the customer's own data center or cloud tenant. I have not seen any indication of this being on Adobe's roadmap, but I suspect customer's objections with AEM as a Cloud Service will have more to do with not having control as any missing features. 
+
+## What do I do now?
+
+  
+As with most major solution choices, the correct decision depends on the context. No matter the context, however, AEM as a Cloud Service makes [Summit 2020](https://summit.adobe.com/) a must attend for any Adobe Experience Manager customer.  
+  
+### On Premise Customers
+
+Evaluate whether the desire to run On-Premise is worth the cost and lack of investment Adobe will be putting into AEM Classic. With a sufficiently knowledgable partner and some architectural changes most anything you can do AEM Classic should be possible in AEM as a Cloud Service in the near future.  
+  
+### Customers Relying on Features not Compatible with AEM as a Cloud Service
+
+Evaluate different solutions and work with your technical contacts at Adobe to understand if / when Adobe will port the features to AEM as a Cloud Service.   
+  
+### Existing AEM Customers not on AEM 6.5
+
+Consider moving to AEM as a Cloud service vs any efforts to upgrade AEM to the latest version. While there are benefits to AEM 6.5, moving to AEM as a Cloud Service could provide significantly more benefits and will get you on a platform more aligned to Adobe's vision.  
+  
+### Existing AEM Customers not on AEM 6.5
+
+Consider moving to AEM as a Cloud service vs any efforts to upgrade AEM to the latest version. While there are benefits to AEM 6.5, moving to AEM as a Cloud Service could provide significantly more benefits and will get you on a platform more aligned to Adobe's vision.  
+  
+### AEM Customers on AEM 6.5
+
+Treat AEM as a Cloud Service as the next version of AEM and plan upgrade accordingly.   
+  
+### New AEM Customers / Implementations
+
+Plan for AEM as a Cloud Service as the projected solution for new implementations. Depending on timelines and the full General Availability release of AEM as a Cloud Service, some new implementations may start on AEM Classic, but considering AEM as a Cloud Service as the end platform will help ensure that the solution does not cause issues when moved to AEM as a Cloud Service.
+
+  
+
+## What's next for AEM as a Cloud Service?
+
+  
+As a close partner of Adobe, Perficient Digital is working with Adobe to get up to speed with AEM as a Cloud Service. Expect to see a lot more posts and thought leadership on AEM as a Cloud Service coming from the team at Perficient Digital as we get ready for Adobe Summit 2020!
+
+  

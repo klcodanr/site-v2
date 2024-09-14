@@ -1,0 +1,252 @@
+---
+title: OSGi HTTP Whiteboard Servlets
+description: What are OSGi HTTP Whiteboard Servlets and could they be useful for
+  your project? Find the answers here!
+hideInNav: false
+tags:
+  - OSGi
+  - Servlet
+  - Apache Sling Servlet
+pubDate: 2023-01-03
+display: post
+image: /images/posts/2023/01/osgi-servlet-hero.jpg
+published: true
+---
+
+import Columns from '../../components/Columns.astro';
+import Column from '../../components/Column.astro';
+
+  
+If you’ve been doing development with AEM / Apache Sling, you’re probably already familiar with a few different methods of implementing servlets:
+
+  
+* [**Path-based servlets**](https://sling.apache.org/documentation/the-sling-engine/servlets.html#example-registration-by-path-1) \- Sling Servlets attached to defined paths.
+* [**Resourced-based servlets**](https://sling.apache.org/documentation/the-sling-engine/servlets.html#example-registration-by-resource-type-etc-1) \- Sling servlets attached to a resource type and (optional) method, selector and extensions
+* [**Script servlets**](https://sling.apache.org/documentation/bundles/scripting.html#scripts-are-servlets-1) \- every component script you create is compiled into a Java servlet (you can see this with the [FS Classloader console](/posts/2015/06/new-apache-sling-fs-classloader-console.html))
+
+  
+All of these servlets are part of the Apache Sling framework, however there’s an even lower level servlet framework you can hook into, the [OSGI HTTP Whiteboard](https://docs.osgi.org/specification/osgi.cmpn/7.0.0/service.http.whiteboard.html).  
+  
+## So What? Performance!
+
+  
+It'd be reasonable to ask: why use a lower level construct when a higher level one exists? The reason is simple: **performance**.
+
+Since OSGi servlets are lower level and aren't leveraging the Spring framework, there's less between a request and your code. 
+
+There are three drivers of this performance difference:
+
+* **[Sling Authentication](https://sling.apache.org/documentation/the-sling-engine/authentication.html)** \- the process by which Sling authenticates a request to a user. If you don't _need_ authentication, then you can skip this expensive process
+* [**Sling Servlet Resolution**](https://sling.apache.org/documentation/the-sling-engine/servlets.html) \- the process by which Sling selects your servlet by resolving resource's types. For complex setups this can incur multiple repository reads as sling evaluates the inheritance model of a resource
+* **Filters** \- only filters with a global scope will execute for OSGi HTTP servlets, thus reducing the amount of code executing per request
+
+So how much difference does this make? Glad you asked! For a simple, unauthenticated servlet, OSGi servlets can serve 10x more traffic in the same time:
+
+  
+
+<Columns>
+
+<Column>
+
+![Hello World Servlet Requests per Second](/images/posts/2023/01/HelloWorld-RPS.png)
+
+</Column>
+
+<Column>
+
+![Hello World Servlet Time (in seconds) per Request](/images/posts/2023/01/HelloWorld-TPR.png)
+
+</Column>
+
+</Columns>
+
+  
+
+The graphs above show the results of running 5,000 requests using [Apache Bench](https://httpd.apache.org/docs/2.4/programs/ab.html) against [OSGi, resource-based and path-based servlets\*](https://github.com/klcodanr/com.danklco.blog.servletdemo/tree/main/src/main/java/com/danklco/hello). While the resource and path-based servlets were able to process an average of 1313.33 requests per second, the OSGi HTTP servlet was able to process 12,379.27 requests per second or approximately 10x as many requests per second!
+
+Based on this performance difference, OSGi HTTP servlets will be significantly faster than Sling Servlets, as long as you don't need to access the Sling / AEM repository. A few examples would include servlets to post form data back to a backend system or to perform a search in a 3rd party system and return the results.
+
+What if you do need to access the repository though? Does this performance improvement still hold?
+
+I created a similar test case, but creating a service user based resource resolver and reading a resource property to see:
+
+<Columns>
+
+<Column>
+
+![Service User Requests per Second](/images/posts/2023/01/ServiceUser-RPS.png)
+
+</Column>
+
+<Column>
+
+![Service User Time per Request](/images/posts/2023/01/ServiceUser-TPR.png)
+
+</Column>
+
+</Columns>
+
+  
+
+Even with having to open a Resource Resolver and read a resource, the OSGi HTTP Servlet can still handle approximately 4.5x more requests per second than the Sling servlets.
+
+This still skips the Sling Authentication process, which is an expensive part of standard Sling request processing. Here's a third run using the [SlingAuthenticator](https://github.com/apache/sling-org-apache-sling-auth-core/blob/master/src/main/java/org/apache/sling/auth/core/impl/SlingAuthenticator.java) for authenticating the OSGi HTTP Servlet request.  
+  
+
+<Columns>
+
+<Column>
+
+![Authorized Requests per Second](/images/posts/2023/01/Auth-RPS.png)
+
+</Column>
+
+<Column>
+
+![Authorized Time per Request](/images/posts/2023/01/Auth-TPR.png)
+
+</Column>
+
+</Columns>
+
+  
+
+It may not look like much of a difference, but as Mark Twain said, there’s lies, damn lies and statistics. I fixed the graph’s maximum to ensure consistency, if I remove the maximum, it tells a much different story:
+
+  
+
+![Authorized Requests per Second (scaled)](/images/posts/2023/01/Auth-RPS-Scaled.png)
+
+  
+
+Even using Sling Authentication, an OSGi HTTP servlet is still able to process 1.9x more requests per second.  
+  
+## The Right Tool for the Job
+
+  
+Are OSGi HTTP servlets appropriate for every use case? Unsurprisingly, no. For most common resource based use cases or non-public facing servlets, resource or path based servlets are easier and simpler. 
+
+OSGi servlets are most useful for performance-critical, non-content oriented use cases such as serving search results, handing form posts or acting as a proxy for a backend API.
+
+  
+## Implementing an OSGi Servlet
+  
+  
+ OSGi servlets start with a context. In fact, every servlet in Apache Sling / AEM is in the [org.apache.sling context](https://github.com/apache/sling-org-apache-sling-engine/blob/5d8df331c2ef9eae1cec386ccdbe32c9968b104c/src/main/java/org/apache/sling/engine/impl/SlingHttpContext.java) by default. To create your servlet’s context, register a service for the [ServletContextHelper](https://docs.osgi.org/javadoc/osgi.cmpn/7.0.0/org/osgi/service/http/context/ServletContextHelper.html) abstract class, something like:  
+  
+
+```java
+@Component(service = ServletContextHelper.class, property = {
+        "osgi.http.whiteboard.context.name=" + TestHttpContext.CONTEXT_NAME,
+        "osgi.http.whiteboard.context.path=/test"
+})
+public class TestHttpContext extends ServletContextHelper {
+
+    public static final String CONTEXT_NAME = "com.danklco.blog.test";
+
+    private final MimeTypeService mimeTypeService;
+
+    private final AuthenticationSupport authenticationSupport;
+
+    /**
+     * Constructs a new context using contructor injection
+     *
+     * @param mimeTypeService       Used when providing mime type of requests
+     * @param authenticationSupport Used to authenticate requests with sling
+     */
+    @Activate
+    public TestHttpContext(@Reference final MimeTypeService mimeTypeService,
+            @Reference final AuthenticationSupport authenticationSupport) {
+        this.mimeTypeService = mimeTypeService;
+        this.authenticationSupport = authenticationSupport;
+    }
+
+    /**
+     * Returns the MIME type as resolved by the MimeTypeService
+     */
+    @Override
+    public String getMimeType(String name) {
+        return mimeTypeService.getMimeType(name);
+    }
+
+    /**
+     * Always returns <code>null</code> because resources are all provided
+     * through individual endpoint implementations.
+     */
+    @Override
+    public URL getResource(String name) {
+        return null;
+    }
+
+    /**
+     * Only attempts to authenticate requests to /test/auth
+     */
+    @Override
+    public boolean handleSecurity(HttpServletRequest request,
+            HttpServletResponse response) throws IOException {
+        if (request.getRequestURI().equals("/test/auth")) {
+            return this.authenticationSupport.handleSecurity(request, response);
+        } else {
+            return true;
+        }
+    }
+}
+```
+
+  
+See [TestHttpContext](https://github.com/klcodanr/com.danklco.blog.servletdemo/blob/main/src/main/java/com/danklco/TestHttpContext.java) for the full code. A few things to note:
+
+* This class is deliberately not supporting resources from the bundle classloader
+* The calling AuthenticationSupport.handleSecurity will (assuming the credentials provided with the request are valid) populate an request attribute you need to retrieve in the servlet with the user's ResourceResolver
+Now you can implement your OSGi servlet. OSGi servlet paths work more like path-based Sling servlets, but are attached under the context path, so consider the context path carefully.  
+  
+Here’s a simple example servlet:  
+  
+
+```java
+@Component(service = { Servlet.class }, property = {
+        HttpWhiteboardConstants.HTTP_WHITEBOARD_SERVLET_PATTERN + "=/demo/*",
+        HttpWhiteboardConstants.HTTP_WHITEBOARD_CONTEXT_SELECT + "=("
+                + HttpWhiteboardConstants.HTTP_WHITEBOARD_CONTEXT_NAME + "=" + TestHttpContext.CONTEXT_NAME + ")" })
+public class AuthOsgiServlet extends HttpServlet {
+
+    @Override
+    protected void doGet(final HttpServletRequest request, final HttpServletResponse response)
+            throws ServletException, IOException {
+        response.getWriter().write("Hello " + getResourceResolver().getUserID());
+    }
+
+    public ResourceResolver getResourceResolver(final HttpServletRequest request) {
+        Object resolverAttribute = request.getAttribute(AuthenticationSupport.REQUEST_ATTRIBUTE_RESOLVER);
+        if (resolverAttribute instanceof ResourceResolver) {
+            return (ResourceResolver) resolverAttribute;
+        }
+        throw new SlingException("Could not get ResourceResolver from request", null);
+    }
+}
+```
+
+  
+In the _@Component_ annotation properties, the servlet is using the TextHttpContext and is registering for the pattern _/demo/\*_. This means that the servlet will handle all requests under _/test/demo._
+
+As noted above the _getResourceResolver_ method retrieves the request's ResourceResolver from the request attribute set by the Sling Authenticator. The attribute will not be set if you do not authenticate the request in the context. You can use this ResourceResolver to retrieve resources from the repository on behalf of the requesting user.
+
+  
+## Questions?
+
+  
+Hopefully this gives you a good overview of OSGi HTTP servlets and explains why they can be a valuable tool in your toolbelt. You can find more examples in the [com.danklco.blog.servletdemo repository](https://github.com/klcodanr/com.danklco.blog.servletdemo/blob/main/src/main/java/com/danklco/auth/AuthOsgiServlet.java). Please leave a comment if you have any questions!  
+  
+  
+> \* Performance Methodology:  
+>  
+> Environment:  
+> * AEM Version: 2022.10.9398.20221020T071514Z-220900-000001
+> * System: macOS 12.6 (21G115), 8-Core Intel Core i9, 16 GB Memory
+> * Java: OpenJDK 64-Bit Server VM(build 11.0.11+9, mixed mode)
+> 
+> Collected performance metrics with Apache Bench v2.3 using 5,000 requests and 5 concurrent requests. Converted to CSV via [AB Parser v0.1.0\. ](https://github.com/SixDimensions/ab-parser)Graphs created in Excel.
+> 
+> Sling Authentication was disabled for the first two resource and path-based tests.
+> 
+> More information can be found in the [com.danklco.blog.servletdemo](https://github.com/klcodanr/com.danklco.blog.servletdemo) repository.

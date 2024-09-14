@@ -1,0 +1,97 @@
+---
+title: The Great and Powerful cq:EditConfig
+description: Promoting the cq:EditConfig an configuration node which allows
+  developers to customize the authoring experience for a component
+hideInNav: false
+tags:
+  - Adobe CQ
+  - Adobe Experience Manager
+  - Components
+  - Best Practices
+  - Dialog
+pubDate: 2014-01-08
+display: post
+image: /images/posts/shared/CQ5.png
+published: true
+---
+
+One of the most under-appreciated features of AEM components, in my opinion, is the cq:EditConfig. This node allows developers to configure how a component is edited, add or remove functionality from the editor and generally tailor the authoring experience for component.
+
+The cq:EditConfig is simply a node with the primary type `cq:EditConfig` and the name cq:editConfig under the component root. The cq:EditConfig allows for configuring many important features of the component’s editing experience including:
+
+* Dialog display behavior
+* Edit bar or hover appearance
+* Editor items
+* Listeners
+* Advanced features such as:  
+   * Drop targets  
+   * Additional actions  
+   * InPlace editing
+
+## When to use cq:EditConfig
+
+Personally, I end up using cq:EditConfigs on many of the components I write. They are especially useful on components which:
+
+* May not display content - After all how can you hover over something you can’t see
+* Do not need to be edited by authors
+* Should not be moved, deleted or copied
+* Need advanced functionality
+
+I’d also say I really like the idea of a component’s title appearing in the edit bar or dropdown. That way authors are visually clued as to which component they are editing before they open the dialog. This can be especially useful for components which are nested or do not display much without being configured.
+
+## Basic cq:EditConfig
+
+A basic cq:EditConfig is often used to change the dialog mode and editor layout.
+
+```
+<jcr:root xmlns:cq="http://www.day.com/jcr/cq/1.0" xmlns:jcr="http://www.jcp.org/jcr/1.0"
+	cq:actions="[text:My Component,-,edit,delete,insert,copymove]"
+	cq:dialogMode="floating"
+	cq:layout="editbar"
+	jcr:primaryType="cq:EditConfig">
+</jcr:root>
+
+```
+
+The editor above would display an edit bar above the component and open the dialog in a floating window.
+
+The three properties being set here, are:
+
+* **cq:actions** \- the actions available from the edit bar, the `text:` prefix indicates that the following text will be displayed and `-` is used as a separator
+* **cq:dialogMode** \- the mode the dialog will display in, should be either inline (the default) or floating. Inline will display the dialog in the place of the component, floating will float the dialog above the page, which is useful when a component is smaller than the dialog needs to be.
+* **cq:layout** \- the layout of the editor, can be rollover (the default) which displays the box around the component when it is moused over or editbar which displays an edit bar above the component.
+
+If you do not set a property, the default values will be used. For `cq:actions`, the default actions are: `edit,delete,insert,copymove`
+
+As a note on edit bars, a useful technique for components which contain other components is to add [start and end bars](/posts/2013/06/21/simple-container-component-start-end-bars/).
+
+## Dialog Replacement
+
+One of the nice features about the cq:EditConfig is you can use it to get components to show up in the sidekick which do not have a dialog. This is something that I see every so often, usually with the developer instead creating an empty dialog. To get around this, simply create a cq:EditConfig where the cq:actions has every action except edit.
+
+## Listeners
+
+Another common thing to do with an edit config is add a listener to refresh the page when a component is edited. This is useful when a component requires JavaScript to run correctly. To add a listener, add a child node called cq:listeners with the primary type `cq:EditListenersConfig` as shown below:
+
+```
+<jcr:root xmlns:cq="http://www.day.com/jcr/cq/1.0" xmlns:jcr="http://www.jcp.org/jcr/1.0"
+	cq:actions="[text:My Component,-,edit,delete,insert,copymove]"
+	cq:dialogMode="floating"
+	cq:layout="editbar"
+	jcr:primaryType="cq:EditConfig">
+	<cq:listeners
+		jcr:primaryType="cq:EditListenersConfig"
+		afteredit="REFRESH_PAGE"/>
+</jcr:root>
+
+```
+
+The listeners can react to a number of different events, for each event add a property to the cq:listeners node with the name of the event to which to listen and the value `REFRESH_PAGE`.
+
+I would be cautious about the overuse of listeners as they do tend to degrade the authoring experience in CQ by requiring a number of reloads to edit a page. Instead, try to add a hook to invoke whatever JavaScript needs to be run and invoke that method in the body of the component. Given that you can [detect the WCM Mode in CQ](/posts/2013/04/02/what-my-cq-mode/) pretty easily, it’s certainly possible to only have the script tag appear when authoring the page. I would also note components which require JavaScript to be run on page load are problematic with the built in AEM Campaigns and Teasers for the same reason.
+
+So there you have it, the cq:EditConfig. Now there is no more excuses for components with empty dialogs or components who’s dialogs open up awkwardly in a tiny space. And, if I see it again, I will set my flying monkeys on you!
+
+## Reference
+
+* [Configuring the Edit Behaviour of a Component](http://dev.day.com/docs/en/cq/current/developing/components.html#Configuring%20the%20Edit%20Behaviour%20of%20a%20Component)

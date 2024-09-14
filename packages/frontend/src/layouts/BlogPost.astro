@@ -1,0 +1,141 @@
+---
+import { type CollectionEntry, getCollection } from "astro:content";
+import Button from "../components/Button.astro";
+import FormattedDate from "../components/FormattedDate.astro";
+import Grid from "../components/Grid.astro";
+import Content from "./Content.astro";
+import PostCard from "../components/PostCard.astro";
+
+type Props = CollectionEntry<"posts">["data"];
+
+const { title, pubDate, image, tags } = Astro.props;
+const { slug } = Astro.params;
+
+const posts = (await getCollection("posts"))
+  .filter((p) => p.data.published)
+  .sort(
+    (a, b) =>
+      new Date(b.data.pubDate || new Date()).getTime() - new Date(a.data.pubDate || new Date()).getTime()
+  );
+
+const similarPosts = posts
+  .filter((p) => p.slug !== slug)
+  .map((p) => {
+    const otherTags = p.data.tags || [];
+    const score = otherTags.filter((t: string) => tags.includes(t)).length;
+    return { data: p.data, score, slug: p.slug };
+  })
+  .sort((a, b) => b.score - a.score)
+  .slice(0, 6);
+
+const idx = posts.findIndex((p) => p.slug === slug);
+const prevPost = posts[idx - 1];
+const nextPost = posts[idx + 1];
+---
+
+<Content {...Astro.props}>
+  <div class="post">
+    <article>
+      <div class="hero-image">
+        {image && <img src={image} alt={title} />}
+      </div>
+      <section class="title">
+        <h1>{title}</h1>
+        <div class="date">
+          <FormattedDate date={pubDate || new Date()} />
+        </div>
+        <div>
+          <ul class="tags">
+            {
+              tags.map((tag: string) => (
+                <li>
+                  <a
+                    href={`/tags/${tag.replace(/[^a-zA-Z0-9]/g, "-").toLowerCase()}`}
+                  >
+                    {tag}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+        <hr />
+      </section>
+      <slot />
+    </article>
+    <hr />
+    <div class="post-nav">
+      {
+        prevPost && (
+          <Button link={`/posts/${prevPost.slug}`}>
+            ← {prevPost.data.title}
+          </Button>
+        )
+      }{!prevPost && <span />}
+      {
+        nextPost && (
+          <Button link={`/posts/${nextPost.slug}`}>
+            {nextPost.data.title} →
+          </Button>
+        )
+      }
+    </div>
+    <aside data-pagefind-ignore>
+      <h3>Similar Posts</h3>
+      <Grid>
+        {similarPosts.map((post) => <PostCard post={post} />)}
+      </Grid>
+    </aside>
+  </div>
+</Content>
+
+<style>
+  .title {
+    margin-top: 3em;
+    text-align: center;
+  }
+
+  .hero-image img {
+    display: block;
+    margin: 0 auto;
+    border-radius: 12px;
+    box-shadow: var(--box-shadow);
+    max-height: 450px;
+    object-fit: cover;
+    max-width: 100%;
+  }
+
+  aside {
+    margin: 3em;
+  }
+
+  .post-nav {
+    display: flex;
+    justify-content: space-between;
+    margin: 3em 0;
+  }
+
+  .tags {
+    display: flex;
+    list-style: none;
+    padding: 0;
+    margin: 1em;
+    justify-content: center;
+    gap: 0.5em;
+  }
+
+  .tags a {
+    background-color: var(--gray-light);
+    padding: 0.25em 0.5em;
+    border-radius: 0.25em;
+    counter: white;
+    color: var(--gray-dark);
+    text-decoration: none;
+    font-size: small;
+  }
+
+  .tags a:hover {
+    background-color: var(--gray-dark);
+    color: var(--gray-light);
+  }
+</style>

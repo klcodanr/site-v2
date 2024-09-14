@@ -1,0 +1,37 @@
+---
+import "../styles/form.css";
+---
+
+<form>
+  <label for="work-filter" class="sr-only">Filter Work</label>
+  <input
+    type="text"
+    id="work-filter"
+    name="work-filter"
+    placeholder="Filter..."
+  />
+</form>
+
+<style>
+  #work-filter {
+    width: 80%;
+    display: block;
+  }
+</style>
+
+<script>
+  document.getElementById("work-filter")?.addEventListener("input", () => {
+    const filter = (
+      document.getElementById("work-filter") as HTMLInputElement
+    ).value.toLowerCase();
+    document.querySelectorAll(".projects .card").forEach((p) => {
+      const project = p as HTMLDivElement;
+      const text = project.innerText.toLowerCase();
+      if (text.includes(filter) || filter === "") {
+        project.style.display = "block";
+      } else {
+        project.style.display = "none";
+      }
+    });
+  });
+</script>

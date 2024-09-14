@@ -1,0 +1,35 @@
+---
+title: Embedding Oak Index Configurations into a Package
+description: AEM 6 ships with a new repository, CRX3 which is based on Apache
+  Oak, a subproject of the Apache Jackrabbit project.  This repository promises
+  significant performance increases over CRX2, however it does require a bit
+  more work to setup.  Unlike CRX2, CRX3 requires you to explicitly declare
+  which fields will be indexed.
+hideInNav: false
+tags:
+  - Apache Jackrabbit Oak
+  - Adobe Experience Manager
+  - Best Practices
+pubDate: 2015-03-09
+display: post
+image: /images/posts/2015-03-09-oak-index-packages/oak_logo.png
+published: true
+---
+
+AEM 6 ships with a new repository, CRX3 which is based on [Apache Oak](http://jackrabbit.apache.org/oak/), a subproject of the [Apache Jackrabbit](http://jackrabbit.apache.org/) project. This repository promises significant performance increases over CRX2, however it does require a bit more work to setup. 
+
+Unlike CRX2, CRX3 requires you to explicitly declare which fields will be indexed. If a field is not indexed, you will see an error like the one below in the error.log and significant performance degredation:
+
+```
+24.02.2015 14:03:15.997 WARN [0:0:0:0:0:0:0:1 [1424804529693] GET /bin/servlet HTTP/1.1] org.apache.jackrabbit.oak.plugins.index.property.strategy.ContentMirrorStoreStrategy Traversed 333000 nodes using index cq:tags with filter Filter(query=select [jcr:path], [jcr:score],  from [nt:base] as a where [jcr:content/cq:tags] like 'some/tag%' and [jcr:primaryType] = 'cq:Page' / xpath: //*[(jcr:like(jcr:content/@cq:tags, 'some/tag%') and (@jcr:primaryType = 'cq:Page'))] /, path=, property=[jcr:content/cq:tags=[some/tag..some/tag], jcr:primaryType=cq:Page])
+```
+
+To to correct this issue and restore acceptable performance, you should [configure your Oak Index](http://docs.adobe.com/docs/en/aem/6-0/deploy/upgrade/queries-and-indexing.html#Configuring%20the%20indexes) to add the required properties. Adobe has already produced good information on this, as well as a [nifty tool for seeing the indexes](http://adobe-consulting-services.github.io/acs-aem-commons/features/oak-index-manager.html). But how do you go ahead and package this up as part of your project? It's pretty simple, just do the following:
+
+1. Create a folder \_oak\_index inside the content package for your project. The reason for the name is that oak:index is not a valid folder name on Windows.
+2. Create a file .content.xml and add in something like this:  
+![Content.xml](/images/posts/2015-03-09-oak-index-packages/content-xml.png)One thing to note which caught me the first time, is that the `declaringNodeTypes` and `propertyNames` must be of type [Name](http://www.day.com/maven/jsr170/javadocs/jcr-2.0/javax/jcr/PropertyType.html#NAME), not just String.
+3. Add in something like this into your package's filter.xml:  
+![Filter.xml](/images/posts/2015-03-09-oak-index-packages/filter-xml.png)
+
+Once you install your packages, your new oak indexes will appear and be ready for use. I'd recommend reindexing manually as you don't want this to occur with every package deployment.

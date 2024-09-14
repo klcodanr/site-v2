@@ -1,0 +1,54 @@
+---
+title: Managing Multiple Projects with Repo
+description: In my previous post Creating a Scalable Application Ecosystem, I
+  described how to create an ecosystem of applications, libraries, and services
+  rather than isolated applications. With this paradigm, you should end up with
+  smaller, more manageable projects, but how do you manage all of these separate
+  codebases?
+hideInNav: false
+tags:
+  - Strategy
+  - Architecture
+  - Technical Solutions
+pubDate: 2019-01-22
+display: post
+image: /images/posts/2019-01/building-project-skeleton.jpg
+published: true
+---
+
+  
+
+In my previous post [Creating a Scalable Application Ecosystem](https://blogs.perficientdigital.com/2018/11/29/creating-a-scalable-application-ecosystem/), I described how to create an ecosystem of applications, libraries, and services rather than isolated applications. With this paradigm, you should end up with smaller, more manageable projects, but how do you manage all of these separate codebases?
+
+The Android project has this same problem in the extreme and to allow developers to easily work with multiple git repositories, they developed a tool called [repo](https://source.android.com/setup/develop#repo). 
+
+Repo augments git, allowing developers to download multiple projects with `repo init`, update a set of projects with `repo sync`, simultaneously create a branch across multiple projects with `repo start` and push all of the changes with `repo upload`.
+
+The [Apache Sling project](https://github.com/apache/sling-aggregator) uses repo to manage the 200+ modules making up the Sling codebase with significant success.   
+  
+## Bringing Repo to your Project
+
+  
+The first step to using repo on your project ([after installing the tool](https://source.android.com/setup/build/downloading#installing-repo)) is to create a [manifest XML file](https://gerrit.googlesource.com/git-repo/+/master/docs/manifest-format.md) to describe the projects making up your application ecosystem. The basic structure of a manifest is as follows:
+
+  
+
+![Repo Manifest Sample](/images/posts/2019-01/manifest.png)
+
+  
+
+The manifest itself should be in a separate project as a file in the project root called default.xml. The project only needs to contain the default.xml, but as this is the entry point for your codebase, adding a descriptive readme.md is essential. In the Apache Sling project we even used the project list in the default.xml to build out pages [listing the modules](https://github.com/apache/sling-aggregator/blob/master/docs/modules.md) and even showing project status.  
+  
+## Getting Started with Repo
+
+  
+To start using your repo project aggregator:  
+
+* Clone the project
+* Run the command `repo init`
+* Run the command `repo sync`
+
+This will automatically initialize, download and synchronize all of the projects in the repo manifest, initialize the project list.
+
+Hopefully, this helps you understand how repo can support you to support building and managing an application ecosystem.  
+  

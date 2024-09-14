@@ -1,0 +1,41 @@
+---
+title: "New from Apache Sling: Testing Tools 1.0.8"
+description: Highlights some of the features available in the new 1.0.8 release
+  of the Apache Sling Testing Tools library.
+hideInNav: false
+tags:
+  - Apache Sling
+  - jUnit
+  - Integration Testing
+pubDate: 2014-07-22
+display: post
+image: /images/posts/shared/sling.jpeg
+published: true
+---
+
+The Apache Sling Project just announced the release of Testing Tools 1.0.8\. This new release brings some great new features and fixes to anyone using Apache Sling Testing Tools for integration tests. There are two fixes which are certainly worth highlighting.
+
+### [SLING-3328](https://issues.apache.org/jira/browse/SLING-3328): Simplify SlingTestBase usage with an already running instance
+
+This issue makes it easier to connect the Sling Testing Tools to a running Sling / AEM instance without requiring to set the ``` jar.executor.jar.folder`` , `jar.executor.jar.options`, `jar.executor.vm.options` and `jar.executor.jar.name.regexp ` `` ```properties which currently must be set and must contain reasonable values which resolve to a JAR file. Now, with this fix, if the server specified in the `test.server.url` property as the server to connect to is running, these properties will not be required.
+
+For example, in my previous post on [Integration Tests in AEM](/posts/2014-06-follow-up-to-integration-tests-adobe-cq), I had a fairly large number of parameters specified and the cq.dir property needed to be sent with every build. This is no longer required and the parameters now look like below:
+
+```
+${crx.port}
+http://${crx.host}:${crx.port}
+false
+240
+1.0
+/libs/granite/core/content/login.html:QUICKSTART_HOMEPAGE
+30
+20
+```
+
+### [SLING-3561](https://issues.apache.org/jira/browse/SLING-3561): SlingClient.mkdirs Broken
+
+This issue fixed a pretty big problem in the SlingClient used to execute remote Integration Tests. This bug caused an error if you attempted to create folders at a path where any portion of the path already exists, for example: if you tried to create `/apps/test/mytest` and `/apps` already existed in your Sling instance, this would cause an error.
+
+This simplifies the AbstractIntegrationTest I provided in the [Integration Tests in AEM](/posts/2014-06-follow-up-to-integration-tests-adobe-cq) post, as the `createFolders` method is no longer needed.
+
+These two fixes as well as the [other fixes available in the release](https://issues.apache.org/jira/browse/SLING/fixforversion/12324063/), make it very much worth the time to upgrade if you are using the Sling Testing Tools for Integration Tests.

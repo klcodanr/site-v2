@@ -1,0 +1,95 @@
+---
+title: "One Tool to Configure Them All: Sling Repoinit"
+description: Learn how to configure your AEM repository with code via Apache Sling RepoInit
+hideInNav: false
+tags:
+  - Adobe Experience Manager
+  - Apache Sling
+  - Best Practices
+  - RepoInit
+pubDate: 2020-06-17
+display: post
+image: /images/posts/2020-06/one-tool-hero.jpeg
+published: true
+---
+
+  
+
+The core paradigm for the [Java Content Repository (JCR)](https://en.wikipedia.org/wiki/Content%5Frepository%5FAPI%5Ffor%5FJava), the repository for Adobe Experience Manager (AEM) is [Everything is Content.](https://www.slideshare.net/bdelacretaz/a-jcr-view-of-the-world-everything-is-content-everything-is-a-tree-22182699) This principal drives the flexibility which made AEM a market-leading solution. It does, however, come with a downside, managing the initial repository state is challenging since the repository state is a combination of the content, code and configuration for an AEM application.
+
+Managing this initial state is important for developers and administrators to be able to stand up local instances, standing up new environments and keeping environments in sync.  
+
+Multiple teams have build parts of a solution to this problem, including: 
+
+* [Netcentric Access Control Tool](https://github.com/Netcentric/accesscontroltool)
+* [ACS AEM Commons Ensure Service User](https://adobe-consulting-services.github.io/acs-aem-commons/features/ensure-service-users/index.html)
+* [ACS AEM Commons Authorizable Packager](https://adobe-consulting-services.github.io/acs-aem-commons/features/packagers/authorizable-packager/index.html)
+* [Apache Sling Service User Web Console](https://github.com/apache/sling-org-apache-sling-serviceuser-webconsole)
+* [AEM Content Packages](https://docs.adobe.com/content/help/en/experience-manager-cloud-service/implementing/developing/aem-project-content-package-structure.html)
+
+Recently though, another solution has come to the fore for configuring the initial repository state.
+
+  
+## Apache Sling RepoInit
+
+  
+[Apache Sling RepoInit](https://sling.apache.org/documentation/bundles/repository-initialization.html) has been a feature of Apache Sling since 2016, but historically has been used for base repository initialization as a part of slingstart / launchpad starter, not for project-level repository initialization. 
+
+Version 1.1.6+ of Sling JCR RepoInit includes the ability for registering configurations with RepoInit scripts or references. This brings Apache Sling Repoint out from just being a base repository initializer to enable use by project teams. 
+
+With Sling Repoint, we have a consolidated grammar to:
+
+* Create groups
+* Assign permissions
+* Create paths
+* Set properties
+* Assign group membership
+* Create OSGi configurations
+* Create service users
+  
+## Enabling RepoInit in AEM
+
+  
+> **Note:** this is based on AEM 6.5.5, newer service packs and AEM Cloud Service may have different dependency versions.
+
+  
+AEM includes a fairly old version of Sling RepoInit, in order to leverage the full power of Sling RepoInit, you need to upgrade to the following dependencies for AEM 6.5.5:  
+
+* [org.apache.sling.jcr.repoinit - 1.1.24](https://search.maven.org/artifact/org.apache.sling/org.apache.sling.jcr.repoinit/1.1.24/jar)
+* [org.apache.sling.repoinit.parser - 1.6.2](https://search.maven.org/artifact/org.apache.sling/org.apache.sling.repoinit.parser/1.6.2/jar)
+  
+## Configuring RepositoryInitializer
+
+  
+We can configure RepoInit scripts to be executed by registering a configuration of the `org.apache.sling.jcr.repoinit.impl.RepositoryInitializer` Service Factory, however there is a challenge with how this service resolves the references. Each reference is expected to be in the form of a URL and OSGi supports exposing bundles as URLs, however when Apache Felix resolves the URL of a bundle in the [URLHandlersBundleStreamHandler](https://github.com/apache/felix-dev/blob/master/framework/src/main/java/org/apache/felix/framework/URLHandlersBundleStreamHandler.java), it expects the URL host to be the UUID of the bundle, not a stable ID such as the Bundle's Symbolic Name.  
+  
+I have opened a ticket to get this resolved, but until that's complete and Generally Available, the best option is to create an OSGi Component to resolve the Bundle URL and initialize the configurations when the bundle starts.  
+  
+Below is a sample implementation showing how this could be done, showing how to support multiple RepoInit files in a single bundle:  
+  
+
+  
+Now that you have Sling RepoInit setup and working, you can create any number of RepoInit scripts in the ./src/main/resources/repoinits folder and on bundle installation they'll be live reloaded.   
+  
+With the RepoInit scripts, you can set up your repository completely with commands like:  
+  
+
+```
+# Create paths
+create path /content/my-site(cq:Page)
+
+# Create a group
+create group my-site-admin
+set ACL for my-site-admin
+    allow crx:replicate, jcr:lockManagement, jcr:versionManagement, rep:write on /content/my-site
+end
+
+# Add group members
+add my-site-admin to group administrators
+
+# And More!
+```
+
+  
+Apache Sling RepoInit is the consolidated way to initialize a repository for any Apache Sling-based system including AEM 6.5, [AEM as a Cloud Service](https://blogs.perficient.com/2020/01/13/thoughts-on-aem-as-a-cloud-service/) and [Apache Sling CMS](https://github.com/apache/sling-org-apache-sling-app-cms). With RepoInit, you can be assured that your solution will work on both the current version of AEM as well as AEM as a Cloud Service.   
+  

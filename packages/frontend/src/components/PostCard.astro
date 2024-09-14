@@ -1,0 +1,32 @@
+---
+import Card from "./Card.astro";
+import CardBody from "./CardBody.astro";
+import Button from "./Button.astro";
+import FormattedDate from "./FormattedDate.astro";
+
+const { post } = Astro.props;
+---
+
+<Card>
+  <div class="img-container">
+    {post.data.image && <img src={post.data.image} alt={post.data.title} />}
+    {
+      !post.data.image && (
+        <img
+          src={`https://via.placeholder.com/600x300?text=${encodeURIComponent(post.data.title)}`}
+          alt={post.data.title}
+        />
+      )
+    }
+  </div>
+  <CardBody>
+    <div>
+      <h3>{post.data.title}</h3>
+      <FormattedDate date={post.data.pubDate} />
+    </div>
+    <p>{post.data.description}</p>
+    <div>
+      <Button link={`/posts/${post.slug}`}>Read Post</Button>
+    </div>
+  </CardBody>
+</Card>

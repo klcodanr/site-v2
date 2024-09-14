@@ -1,0 +1,49 @@
+---
+title: Web Maintenance a Chore? AEM Live Copy to the Rescue!
+description: How do distributors and manufacturers maintain hundreds of dealer
+  or branch websites? AEM Live Copy can help easily manage shared content and
+  structure while allowing for local site differences.
+hideInNav: false
+tags:
+  - Adobe Experience Manager
+  - AEM 6
+  - Live Copy
+pubDate: 2016-02-23
+display: post
+image: /images/posts/2016-02-23-introduction-adobe-experience-manager-live-copy/Live-Copy-in-AEM.jpg
+published: true
+---
+
+In my recent work with distributors and manufacturers, I’ve noticed many have a similar problem. They are responsible for supporting multiple dealer or branch websites, and are struggling to do so. These are hundreds of sites, which are managed at a corporate level and mainained by a branch or dealer. The size and complexity in managing these sites and help non-technical authors maintain them makes this a daunting task for more organizations, so how can we make it easier? [Adobe Experience Manager](http://www.adobe.com/marketing-cloud/enterprise-content-management.html) [Live Copy](https://docs.adobe.com/docs/en/aem/6-1/administer/sites/msm.html) allows authors to easily manage multiple local sites that share some content between sites and allows for unique content on a particular site.
+
+## What is Live Copy?
+
+Live Copy is a feature in Adobe Experience Manager where the content and structure of a source site is copied to target sites via a configurable process. This can either be automatic or manual, and can even invoke other processes like automatic publication workflows upon changes to the source site.
+
+![](/images/posts/2016-02-23-introduction-adobe-experience-manager-live-copy/Live-Copy-in-AEM.jpg "Live Copy in AEM") 
+
+As shown in the illustration above, a source site (or blueprint) contains the base content and structure. The Live Copied sites (Local Branch 1 and Local Branch 2) will receive updates with the shared content, which is shown in red. The blue content is created for each individual local site and will not be shared with the blueprint site or the other local sites. This same process can act within a page, allowing authors to add, change or remove pieces of content on a page while preserving the live copy link for the rest of the page content. Live Copies can also be Live Copied allowing the creation of multiple blueprints, for example, creating a region or service focused blueprint versus the default generic blueprint.
+
+## Live Copy Process
+
+The process for creating a live copy is simple. First, an author would log into Adobe Experience Manager and select `+ Create` \>> `Create Live Copy` from the Sites Manager.
+
+![/images/posts/2016-02-23-introduction-adobe-experience-manager-live-copy/01-create-live-copy.png](/images/posts/2016-02-23-introduction-adobe-experience-manager-live-copy/01-create-live-copy.png "Creating a Live Copy")
+
+Next, the author will select the source or blueprint site:
+
+![Select Source](/images/posts/2016-02-23-introduction-adobe-experience-manager-live-copy/02-select-source.png) 
+
+Then select the destination path, which is the path under which the live copy target site will be created:
+
+![Select Destination](/images/posts/2016-02-23-introduction-adobe-experience-manager-live-copy/03-select-destination.png) 
+
+Finally, the author enters the site title, name and rollout configurations. The rollout configurations are hooks which are executed by Live Copy on certain event triggers to perform updates to the target site or other actions. For more information, check out this article on [creating Rollout Configurations](https://docs.adobe.com/docs/en/cq/5-6-1/developing/multi%5Fsite%5Fmanager%5Fdev.html). The two rollout configurations I have selected below will update the content of the Live Copy target when the Live Copy is first executed (Standard rollout config) and update the target whenever there is a modification to the source (Push on modify).
+
+![Configure Live Copy](/images/posts/2016-02-23-introduction-adobe-experience-manager-live-copy/04-configure-livecopy.png)
+
+When the author clicks create, the new site will be created and linked back to the source site via Live Copy. From there the content can be managed similarly to any other AEM content and the authors can choose to override any Live Copied page content via canceling inheritance.
+
+![Canceling Live Copy Inheritance](/images/posts/2016-02-23-introduction-adobe-experience-manager-live-copy/05-override-inheritance.png)
+
+You can find more documentation about Live Copy on the [Adobe documentation website](https://docs.adobe.com/docs/en/aem/6-1/administer/sites/msm.html). If you are facing the problem of managing a large number of similar, but not quite the same websites in Adobe Experience Manager, Live Copy can be the solution to your challenges.

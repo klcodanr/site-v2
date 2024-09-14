@@ -1,0 +1,44 @@
+---
+title: Tailing AEM Logs in Eclipse
+description: Use Eclipse's LogViewer to follow updates in AEM log files right from the IDE.
+hideInNav: false
+tags:
+  - Adobe Experience Manager
+  - Eclipse
+  - Logging
+  - Best Practices
+pubDate: 2014-07-07
+display: post
+image: /images/posts/2014-07-07-tailing-aem-logs-in-eclipse/7-select-logs.png
+published: true
+---
+
+My typical workflow for developing with AEM frequently involves reading from logs. Whether it's for checking if bundles and services installed, following the logging of custom code or trying to get a full stack trace of an error, the logs provided by AEM are an invaluable tool. Until now, this has meant switching back and forth between my IDE (Eclipse) and the terminal. Dual monitors and [Total Terminal](http://totalterminal.binaryage.com/) help, but it's still not as efficient as it could be to keep switching back and forth.
+
+Last week, I decided to see if this was a way to make this better. The most obvious solution was to make my logs visible inside Eclipse, so I started looking at the Eclipse Marketplace. There are [a number of plugins](http://marketplace.eclipse.org/search/site/log), and after some testing, I settled on [LogViewer](http://marketplace.eclipse.org/content/logviewer) as it was fairly simple, but had all of the features I wanted.
+
+## Installing LogViewer
+
+Installing LogViewer is pretty simple as it's available in the Eclipse Marketplace. Simply search for LogViewer and follow the wizard through the installation. Make sure to accept that you are installing unsigned code and then restart Eclipse when the installation is complete.
+
+![Search Marketplace](/images/posts/2014-07-07-tailing-aem-logs-in-eclipse/1-search-marketplace.png)
+
+## Adding LogViewer
+
+Once you have LogViewer installed and Eclipse has restarted, you can add it to you perspective. Simply go to _Window > Show View > Other..._ to locate the LogViewer view and then add it to your perspective where ever makes sense for you. I would suggest the bottom viewport. 
+
+![Find Log Viewer](/images/posts/2014-07-07-tailing-aem-logs-in-eclipse/5-find-log-viewer.png)
+
+## Configuring LogViewer
+
+Once you have LogViewer installed and added to your perspective, you can configure it. First, select the _Open Logfile_ button to select the logs to tail.
+
+![Select logs](/images/posts/2014-07-07-tailing-aem-logs-in-eclipse/7-select-logs.png)
+
+Next, go ahead and add some line highlighting to highlight errors and warnings, simply select the _Show rule preferences_ button. This will open the preferences dialog to set up line highlighting.
+
+![Log highlighting](/images/posts/2014-07-07-tailing-aem-logs-in-eclipse/8-log-highlighting.png)
+
+Adding rules is simple and log viewer supports several different modes of searching including regular expressions and word matching. Once you have all this configured, sit back and enjoy viewing your logs without leaving Eclipse:
+
+![Logs in Eclipse](/images/posts/2014-07-07-tailing-aem-logs-in-eclipse/9-logs.png)

@@ -1,0 +1,40 @@
+{
+  "name": "danklco-frontend",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "astro": "astro",
+    "build": "astro check && astro build",
+    "lint": "eslint .",
+    "dev": "astro dev",
+    "preview": "astro preview",
+    "start": "npm run dev",
+    "test": "npx playwright test"
+  },
+  "dependencies": {
+    "@astrojs/check": "^0.9.3",
+    "@astrojs/mdx": "^3.1.6",
+    "@astrojs/rss": "^4.0.7",
+    "@astrojs/sitemap": "^3.1.6",
+    "@playform/compress": "^0.1.1",
+    "astro": "^4.14.2",
+    "astro-compress": "^2.3.1",
+    "astro-icon": "^1.1.1",
+    "astro-pagefind": "^1.6.0",
+    "astro-sst": "2.41.5",
+    "sst": "^2.43.4",
+    "typescript": "^5.5.4"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.10.0",
+    "@iconify-json/mdi": "^1.2.0",
+    "@playwright/test": "^1.46.1",
+    "@typescript-eslint/eslint-plugin": "^8.1.0",
+    "@typescript-eslint/parser": "^8.1.0",
+    "astro-capo": "^0.0.1",
+    "eslint": "^8.56.0",
+    "eslint-plugin-astro": "^1.2.3",
+    "eslint-plugin-jsx-a11y": "^6.9.0",
+    "fast-xml-parser": "^4.5.0"
+  }
+}

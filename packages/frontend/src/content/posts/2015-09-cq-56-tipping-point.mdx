@@ -1,0 +1,34 @@
+---
+title: CQ 5.6 Tipping Point
+description: Discusses the point at which CQ 5.6 becomes unreliable
+hideInNav: false
+tags:
+  - AEM 6
+  - DevOps
+pubDate: 2015-09-02
+display: post
+image: /images/posts/2015-09-02-cq-56-tipping-point/Woodwards_building_Vancouver_demolition_1.jpg
+published: true
+---
+
+![](/images/posts/2015-09-02-cq-56-tipping-point/Woodwards_building_Vancouver_demolition_1.jpg)  
+ Image Credit: "[Woodwards building Vancouver demolition 1](https://commons.wikimedia.org/wiki/File:Woodwards%5Fbuilding%5FVancouver%5Fdemolition%5F1.jpg#/media/File:Woodwards%5Fbuilding%5FVancouver%5Fdemolition%5F1.jpg)" by [Tannoy](//en.wikipedia.org/wiki/User:Tannoy) at [English Wikipedia](//en.wikipedia.org/wiki/).  
+ Licensed under [CC BY-SA 3.0](http://creativecommons.org/licenses/by-sa/3.0) via [Wikimedia Commons](//commons.wikimedia.org/wiki/). 
+
+ Recently, I spent a bit of time running performance tests against various versions of CQ5/AEM to understand the performance characteristics of the different versions. One of the interesting outcomes of this testing is that CQ 5.6 and before have a very distinct point at which the instance becomes unstable.
+
+ To evaluate the performance characteristics of AEM, I used an AWS m4.xLarge EC2 instance and Apache Benchmark to simulate traffic against a consistent baseline. 
+
+ AEM 6.0 and 6.1 were able to scale up to 1000 concurrent requests without significant errors as illustrated in the graph below:
+
+![60 stays standing](/images/posts/2015-09-02-cq-56-tipping-point/aem6-keeps-standing.png)  
+
+ CQ5.6 however ran into serious problems at approximately 400 concurrent requests and experienced a high and increasing error rate as the concurrency continued to increase.
+
+![56 Tipping Point](/images/posts/2015-09-02-cq-56-tipping-point/56-tipping-point.png)  
+
+ So why is this the case? In AEM 6.0, Adobe introduce the new [CRX3 repository which is based on Jackrabbit OAK](http://docs.adobe.com/docs/en/aem/6-0/deploy/upgrade/introduction-to-oak.html). This new repository implementation provides significant performance improvements over CRX2.
+
+ I found out a number of other particularities when comparing the performance of CQ 5.6 and AEM 6.1, for a complete report, including analysis and recommendations:
+
+[ Read my AEM Performance Comparison Whitepaper!](/posts/2015-09-aem-61-performance-whitepaper) 

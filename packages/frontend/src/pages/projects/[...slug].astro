@@ -1,0 +1,48 @@
+---
+import { type CollectionEntry, getCollection } from "astro:content";
+import Project from "../../layouts/Project.astro";
+import FormattedDate from "../../components/FormattedDate.astro";
+import Button from "../../components/Button.astro";
+
+export async function getStaticPaths() {
+  const projects = await getCollection("projects");
+  return projects.map((project) => ({
+    params: { slug: project.slug },
+    props: project,
+  }));
+}
+
+type Props = CollectionEntry<"projects">;
+
+const project = Astro.props;
+---
+
+<Project {...project.data}>
+  <article>
+	<Button link="/my-work">&lt;&nbsp;Back to My Work</Button>
+    <div class="hero-image">
+      <img src={project.data.image} alt={project.data.title} />
+    </div>
+    <section>
+      <header>
+        <h1>{project.data.title}</h1>
+        <div>
+          <FormattedDate date={project.data.startDate} excludeDay={true} /> - <FormattedDate
+            date={project.data.endDate}
+            excludeDay={true}
+          />
+        </div>
+      </header>
+      <p>
+        <em>{project.data.projectRole}</em>
+      </p>
+      <ul class="tasks">
+        {project.data.tasks.map((task: unknown) => <li>{task}</li>)}
+      </ul>
+      Tools Used:
+      <ul class="list-inline">
+        {project.data.tools.map((tool: unknown) => <li>{tool}</li>)}
+      </ul>
+    </section>
+  </article>
+</Project>

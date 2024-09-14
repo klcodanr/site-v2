@@ -1,0 +1,159 @@
+---
+title: Finding Links in Day CQ
+description: Learn how to find links to a path in Day CQ
+hideInNav: false
+tags:
+  - Adobe CQ
+pubDate: 2011-06-03
+display: post
+image: /images/posts/shared/CQ5.png
+published: true
+---
+
+Sometimes, when setting up development environments, it is not feasible to copy all of the content from the production environment, all you really need is a specific set of content being used by what you’re working on.
+
+This is where being able to follow links and identify content can be very valuable, rather than having to create a bloated environment with extra content you don’t need, you can identify exactly what you need.
+
+### Connecting to the Repository
+
+To identify links inside our current content, we’ll start by connecting to the CQ using DavEx. The reason we’re using DavEx instead of RMI is that DavEx does not require any changes to the CQ Server by default.
+
+First, we get the repository:
+
+```
+Repository repository = JcrUtils.getRepository("http://localhost:4502/crx/server");
+
+```
+
+Next we create our credentials and login to get the session:
+
+```
+SimpleCredentials creds = new SimpleCredentials("admin", "admin".toCharArray());  
+Session session = repository.login(creds, "crx.default");  
+
+```
+
+### Searching the Nodes
+
+Once we have the session, we can query the CQ Server to find the links. First we need to retrieve the node at which to start searching links:
+
+```
+Node rootNode = session.getNode("/content/mysite"); 
+
+```
+
+Next we call the searchNode function. This function is recursive, so it will search down the JCR node tree until it has traversed all of the nodes under the root node.
+
+```
+searchNode(rootNode);
+
+```
+
+So what does searchNode do? First, it iterates through every property on the node and calls another function checkProperty(node,value) on each property. This function will check the value of the property to see if it is a link. Once all of the properties have been checked, it gets all of the sub-nodes for the current node and calls itself on each one.
+
+```
+protected void searchNode(Node node) throws RepositoryException {
+    try {
+        log.debug("Checking node " + node.getPath());
+        PropertyIterator properties = node.getProperties();
+        while (properties.hasNext()) {        
+            Property prop = properties.nextProperty()                  if (prop.isMultiple()) {
+                Value[] values = prop.getValues();
+                 for (int i = 0; i < values.length; i++) {
+                      checkProperty(node, values[i].getString());
+                 }
+            } else {
+              checkProperty(node, prop.getValue().getString());
+            }
+        }
+        log.debug("Seaching child nodes.");
+        NodeIterator nodes = node.getNodes();
+        while (nodes.hasNext()) {
+              searchNode(nodes.nextNode());
+        }
+  } catch (Exception e) {
+        log.warn("Unexpected exception processing node" +  node.getPath(), e);
+  }
+}
+
+```
+
+### Checking the Node Properties
+
+Once we have the value of the property, we can check it to see if it links to anything we’ll need. In this case we only want nodes under “/content/dam/mysite”. First we check to see if the value of the property is a valid path, if so we can write the value out to a report or to the console. Next, we need to see if the property is HTML and contains an anchor tag. If so we’ll need to call parseHTML to parse the value.
+
+```
+protected void checkProperty(Node node, String value) throws RepositoryException {
+	  log.trace("checkProperty");
+
+	  log.trace("Checking value: " + value);
+	  if (value.startsWith('/content/dam/mysite'))) {
+			log.trace('Writing '+value+' to report');
+			report.println(value);
+	  }
+	  if (value.contains("</a>")) {
+			parseHTML(node, value);
+	  }
+}
+
+```
+
+### Parsing HTML Node Values
+
+Parsing the HTML content of a JCR node is a little more difficult. Since the content is HTML, not XML , it cannot be reliably parsed using the built in XML parses available in Java. We could use regular expressions, however they introduce significant complexity and cannot truly parse HTML. Instead we’ll use a library called HTML Parser. This library will parse the HTML and allow us to process it using Java. 
+
+The parseHTML function first creates a NodeVisitor. This HTMLParser class is invoked by the parser every time it encounters a node. In our NodeVisitor we check for anchor tags and if they have a valid link we will write out a report.
+
+Next we invoke the HTML Parser classes to parse the HTML, this will and then use are visitor to visit all of the nodes in the HTML document.
+
+```
+protected void parseHTML(final Node node, String html) {
+	  // node visitor, will visit all a tags and check the href
+	  NodeVisitor linkVisitor = new NodeVisitor() {
+
+			@Override
+			public void visitTag(Tag tag) {
+				  String name = tag.getTagName();
+				  if ("a".equalsIgnoreCase(name)) {
+						log.trace("Visiting link");
+						String hrefValue = tag.getAttribute("href");
+						log.trace("Found href: " + hrefValue);
+						if (hrefValue.startsWith('/content/dam/mysite')){
+							  report.println(hrefValue);
+						}
+				  }
+			}
+	  };
+
+	  try {
+			log.debug("Parsing HTML");
+			Parser parser = new Parser(new Lexer(new Page(html, "UTF-8")));
+			parser.visitAllNodesWith(linkVisitor);
+	  } catch (Exception e) {
+			error("Unable to parse HTML", e);
+	  }
+}
+
+```
+
+### Bringing it all Together
+
+That’s really all you need! Once you run the application you’ll have a report with all of the content objects you’ll need to import into your development environment. You can find a complete Java class [here](/assets/ContentFinder.java), which creates two reports, one CSV with the list of source pages and link targets as well as creating a filter.xml for Day’s Vault tool.
+
+In order to compile and run this application you’ll need the following dependencies:
+
+```
+<ivy-module version="2.0">
+	<info organisation="com.cp" module="ContentFinder" />
+	<dependencies>
+		<dependency org="org.apache.jackrabbit" name="jackrabbit-api" rev="2.2.5" />
+		<dependency org="org.apache.jackrabbit" name="jackrabbit-webdav" rev="2.2.5" />
+		<dependency org="org.apache.jackrabbit" name="jackrabbit-jcr2dav" rev="2.2.5" />
+		<dependency org="log4j" name="log4j" rev="1.2.16" />
+		<dependency org="org.slf4j" name="slf4j-log4j12" rev="1.5.8" />
+		<dependency org="org.slf4j" name="slf4j-api" rev="1.5.8" />
+		<dependency org="org.htmlparser" name="htmlparser" rev="1.6" />
+	</dependencies>
+</ivy-module>
+
+```

@@ -1,0 +1,93 @@
+---
+title: Apache Sling JVM Performance Comparison
+description: A comparison of the performance of top Java Virtual Machine
+  implementations in running Apache Sling.
+hideInNav: false
+tags:
+  - Java
+  - Apache Sling
+  - Apache Sling CMS
+  - Performance
+pubDate: 2020-08-19
+display: post
+image: /images/posts/2020-08/Performance-Banner.jpg
+published: true
+---
+
+  
+
+With the recent proliferation of Java Virtual Machine (JVM) implementations, it's difficult to know which implementation is the best for your use case. While proprietary vendors [generally prefer Oracle Java](https://docs.adobe.com/content/help/en/experience-manager-65/deploying/introduction/technical-requirements.html#java-virtual-machines), there are several open source options with different approaches and capabilities. 
+
+Given how the implementations vary in some underlying technical specifics, the "correct" JVM implementation will vary based on the use case. [Apache Sling](https://sling.apache.org), in particular has some specific needs given the complexity of the [OSGi](https://felix.apache.org/) / [JCR](https://jackrabbit.apache.org/) backend and the Sling Resource Resolution framework.   
+  
+## Test Strategy
+
+  
+To help get some real data on which JVM implementation works best for running Apache Sling, I created a project to:  
+
+1. Install a number of JVM implementations and monitoring tools
+2. For each JVM:  
+   1. Setup an instance of [Apache Sling CMS](https://github.com/apache/sling-org-apache-sling-app-cms)  
+   2. Install a content package to the Sling CMS instance  
+   3. Run a performance test using [siege](https://www.joedog.org/siege-home/)
+3. Consolidate the data into a CSV
+
+If you are curious, you can checkout the [Sling JVM Comparison project on Github](https://github.com/PerficientDigital/sling-jvm-comparison).
+
+The project installs and compares the following JVM implementations on version 11:  
+
+* [Eclipse OpenJ9](https://www.eclipse.org/openj9/)
+* [Amazon Coretto](https://aws.amazon.com/corretto/)
+* [OpenJDK Hotspot](http://openjdk.java.net/groups/hotspot/)
+* [Oracle JDK](https://www.oracle.com/java/technologies/javase-downloads.html)
+* [Azul Zulu](https://www.azul.com/downloads/zulu-community/)
+* [GraalVM](https://www.graalvm.org/)
+
+To create a meaningful comparison, I setup and ran the test an [Amazon EC2 m5.large](https://aws.amazon.com/ec2/instance-types/m5/) instance running [Ubuntu 18.04 LTS “Bionic Beaver”](https://releases.ubuntu.com/18.04) and captured the results.  
+  
+## Startup / Install Performance
+
+  
+An important performance comparison is the amount of time it takes to get an instance running. To measure this, I captured the time in milliseconds to start the Apache Sling CMS instance and the amount of time required to upload and install the same content package. There is a potential variance in the capture of the startup time as the test process polls the Sling instance to see when it responds successfully to a request to determine startup time.  
+  
+<div class='tableauPlaceholder' id='viz1725843313895' style='position: relative'><noscript><a href='https:&#47;&#47;blogs.perficient.com&#47;2020&#47;08&#47;19&#47;apache-sling-jvm-performance-comparison'><img alt=' ' src='https:&#47;&#47;public.tableau.com&#47;static&#47;images&#47;Ap&#47;ApacheSling-JVMPerformanceComparison&#47;StartupPkgInstall&#47;1_rss.png' style='border: none' /></a></noscript><object class='tableauViz'  style='display:none;'><param name='host_url' value='https%3A%2F%2Fpublic.tableau.com%2F' /> <param name='embed_code_version' value='3' /> <param name='site_root' value='' /><param name='name' value='ApacheSling-JVMPerformanceComparison&#47;StartupPkgInstall' /><param name='tabs' value='no' /><param name='toolbar' value='yes' /><param name='static_image' value='https:&#47;&#47;public.tableau.com&#47;static&#47;images&#47;Ap&#47;ApacheSling-JVMPerformanceComparison&#47;StartupPkgInstall&#47;1.png' /> <param name='animate_transition' value='yes' /><param name='display_static_image' value='yes' /><param name='display_spinner' value='yes' /><param name='display_overlay' value='yes' /><param name='display_count' value='yes' /><param name='language' value='en' /></object></div>                <script type='text/javascript'>                    var divElement = document.getElementById('viz1725843313895');                    var vizElement = divElement.getElementsByTagName('object')[0];                    vizElement.style.width='100%';vizElement.style.height=(divElement.offsetWidth*0.75)+'px';                    var scriptElement = document.createElement('script');                    scriptElement.src = 'https://public.tableau.com/javascripts/api/viz_v1.js';                    vizElement.parentNode.insertBefore(scriptElement, vizElement);                </script>
+  
+
+OpenJDK Hotspot and Amazon Coretto are essentially tied as the leaders of the pack with Oracle JDK and GraalVM following shortly behind. Azul Zulu and Eclipse OpenJ9 take 78% and 87% longer to start as OpenJDK Hotspot. Interestingly, most of the JVM implementations take approximately the same time to install the content package, however Eclipse OpenJ9 takes 35% longer to install the content package.
+
+  
+## Performance Under Load
+
+  
+To check performance under load, I tested the instances using siege using a list of URLs over the course of an hour with blocks of 15 minutes on and 15 minutes off. 
+
+First, we can take a look at the throughput per second:  
+  
+
+  
+And next, we can look at the raw transaction count:  
+
+  
+Both show the same story, OpenJDK Hotspot, Amazon Coretto and Oracle JDK taking the top spots for performance with GraalVM, Azul Zulu and Eclipse OpenJ9 trailing behind.  
+  
+## Memory Usage
+
+  
+Finally, given how memory intensive Java applications can be, it's important to consider memory usage and here the differences are quite stark:  
+  
+
+  
+Eclipse OpenJ9 is _significantly_ less memory intensive, using only 55% of the average memory of the 4 middle-tier JVM implementations. GraalVM also sits outside the average, using 15% more memory than the same middle-tier JVM implementations.  
+  
+## Summary and Findings
+
+  
+From a raw performance perspective, OpenJDK Hotspot is the clear winner with Amazon Coretto close behind. If you are all in on Amazon or want a long-term supported JVM option, Amazon Coretto would be worth considering.
+
+For those running Apache Sling on memory-limited hosting options, Eclipse OpenJ9 is the best option. While there is a tradeoff for performance, when you only have a Gigabyte or two of memory, reducing the load by 45% will make a tremendous difference.  
+  
+### Credit
+
+  
+I want to thank [Paul Bjorkstrand](https://blogs.perficient.com/author/pbjorkstrand/) for coming up with idea for this post.   
+  

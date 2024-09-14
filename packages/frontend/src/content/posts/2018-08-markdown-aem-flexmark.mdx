@@ -1,0 +1,92 @@
+---
+title: Markdown in AEM with Flexmark
+description: Unfortunately, AEM did not provide a mechanism to interact with
+  Markdown content, nor were any of the Java markdown libraries compatible with
+  OSGi. Recently, I worked with the Flexmark team to produce an OSGi bundle
+  version of the Flexmark markdown library.
+hideInNav: false
+tags:
+  - Adobe Experience Manager
+  - Apache Sling
+  - Markdown
+  - OSGi
+pubDate: 2018-08-30
+display: post
+image: /images/posts/2018-08/wall-of-books.jpg
+published: true
+---
+
+  
+[Markdown](https://daringfireball.net/projects/markdown/syntax) is a light markup language with text-based syntax which can be converted to HTML, PDFs or any number of different styled formats. Markdown is a popular format for text-heavy content such as documentation, wiki content and comments as it is easy to maintain and read the content without the added complexity of including formatting.
+
+ Unfortunately, AEM did not provide a mechanism to interact with Markdown content, nor were any of the [Java markdown libraries](https://www.w3.org/community/markdown/wiki/MarkdownImplementations) compatible with OSGi. Recently, I worked with the [Flexmark](https://github.com/vsch/flexmark-java) team to [produce an OSGi bundle version of the Flexmark markdown library](https://github.com/vsch/flexmark-java/pull/261).
+
+Now that this library is released, integrating markdown content into AEM is an easy process.
+
+  
+## Using Flexmark in AEM
+
+  
+To use the Flexmark library in AEM, first you need to get the bundle installed. It can either be [downloaded directly from Maven Central](https://search.maven.org/search?q=a:flexmark-osgi) (not recommended) or integrated into your Content Package POM with the following:
+
+  
+
+```xml
+<!-- within /project/dependencies -->
+<dependency>
+  <groupId>com.vladsch.flexmark</groupId>
+  <artifactId>flexmark-osgi</artifactId>
+  <version>0.34.22</version>
+  <scope>provided</scope>
+</dependency>
+
+<!-- within /project/build/plugins/plugin (content-package-maven-plugin) -->
+<embedded>
+  <groupId>com.vladsch.flexmark</groupId>
+  <artifactId>flexmark-osgi</artifactId>
+  <target>/apps/myapp/install</target>
+</embedded>
+```
+
+  
+Once the bundle is installed you can then use the Flexmark API to retrieve and leverage the Markdown content from the AEM repository, for example using a Sling Model like this one which retrieves Markdown content from the property _markdownfield_ and converts the Markdown content to HTML:
+
+  
+
+```java
+package com.myorg.site.models;
+
+import org.apache.sling.api.resource.Resource;
+import org.apache.sling.models.annotations.Model;
+import org.apache.sling.models.annotations.injectorspecific.Self;
+
+import com.vladsch.flexmark.ast.Node;
+import com.vladsch.flexmark.html.HtmlRenderer;
+import com.vladsch.flexmark.parser.Parser;
+import com.vladsch.flexmark.util.options.MutableDataSet;
+
+@Model(adaptables = Resource.class)
+public class DiscussionMarkdownModel {
+
+	@Self
+	private Resource resource;
+
+	public String getHtml() {
+		MutableDataSet options = new MutableDataSet();
+
+		Parser parser = Parser.builder(options).build();
+		HtmlRenderer renderer = HtmlRenderer.builder(options).build();
+		Node node = parser.parse(resource.getValueMap().get("markdownfield", String.class));
+
+		return renderer.render(node);
+	}
+}
+
+```
+
+  
+With the new Flexmark OSGi bundle, integrating Markdown in AEM is painless, as we can see in this simple example.
+
+[Robert Munteanu](https://twitter.com/rombert) is also working on a [Sling Resource Provider backed by Markdown files](https://github.com/apache/sling-whiteboard/tree/master/mdresourceprovider), which is an interesting concept if someone wanted to do something like publish documentation in Markdown, but display it on a site with the dynamic, marketing features AEM. So who knows, maybe Adobe could convert their documentation site into Markdown + AEM?  
+
+  

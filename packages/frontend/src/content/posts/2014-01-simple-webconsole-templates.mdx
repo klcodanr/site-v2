@@ -1,0 +1,98 @@
+---
+title: Simple Web Console Templates
+description: Demonstrates a simple technique for creating HTML templates for
+  Apache Felix WebConsole screens
+hideInNav: false
+tags:
+  - Adobe CQ
+  - Adobe Experience Manager
+  - Best Practices
+  - Apache Felix
+  - OSGi
+pubDate: 2014-01-27
+display: post
+image: ""
+published: true
+---
+
+Awhile back, I wrote a blog post about [creating Apache Felix Web Console Plugins](/posts/2013/09/11/service-boss-level-part-2-custom-web-console-plugins/). It’s a pretty great technique for creating a diagnostic configuration panel for complex services or applications, however the process for rendering HTML for the consoles is still somewhat stuck in the dark ages.
+
+Since servlets are used to render the HTML, you’ll generally see HTML being written to the response in the Java code of the Web Console class. You can even see this in the plugins which come in Apache Sling, such as:
+
+* [TopologyWebConsolePlugin](https://svn.apache.org/repos/asf/sling/trunk/bundles/extensions/discovery/impl/src/main/java/org/apache/sling/discovery/impl/TopologyWebConsolePlugin.java)
+* [JobConsolePlugin](https://svn.apache.org/repos/asf/sling/trunk/contrib/extensions/bgservlets/src/main/java/org/apache/sling/bgservlets/impl/webconsole/JobConsolePlugin.java)
+
+While this technique works, it makes for ugly code and makes it difficult to separate out the presentation and back end logic. On the other hand, this is a console, not something where you really want to spend the time to build a whole presentation framework. Instead, I suggest levering Apache Common Lang’s [StrSubstitutor](http://commons.apache.org/proper/commons-lang/javadocs/api-2.6/org/apache/commons/lang/text/StrSubstitutor.html)to templatize your HTML. The StrSubstitutor simply substitutes tokens for values you pass in, so like [mustache](http://mustache.github.io/), it provides truly logic-less templates.
+
+### Creating the Template File
+
+First, you will want ot go ahead and create the template. It can be pretty much any HTML you’d want. Since you will most likely be using the [Abstract Web Console Plugin](http://felix.apache.org/apidocs/webconsole/3.0.0/org/apache/felix/webconsole/AbstractWebConsolePlugin.html)you do not need to include the boilerplate HTML such as the head or body, you just need to supply the content of the page.
+
+While you are writing the HTML, you might as well add the tokens to be replaced. The format for the tokens is `${TOKEN_NAME}`, so for example, the token for the key name would be $`name`.
+
+### Loading the Template
+
+Next, there’s an important question: where do we get the template from? Well, the easiest way to load the template is to stream it from the classpath. Any files you place in the `src/main/resources` folder of your Maven Bundle project will be available in the classpath, so loading the template is as easy as:
+
+```
+InputStream is = null;
+ByteArrayOutputStream baos = new ByteArrayOutputStream();
+String template = null;
+try{
+	is = getClass().getClassLoader().getResourceAsStream(templateName);
+	if(is != null){		
+		IOUtils.copy(is, baos);
+		template = baos.toString();
+	} else {
+		throw new IOException("Unable to load template "+templateName);
+	}
+} finally {
+	IOUtils.closeQuietly(is);
+	IOUtils.closeQuietly(baos);
+}
+
+```
+
+### Populating the Template
+
+As previously mentioned, the StrSubstitutor will simply replace tokens with values. To do this, it takes a map of token names and String values. So all you really need to do is create a `HashMap<String,String>` and put in the tokens and values.
+
+At this point, you’re probably wondering how to handle lists of values. Unfortunately, there’s not an overly awesome option. In my case, I had to templatize a list of ServiceReferences, so I created a separate template which templatized an individual ServiceReference and invoked that template for each one. Still a heck of a lot cleaner than having the HTML inline.
+
+So, once you have your parameters all generated, you can go ahead and populate the template and write the result to the response.
+
+```
+StrSubstitutor sub = new StrSubstitutor(properties);
+response.getWriter().write(sub.replace(template));
+
+```
+
+### Bringing It All Together
+
+Generally, it’s probably a good idea to separate out a single page into a couple templates, assuming the different sections of the page serve different needs. Therefore just create a simple function which you can invoke to load the template, populate it and write the response to the response. For example, something like this:
+
+```
+private void renderBlock(HttpServletResponse res, String templateName,
+		Map<String, String> properties) throws IOException {
+	InputStream is = null;
+	ByteArrayOutputStream baos = new ByteArrayOutputStream();
+	String template = null;
+	try{
+		is = getClass().getClassLoader().getResourceAsStream(templateName);
+		if(is != null){		
+			IOUtils.copy(is, baos);
+			template = baos.toString();
+		} else {
+			throw new IOException("Unable to load template "+templateName);
+		}
+	} finally {
+		IOUtils.closeQuietly(is);
+		IOUtils.closeQuietly(baos);
+	}
+	StrSubstitutor sub = new StrSubstitutor(properties);
+	res.getWriter().write(sub.replace(template));
+}
+
+```
+
+You can see an example in the [Component Bindings Provider Web Console](https://github.com/SixDimensions/Component-Bindings-Provider/blob/master/impl/src/main/java/com/sixdimensions/wcm/cq/component/bindings/impl/ComponentBindingsProviderWebConsole.java).

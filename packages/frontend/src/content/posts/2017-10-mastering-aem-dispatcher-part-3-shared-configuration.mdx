@@ -1,0 +1,108 @@
+---
+title: "Mastering the AEM Dispatcher Part 3: Shared Configurations"
+description: In this post, we'll discuss how to set up configuration values in
+  the AEM Dispatcher to promote clarity and make it easy to compare and sync
+  configuration files across environments.
+hideInNav: false
+tags:
+  - Mastering the AEM Dispatcher
+  - Best Practices
+  - AEM 6
+  - Dispatcher
+  - Configuration
+  - Apache httpd
+pubDate: 2017-10-24
+display: post
+image: /images/posts/2017-10-25-mastering-aem-dispatcher-part-3-shared-configuration/passing-notes.jpg
+published: true
+---
+
+This is the third post in the series [Mastering the AEM Dispatcher](/tag/Mastering%20the%20AEM%20Dispatcher/) where delve into the mysteries of this opaque technology.
+
+In this post, we'll discuss how to set up configuration variables in the AEM Dispatcher to reduce redundancy and make it easy to compare and sync configuration files across environments.
+
+## The Starting Point
+
+If you're using Adobe Managed Services (AMS) when you get your new AEM environment, you'll get a Dispatcher configuration like the one below in /etc/httpd:
+
+```
+conf  
+ author-farm.any  
+ author-invalidate-allowed.any  
+ author-renders.any  
+ author-vhosts.any  
+ clientheaders.any  
+ dispatcher.any  
+ httpd.conf  
+ magic  
+ publish-farm.any  
+ publish-invalidate-allowed.any  
+ publish-renders.any  
+ publish-vhosts.any  
+ rules.any  
+conf.d  
+ README  
+ autoindex.conf  
+ dispatcher_vhost.conf  
+ health_check.conf  
+ remoteip.conf  
+ userdir.conf  
+ welcome.conf.ignore  
+conf.modules.d  
+ 00-base.conf  
+ 00-dav.conf  
+ 00-lua.conf  
+ 00-mpm.conf  
+ 00-mpm.conf.old  
+ 00-proxy.conf  
+ 00-systemd.conf  
+ 01-cgi.conf
+```
+
+I like all how this configuration separates out the major functions of the dispatcher into separate files as this theoretically also you to:
+
+* Understand the scope of changes
+* Compare changes between environments
+
+Unfortunately, though because the server IPs, URLs, and other information is hard coded into the configuration files when you try to compare the files from different environments you get a number of false positives in the diff as such:
+
+![Example Diff](/images/posts/2017-10-25-mastering-aem-dispatcher-part-3-shared-configuration/diff.png)
+
+This makes it harder to understand changes as you have to open and check each file. Additionally, since most of us don't naturally memorize arbitrary numbers, so it's hard to know if 10.10.23.12 or 10.10.24.47 are Staging Publisher 1, which results in mistakes and misunderstandings.
+
+## Sharing Configurations
+
+The answer to both these problems is to extract these settings to variables. You can then use these variables instead of hard-coding the values within the configuration files. The trick is that you want to share the same configuration value for Apache's conf files and AEM Dispatcher's any files.
+
+Personally, I like keeping everything together under /etc/httpd, since this makes it easier to just add the whole folder to source control, however, you could do a similar process under /etc/sysconfig. I add a file named 00-variables.conf and add all of the variables into this file and then update the .conf files to use the variables in the format `${VARIABLE_NAME}`. Since this file will be loaded first by Apache (due to it calling .conf files in order) the variables will be available to all of the other configuration files. For example:
+
+```
+**00-variables.conf**
+
+# Public URLS
+Define PRIMARY_URL aem-dispatcher-dev.client.com
+Define SECONDARY_URL clientdev63.adobecqms.net
+
+# Author configurations
+Define AUTHOR_URL aem-author-dev.client.com
+Define AUTHOR_IP 10.55.44.33
+
+# Publisher configurations
+Define PUBLISH_IP 10.66.55.44
+
+**author-invalidate-allowed.any**
+
+/0
+  {
+  /glob "${AUTHOR_IP}"
+  /type "allow"
+  }
+```
+
+And there you have it! Update all of the files and you'll have a clean way to diff different environment's dispatcher configurations as well as being able to easily migrate configurations between environments.
+
+## Next in Mastering the AEM Dispatcher: Sharing Files via SSI
+
+Stay tuned for the [next post](/tag/Mastering%20the%20AEM%20Dispatcher/), where we'll discuss sharing files between sites and applications using SSI includes within the AEM Dispatcher.
+
+**Note:** This blog post is written based on a standard setup on a RedHat derivative (e.g. RedHat or CentOS) with the Apache Dispatcher Module. If you are using IIS or a Debian based OS (e.g. Debian or Ubuntu) the configurations, locations, and files may vary.

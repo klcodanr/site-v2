@@ -1,0 +1,109 @@
+---
+title: "FYI: Seismic Changes Coming in AEM 6.4"
+description: There are quite a few changes coming in the content structure of
+  AEM 6.4. Architects and developers should be aware of these coming up to avoid
+  difficult upgrades.
+hideInNav: false
+tags:
+  - Adobe Experience Manager
+  - AEM 6.4
+  - Content Strategy
+pubDate: 2018-03-15
+display: post
+image: /images/posts/2018-03/stay-on-the-path.jpg
+published: true
+---
+
+import Button from '../../components/Button.astro';
+
+I recently had the opportunity to attend the AEM Gems webinar previewing the latest release of [Adobe Experience Manager, AEM 6.4](https://www.adobe.com/marketing-cloud/experience-manager/new-capabilities.html).
+
+  
+This new release comes with many [new features and enhancements](https://www.adobe.com/marketing-cloud/experience-manager/capabilities.html) including significantly enhanced capabilities in Content Intelligence, template editing and multi-channel publication. It's one of Adobe's more technical changes, however that will have a more significant impact on customers using previous versions of Adobe Experience Manager.
+
+  
+Adobe intends to move to a rolling release, where they will release AEM updates quarterly to their customers, especially those on Adobe Managed Services. In order to simplify the upgrade process, Adobe introduce two new changes to their Content Model for AEM 6.4:
+
+  
+1. Moving away from /etc
+2. Adding mixins to denote Adobe owned vs final vs extensible nodes
+
+  
+These two changes will have a far reaching impact on AEM customers, especially those upgrading from previous versions of the product and will be an important architectural consideration for any new AEM 6.4 implementations.
+
+  
+## What's Wrong with /etc?
+
+  
+To be blunt, /etc has been treated like the junk drawer of AEM. It hosts a mix of content, configurations and code including anything as disparate as:
+
+  
+* Application Configurations
+* Personalization Segments
+* Front End Code
+* Workflow State Information
+
+  
+This mixture of Adobe and client owned data caused tremendous difficulty in supporting upgrades of AEM as it made it far more difficult to know what could be updated without breaking functionality. To make the upgrade process easier, Adobe has decided to move away from using /etc and eventually deprecate any use of the directory.
+
+  
+### Migrating Away from /etc
+
+  
+A reasonable question is what happens to all of the data in /etc? The answer is three fold:
+
+  
+
+![Diagram showing the restructuring of /etc](/images/posts/2018-03/etc-restructuring.jpg)
+
+#### 1\. Content
+
+Any content will be moved to the /content tree. This includes content which should not be published to the web, so implementors will need to be careful on their Dispatcher configuration to ensure that only the desired content will be published.
+
+#### 2\. Code
+
+All code will be moved to /apps and /libs, including Front End code. Now you may think, that's a terrible idea! One bad configuration and my entire codebase is published to the web! To alleviate this, Adobe has a new(ish) feature where [ClientLibs can be published under /etc.clientlibs even though they actually reside in /apps or /libs](https://helpx.adobe.com/experience-manager/kt/sites/using/getting-started-wknd-tutorial-develop/part3.html). This way the dispatcher configuration can be simplified to block any access to /apps and /libs.
+
+This does not mitigate the concerns about permissions and user access, so Architects will need to carefully consider this when creating permission models.
+
+#### 3\. Configurations
+
+All configurations will be relocated to /conf. This has the added advantage of enabling the use of [Apache Sling Context Aware Configurations](https://sling.apache.org/documentation/bundles/context-aware-configuration/context-aware-configuration.html), where configurations can be inherited from a structure of Defaults > Tenants > Applications.
+
+### Mitigating Impact
+
+In order to mitigate the impact of this change on customers, Adobe will have a compatibility mode for AEM 6.4 as well as upgrade migration tool to migrate off /etc. This however will not cover any custom code, so Architects and Developers must be careful to avoid using tests for paths under when testing for things like Cloud Configurations or anything else that would make assumptions about the structure of content residing under /etc.
+
+## New Mixins
+
+In AEM 6.3 and before, the advice was clear: don't modify /libs. Only extend or overlay in /apps. This allowed a relatively clean upgrade process, especially with the introduction of [Sling Resource Merger](https://sling.apache.org/documentation/bundles/resource-merger.html). Unfortunately, customers and implementation teams could still overlay or extend functionality in a manner that would break when upgrading, even if they did so in apps, because their changes would rely on deprecated or restructured functionality.
+
+To reduce these upgrade issue incidents and clarify what nodes can and cannot be updated, Adobe has introduced three new mixins:
+
+* granite:PublicArea - A node which can be overlayed or inherited
+* granite:FinalArea - A node which should not be overlaid or inherited, but can be used directly
+* granite:InternalArea - A node which should not be overlaid, inherited or used directly
+
+![Public and Final Mixins](/images/posts/2018-03/mixin1.jpg)
+
+![Internal and unassigned Mixins](/images/posts/2018-03/mixin2.jpg)
+
+This change makes the new rules a bit more complicated, but does help implementation teams clarify what they can and cannot do when overriding out of the box behavior. In general, the rule is still -- do not modify /libs, but this introduces clearer guidelines on what can be done when overlaying or extending from there.
+
+## What Does This Mean for My Team?
+
+As we start to plan for upgrades to AEM 6.4, there are some key considerations to keep in mind when reviewing projects to asses the level of effort on the upgrade and the approach to upgrading:
+
+### 1\. How much do you rely on /etc?
+
+With AEM 6.4, you have the option of staying with the existing /etc structure or refactoring your project to support the new structure. If you are very tied into using /etc, waiting may give you the time necessary to refactor before the next release, but eventually this needs to be on your project's roadmap.
+
+In the meantime, I would highly recommend reviewing and preemptively refactoring code which relies on the /etc structure to prepare.
+
+### 2\. How Much Did you Overlay / Extend?
+
+Without access to AEM 6.4, it's going to be somewhat difficult to know the impact of the new extension mixins, but the more you've overlayed the default functionality in AEM, the more likely there is to be impact. If it all possible, I would recommend reducing the amount of overlays and extensions of /libs.
+
+## Want to Watch the Webinar Yourself?
+
+<Button link="https://helpx.adobe.com/experience-manager/kt/eseminars/gems/aem-6_4_technical_sneak_peek.html">Watch Deep Dive into AEM 6.4</Button>

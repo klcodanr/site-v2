@@ -1,0 +1,96 @@
+---
+title: "AEM as a Cloud Service Follow-Up: Insights from Cedric Huesler"
+description: Yesterday, Cedric Huesler, the Director of Product Management at
+  Adobe started a Twitter thread on AEM as a Cloud Service. I have a number of
+  burning questions about AEM as a Cloud Service, so I figured I'd take Cedric
+  up on the offer to ask anything.
+hideInNav: false
+tags:
+  - AEM as a Cloud Service
+  - Adobe Experience Manager
+  - MongoDB
+  - Microsoft Azure
+  - Apache Jackrabbit Oak
+  - Apache Sling
+  - Kubernetes
+pubDate: 2020-01-15
+display: post
+image: /images/posts/2020-01/Followup-Banner.jpg
+published: true
+---
+
+  
+
+Yesterday, [Cedric Huesler, the Director of Project Management at Adobe](https://www.linkedin.com/in/cedrichuesler/) started a [Twitter thread](https://twitter.com/keepthebyte/status/1216857162405707777) on [AEM as a Cloud Service](https://blogs.perficientdigital.com/2020/01/13/thoughts-on-aem-as-a-cloud-service/). I have a number of burning questions about AEM as a Cloud Service, so I figured I'd take Cedric up on the offer to ask anything.
+
+Cedric graciously replied, hopefully you find these replies helpful as we all learn more about AEM as a Cloud Service:
+
+  
+> _Q1\. What's the plan for customers who do not want to run this in Adobe's tenant?_  
+> A1\. Today we are offering AEM as CS, MS and self-hosting. We have a single code base for all three.  
+>  
+> _Q2\. What is the roadmap for AEM "Classic"?_  
+> A2\. We will update SP schedule later this week.  
+> A2 (part 2). SP schedule updated with 2020 dates: [https://helpx.adobe.com/experience-manager/maintenance-releases-roadmap.html ](https://helpx.adobe.com/experience-manager/maintenance-releases-roadmap.html)[_@WimSymons_](https://twitter.com/wimsymons) _\- Not really an answer. Okay there will be extra SP's and CFP's, but the question is, will there any "classic" AEM major releases after 6.5 or will you put your money on AEM in the cloud only?_  
+> A2 (part 3). For 2020, we keep updating the single code base for the 3 deliverables and don’t see a need for a major release (to avoid efforts on customer-side to move up - SP are easier to install). If you are not yet on 6.5 - please do that 1st  
+>  
+> _Q3\. What's the underlying persistence mechanism? S3+Mongo?_  
+> A3\. See Oak code-base - mongo and new segment blob store.  
+>  
+> _Q4\. Is this running on Azure? AWS? Will customers be able to choose?_  
+> A4\. It’s a mix - mostly azure today but can change anytime.  
+>  
+> _Q5\. Will customers be able to choose what AZ's to deploy their instances? Including China?_   
+> A5\. Yes, today you can choose regions.   
+>  
+> _Q6\. Will Customers be able to specify routing rules for requests based on the visitors origin?_   
+> A6\. Yes, CDN is bundled in.  
+>  
+> _Q7\. Can you temporarily skip / roll back releases if you encounter problems?_  
+> A7\. Yes and No, the release validation process does that - automated.  
+>  
+> _Q8\. How often will Adobe ship new releases and what will be the procedure to validate customer images?_   
+> A8\. Daily, validation process is quite evolved. Will link up details later   
+>  
+> _Q9\. What's the index storage mechanism? SOLR?_   
+> A9\. Today unchanged.   
+>  
+> _Q10\. Is there a plan / timeline to port the remaining AEM apps (Screens, Forms) to AEM as a Cloud Service?_  
+> A10\. Yes - this year.Huesler, Cedric (@keepthebyte). “1216857162405707777” 13 Jan 2020 Tweet.
+
+  
+Do you have your own questions about AEM as a Cloud Service? [Ask Cedric yourself!](https://twitter.com/keepthebyte/status/1216857162405707777)
+
+  
+## Additional Insights on AEM as a Cloud Service
+
+  
+A few of the underlying technologies which Cedric references or are useful to read:
+
+  
+#### [Sling Feature Model](https://github.com/apache/sling-org-apache-sling-feature)
+
+The new provisioning model for Apache Sling which is used to generate AEM as a Cloud Services instances by creating a "feature model" with the base AEM and customer code. You can also watch the [2019 AdaptTo seminar on the Sling Feature Model](https://adapt.to/2019/en/schedule/the-sling-feature-model-1-0-revealed.html).   
+  
+#### [Oak BlobStore](https://jackrabbit.apache.org/oak/docs/plugins/blobstore.html)
+
+The Oak Blob Store is the new persistence mechanism for large binary files. It splits the files into chunks, hashes each chunk and then stores each chunk into the segment store.  
+  
+### [](https://github.com/apache/sling-org-apache-sling-feature)
+
+#### [Deep Dive into Cloud Native AEM Deployments based on Kubernetes](https://adapt.to/2019/en/schedule/deep-dive-into-cloud-native-aem-deployments-based-on-kubernetes.html)
+
+Seminar from AdaptTo 2019 talking about Adobe's deployment of AEM in Kubernetes (aka AEM as a Cloud Service).  
+  
+#### [Sling Content Distribution for the Cloud](https://adapt.to/2019/en/schedule/sling-content-distribution-for-the-cloud.html)
+
+Another seminar from AdaptTo 2019, talking about how Adobe uses Apache Kafka to orchestrate Content Distribution on AEM as a Cloud Service.  
+  
+#### [AEM as a Cloud Service User Guides](https://docs.adobe.com/content/help/en/experience-manager-cloud-service/landing/home.html)
+
+The starting point for Adobe's documentation on AEM as a Cloud Service.  
+  
+#### [Getting Started with WKND](https://docs.adobe.com/content/help/en/experience-manager-learn/getting-started-wknd-tutorial-develop/overview.html#local-dev-environment)
+
+Adobe's reference site [WKND](https://wknd.site/) has been updated to be compatible with AEM as a Cloud Service.  
+  

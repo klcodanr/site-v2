@@ -1,0 +1,79 @@
+---
+title: Dynamic Dropdowns in AEM Content Fragments
+description: In this post, I'll show you how to easily and cleanly create a
+  dynamic dropdown in an AEM Content Fragment Model driven by an ACS AEM Commons
+  Generic List.
+hideInNav: false
+tags:
+  - Adobe Experience Manager
+  - ACS AEM Commons
+  - Apache Sling
+  - Content Fragments
+pubDate: 2019-09-06
+display: post
+image: /images/posts/2019-09/cf-dropdown-hero.jpg
+published: true
+---
+
+  
+In this post, I'll show you how to easily and cleanly create a dynamic dropdown in an [AEM Content Fragment Model](https://helpx.adobe.com/experience-manager/6-5/assets/using/content-fragments-models.html) driven by an ACS AEM Commons Generic List.  
+  
+## What are Content Fragments?
+
+  
+But first, what are [Content Fragments](https://helpx.adobe.com/experience-manager/6-5/assets/user-guide.html?topic=/experience-manager/6-5/assets/morehelp/content-fragments.ug.js)? Content Fragments are a powerful feature in Adobe Experience Manager (AEM) for managing structure content. 
+
+Each Content Fragment has a model which defines the structure of the Content Fragment. To edit the model, Adobe provided an editor with common fields. Including, text fields, number fields and dropdowns (called Enumerations).  
+  
+
+![Content Fragment Editor](/images/posts/2019-09/CF-Editor.png)
+
+  
+
+## Why isn't this Out of the Box?
+
+  
+Unfortunately, when Adobe implemented the Content Fragment Model editor, the didn't consider extensibility. The fields are very limited and there is no API for adding custom fields. 
+
+Despite these significant shortcomings, Content Fragments make managing simple content structures effortless, due to their simplicity and ease of use.   
+
+While Adobe made it harder for implementors by failing to follow best practices like using [Sling Resource Merger](https://sling.apache.org/documentation/bundles/resource-merger.html) or structuring components in a sane manner, we are using Apache Sling. So we can "kick it old school" and overlay the component.  
+  
+## Our Mission Statement
+
+  
+The Enumerations field included in Content Fragment Models only supports setting a static set of options. This is good enough for slideware, but in real life, it's inadequate. A couple problematic use cases include:  
+  
+* Multiple models sharing the same set of values
+* Lists of options where a new options needs to be dynamically added
+* Option lists which change their options in the context of where / how the Content Fragment is used
+
+## The Solution
+
+  
+To create a dynamic dropdown, we'll overlay the JSP script used to generate the dropdown options from the static list:
+
+/libs/dam/cfm/admin/components/datasources/optionrenderer/optionrenderer.jsp
+
+By creating a script at:
+
+/apps/dam/cfm/admin/components/datasources/optionrenderer/optionrenderer.jsp
+
+Since Sling prioritizes /apps over /libs when it looks up scripts, our script will get called instead of the original script. 
+
+The original script is simple, it hackily converts the String of comma separated options into a [com.adobe.granite.ui.components.ds.DataSource](https://helpx.adobe.com/experience-manager/6-3/sites/developing/using/reference-materials/javadoc/com/adobe/granite/ui/components/ds/DataSource.html) object and then sets that as a request object. Pretty easy to reproduce! But of course, we don't want to break the existing functionality.
+
+To avoid breaking the existing functionality, we can prefix all of our dynamic dropdowns with a known prefix. This will also allow us to even have multiple different types of dropdown population methods. 
+
+In this example, we'll use the prefix: "acs-commons-list:" for populating a dropdown off the values of an [ACS AEM Commons Generic List](https://adobe-consulting-services.github.io/acs-aem-commons/features/generic-lists/index.html). Additionally, we have to use a Lambda function to map the properties in the Generic List into the format used by the DataSource. All said and done, here's what the script looks like:  
+  
+
+  
+Once we have the script in place, we can use dynamic and static dropdowns together.   
+  
+
+![Dynamic Dropdowns](/images/posts/2019-09/Dynamic-Dropdown.gif)
+
+  
+With this technique, we are no longer constrained to static dropdowns with AEM Content Fragments. With more prefixes we can have even more options to populate dynamic dropdowns.  
+  

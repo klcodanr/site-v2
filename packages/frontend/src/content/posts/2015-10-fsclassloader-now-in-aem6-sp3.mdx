@@ -1,0 +1,25 @@
+---
+title: FSClassLoader Now In AEM6.0 SP3
+description: The FSClassLoader now comes in AEM 6.0 SP3, learn how developers
+  can use the OSGi Console to view Java files for their JSPs
+hideInNav: false
+tags:
+  - Apache Sling
+  - AEM 6
+pubDate: 2015-10-28
+display: post
+image: /images/posts/2015-10-28-fsclassloader-now-in-aem6-sp3/viewing-files.png
+published: true
+---
+
+Customers and developers upgrading to AEM 6.0 SP3 will find that there's a new bundle in use, FSClassLoader. As I described in my [previous post](http://labs.6dglobal.com/blog/2015-06-23/new-apache-sling-fs-classloader-console/) this bundle offers superior performance as compared to the repository based classloader, however it does remove the option for developers to access the generated Java code for their JSP's under `/var/classes`.
+
+Luckily, when Adobe built AEM 6.0 SP3, they used FSClassLoader version 1.0.2 which includes an OSGi console allowing developers to view the compiled Java files. To view this, open up the OSGi console at [http://localhost:4502/system/console](http://localhost:4502/system/console) and select the console under Sling >> File System Class Loader
+
+![Finding the FSClassLoader OSGi Console](/images/posts/2015-10-28-fsclassloader-now-in-aem6-sp3/finding-console.png) 
+
+From the console you can view or download the compiled .class file, generated .java file or the .deps file which lists the JSP scripts and TagLibs the files depends on.
+
+![Viewing files in the FSClassLoader OSGi Console](/images/posts/2015-10-28-fsclassloader-now-in-aem6-sp3/viewing-files.png) 
+
+Hopefully this helps anyone upgrading to AEM 6.0 SP3 and wondering why their generated Java files aren't appearing under `/var/classes` 

@@ -1,0 +1,48 @@
+---
+title: How NOT to Generate HTML
+description: Learn how a better way of generating HTML than generating HTML in Java classes.
+hideInNav: false
+tags:
+  - Adobe CQ
+  - Adobe Experience Manager
+  - Best Practices
+  - Java
+  - Adobe Search&Promote
+pubDate: 2014-02-27
+display: post
+image: ""
+published: true
+---
+
+Recently, I have been working on an integeration between Adobe's Search and Promote and CQ5/AEM. This work has reminded me of one of my least favorite anti-patterns, embedding HTML markup in Java code. You tend to see this 'technique' a lot in Servlets, Tags and other Java web technologies. This is a bad idea for several reasons:
+
+* It breaks the MVC model
+* It's hard to understand the HTML code
+* It's difficult, if not impossible, to modify the markup
+
+In the case of Search and Promote, the [CQ integration classes](https://dev.day.com/docs/en/cq/current/javadoc/com/day/cq/searchpromote/package-summary.html) are used to parse the XML responses from Search and Promote. The unfortunate part is they also are used to generate the HTML for the forms to be displayed in CQ as well as some additional HTML markup. While this makes for smaller scripts in CQ, it makes extending the Search and Promote functionality more difficult than necessary.
+
+A better technique which is available to anyone developing on the AEM platform is to generate the data required and invoke a rendering script with a virtual resource to render the results to the page. This allows you to separate out the HTML and Java code, makes it easier to understand the markup and allows end users to override the rendering script like any other JSP.
+
+The technique for doing this is fairly straightforward. First, create a [SyntheticResource](http://sling.apache.org/apidocs/sling6/org/apache/sling/api/resource/SyntheticResource.html):
+
+```
+Resource fakeResource = new SyntheticResource(request.getResourceResolver(), "/content/site/resource-path", "app/components/component1");
+```
+
+Next, retrieve a [RequestDispatcher](http://docs.oracle.com/javaee/6/api/javax/servlet/RequestDispatcher.html):
+
+```
+RequestDispatcher dispatcher = request.getRequestDispatcher(fakeResource);
+
+```
+
+And finally forward the request to the Sling rendering layer:
+
+```
+dispatcher.forward(request, response);
+```
+
+Once the request is forward to Sling, it will be processed like any other Sling Request and the HTML written to the response.
+
+Hopefully, this post makes it easier to understand how to separate the presentation and application logic by invoking Sling scripts through Java code. Using this technique you can avoid the anti-pattern of generating HTML code directly in Java classes.

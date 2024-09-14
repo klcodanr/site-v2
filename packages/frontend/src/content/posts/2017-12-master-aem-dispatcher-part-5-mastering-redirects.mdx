@@ -1,0 +1,79 @@
+---
+title: "Mastering AEM Dispatcher Part 5: Managing Redirects Like a Master"
+description: Introducting the Redirect Map Manager a new tool in the ACS AEM
+  Commons contibuted by Dan Klco of PERFICIENT/digital to help AEM user manage
+  redirects in AEM
+hideInNav: false
+tags:
+  - Mastering the AEM Dispatcher
+  - Best Practices
+  - AEM 6
+  - Dispatcher
+  - Apache httpd
+  - Rewrite Map
+pubDate: 2017-12-07
+display: post
+image: /images/posts/2017-12-07-master-aem-dispatcher-part-5-mastering-redirects/mastering.jpg
+published: true
+---
+
+ Most websites have a large number of redirects which they need to manage. Perficient/Digital just contributed a feature to [ACS AEM Commons](https://adobe-consulting-services.github.io/acs-aem-commons), the [Redirect Map Manager](https://adobe-consulting-services.github.io/acs-aem-commons/features/redirect-map-manager/index.html), which makes managing these redirects a breeze. 
+
+ First, though why do websites need so many redirects? Redirects can come from:
+
+* Legacy or Moved Pages / Assets
+* Landing Page Vanities
+* External Redirects
+
+ Most websites will end up with hundreds if not thousands of redirects, many of which are poorly documented or understood.
+
+## Redirect Management Options
+
+ There are several different options of how to manage these redirects in the Adobe Experience Manager (AEM) platform, but all of them have some limitations or downsides.
+
+#### Option 1: Redirects in Apache
+
+ For a server admin, the easiest route is using Apache httpd Redirect Map text files or rewrites. Unfortunately, these incur significant downsides, including:
+
+* _Requires Downtime_ \- Updates here require apache restarts to work
+* _Administrative Overhead_ \- Due to downtime and server access requirements, making changes in Apache requires a CAB process or at least infrastructure support to perform the update
+* _Performance for very large files_ \- Performance can be impacted for very large files when adding redirects in a text or conf file as these are not optimized for performance
+
+#### Option 2: AEM Vanities
+
+[AEM Vanities](https://helpx.adobe.com/experience-manager/kb/vanity-urls.html) are convenient, as they are authorable, but they do have several limitations:
+
+* _Performance_ \- Large number of vanities can cause performance issues for your AEM instance
+* _Maintainability_ \- There's not a great feature for seeing and maintaining the list of vanities, so it's a page, by page process
+* _Cross-site / domain capabilities_ \- To redirect to an external pag eusing a vanity, you need to first set up the vanity and then have the page redirect to the external site. This is a double redirect which is not preferred for SEO
+
+#### Option 3: Redirects in CDN / Load Balancer
+
+ For teams using a Content Distribution Network (CDN) or Load Balancer, many of these tools offer a GUI for managing redirects. This can be an attractive option, however it also has a few downsides
+
+* _Additional Costs / Tools_ \- Deploying a CDN or Load Balancer may not always be required and may incur additional costs, especially to deploy a solution with administrative capabilities
+* _Not in Marketing Control_ \- Although the CDN or Load Balancer may have an administrative interface, it probably will not be accessible to marketeters, so there will still need to be an IT request process to make redirect updates
+
+## The Solution: Redirect Map Manager
+
+The Redirect Map Manager allows marketers and administrators to easily add vanities, external redirects and legacy mappings as simply as editing dialogs in AEM.
+
+This tool allows administrators to upload a Redirect Map file into AEM and then automatically combines this file with redirects generated from properties in AEM Pages and Assets. The tool supports multiple configurations, so you can support vanity, legacy and external redirects, all through the same mechanism!
+
+![Configuring Redirect Map Manager](/images/posts/2017-12-07-master-aem-dispatcher-part-5-mastering-redirects/configuring-redirect-map-manager.jpg)
+
+ The all of these redirects are then downloaded by Apache and converted into a DB, which can be updated with zero downtime! Because this DB is set up as an optimized Hashed lookup, the this solution scales better than conf or text files.
+
+ Finally, from an adminstrative perspective, the Redirect Map Manager has a preview where administrators can check the file, get the path to the published file and see any errors. The process will validate for entries containing whitespace (which cause issues in Redirect Maps), excludes them and displayed in a warning in preview.
+
+![Redirect Map Manager Preview](/images/posts/2017-12-07-master-aem-dispatcher-part-5-mastering-redirects/report.jpg)
+
+Read more about setting up, configuring and using the [Redirect Map Manager](https://adobe-consulting-services.github.io/acs-aem-commons/features/redirect-map-manager/index.html) on the ACS AEM Commons website.
+
+## Get Redirect Map Manager
+
+ This new tool is available in the latest version of ACS AEM Commons, version [3.13.0](https://github.com/Adobe-Consulting-Services/acs-aem-commons/releases/tag/acs-aem-commons-3.13.0).
+
+[ Get the Latest Version](https://github.com/Adobe-Consulting-Services/acs-aem-commons/releases) 
+
+Stay tuned for our next post in [Mastering the AEM Dispatcher](https://blogs.perficient.com/adobe/tag/mastering-the-aem-dispatcher/) series, where we'll discuss supporting multiple sites in the AEM Dispatcher.

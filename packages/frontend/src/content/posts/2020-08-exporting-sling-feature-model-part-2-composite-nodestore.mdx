@@ -1,0 +1,93 @@
+---
+title: "Exploring the Sling Feature Model: Part 2 - Composite NodeStore"
+description: Continue exploring the Sling Feature Model by building an Oak
+  Composite NodeStore in Docker
+hideInNav: false
+tags:
+  - Apache Sling CMS
+  - Apache Sling
+  - Apache Jackrabbit Oak
+  - Feature Model
+pubDate: 2020-08-03
+display: post
+image: /images/posts/2020-07/Composite-NodeStore-Hero.jpg
+published: true
+---
+
+import Embed from '../../components/Embed.astro';
+
+  
+In my previous post [Exploring the Sling Feature Model](https://blogs.perficient.com/2020/07/27/exploring-the-sling-feature-model-part-1/), I described the process of migrating from a Sling Provisioning project setup to a Sling Feature Model project. 
+
+Now that we have the Sling Provisioning Model project converted, we can move on to the fun stuff and create a Composite NodeStore. We'll use Docker to build the Composite Node Store in the container image.  
+  
+## Creating the Composite NodeStore Seed
+
+  
+The [Composite NodeStore](https://jackrabbit.apache.org/oak/docs/nodestore/compositens.html) works by combining one or more static "secondary" node stores with a mutable primary NodeStore. In the case of AEM as a Cloud Service, the _/apps_ and _/libs_ directories are mounted as a secondary SegmentStore, while the remainder of the repository is mounted as a [MongoDB-backed Document Store](https://jackrabbit.apache.org/oak/docs/nodestore/document/mongo-document-store.html). 
+
+For our simplified example, we will create a secondary static SegmentStore for _/apps_ and _/libs_ and combine that with a primary SegmentStore for the remainder of the repository. Since the secondary SegmentStore will be read-only, we must "seed" the repository to pre-create the static paths _/apps_ and _/libs_. 
+
+To do this, we have a [feature](https://github.com/apache/sling-org-apache-sling-app-cms/blob/SLING-8913-multiple-instance-types/feature/src/main/features/node-store-composite/composite-seed.json) specifically to seed the repository with the /apps and /libs temporarily mutable. We can then use the [aggregate-features goal of the Sling Feature Maven Plugin](https://sling.apache.org/components/slingfeature-maven-plugin/aggregate-features-mojo.html) to combine this with the primary Feature Model to create a feature [slingcms-composite-seed](https://repository.apache.org/content/repositories/snapshots/org/apache/sling/org.apache.sling.cms.feature/0.16.3-SNAPSHOT/org.apache.sling.cms.feature-0.16.3-20200728.212037-1-slingcms-composite-seed.slingosgifeature). When we start a Sling instance using this feature, it will create the nodes under these paths based on the feature contents. 
+
+As shown below, while seeding the repository is written to the libs SegmentStore. It's also worth mentioning that with the Feature Model Launcher, by default, the OSGi Framework runs in a completely different directory from the repository and pulls the bundle JARs from the local Maven repository.  
+  
+
+![Seeding a Composite NodeStore](/images/posts/2020-07/Seeding.png)
+
+  
+Our updated [Dockerfile](https://github.com/apache/sling-org-apache-sling-app-cms/blob/SLING-8913-multiple-instance-types/docker/cms/Dockerfile) runs the following steps to build the container image:  
+  
+* Downloads the Feature Model Launcher JAR and Feature Model JSON files
+* Starts the Sling instance using the slingcms-composite-seed model in the background
+* Polls the Felix Health Checks until the tag "systemalive" returns 200
+* Once the 200 status is returned the Sling instance is stopped and the build cleans up the launcher and symlinks the SegmentStore directory into the expected path
+
+  
+  
+### Naming Gaffes
+
+  
+Hopefully, you are more careful than me, but one thing to keep in mind is that the Sling Feature Launcher will happily start as long as it has a valid model. For example, you can easily spend a significant amount of time trying to understand why nothing responds with this model:
+
+_org.apache.sling.cms.feature-0.16.3-SNAPSHOT-composite-seed.slingosgifeature_
+
+Instead of the one I meant:
+
+_org.apache.sling.cms.feature-0.16.3-SNAPSHOT-slingcms-composite-seed.slingosgifeature_
+
+Since the non-aggregate model is a valid model, the Sling Feature Launcher will happily start, but it simply creates an OSGi container with only a couple of configuration which naturally does... nothing.   
+  
+## Starting and Running 
+
+  
+Once the repository is been fully started and seeded, we'll run a different Feature Model to run the instance. Similar to the Composite Seed Feature Model, the [slingcms-composite-runtime](https://repository.apache.org/content/repositories/snapshots/org/apache/sling/org.apache.sling.cms.feature/0.16.3-SNAPSHOT/org.apache.sling.cms.feature-0.16.3-20200728.212037-1-slingcms-composite-runtime.slingosgifeature) Composite Model will use the composite repository, however it runs the libs mount in readonly mode.   
+
+To use the runtime Feature Model, the CMD directive in the Dockerfile calls the Sling Feature Model Launcher with the slingcms-composite-runtime Feature Model. In addition, we'll mount a volume in the [docker-compose.yml](https://github.com/apache/sling-org-apache-sling-app-cms/blob/SLING-8913-multiple-instance-types/docker/docker-compose.yml) to separate the mutable volume out from the container disk, that way the repository persists between restarts and container deletion.
+
+While in runtime mode, the Composite repository looks like the diagram below, leveraging a Docker volume for the global SegmentStore and the local seeded repository for the libs SegmentStore:
+
+  
+
+![Composite NodeStore Runtime](/images/posts/2020-07/Runtime.png)
+
+  
+
+## End to End
+
+  
+Here's a quick video showing the process of creating a Container-ized version of Sling CMS with a Composite NodeStore from end to end.
+
+  
+
+<Embed media="/assets/Sling-CMS-Composite-NodeStore.mp4"  />
+
+  
+
+## Details: Build Arguments & Dependencies
+
+  
+The [current example implementation](https://github.com/apache/sling-org-apache-sling-app-cms/tree/SLING-8913-multiple-instance-types/) uses Apache Maven to pull down the Feature Models with a [custom settings.xml](https://github.com/apache/sling-org-apache-sling-app-cms/blob/SLING-8913-multiple-instance-types/docker/cms/settings.xml) and [Build Arguments in the Dockerfile](https://github.com/apache/sling-org-apache-sling-app-cms/blob/SLING-8913-multiple-instance-types/docker/cms/Dockerfile#L17). By changing the settings.xml and the Build Arguments, you could override the Feature Model being produced to use a custom Feature Model, for example an aggregate of Sling CMS and your custom Sling CMS app.
+
+We'll cover the process of producing a custom aggregate in the next blog post in the [Exploring the Sling Feature Model](https://blogs.perficient.com/tag/exploring-the-sling-feature-model/) series. If you'd like to learn more about the Sling Feature Model, you should check out my previous post on [Converting Provisioning Models to Feature Models](https://blogs.perficient.com/2020/07/27/exploring-the-sling-feature-model-part-1/).  
+  

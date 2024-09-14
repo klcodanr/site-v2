@@ -1,0 +1,63 @@
+---
+title: Make Your Adobe Managed Services Migration a Success
+description: With companies looking to reduce costs and increase agility, many
+  are looking to move their CMS to the cloud.
+hideInNav: false
+tags:
+  - Adobe Managed Services
+  - Adobe Experience Manager
+  - Cloud Manager
+pubDate: 2020-09-14
+display: post
+image: /images/posts/2020-09/leap-banner.jpg
+published: true
+---
+
+  
+With companies looking to reduce costs and increase agility, many are looking to move their CMS to the cloud. Adobe offers two cloud solutions for AEM, Adobe Managed Services (AMS), and AEM Cloud Service. For existing on-premise customers, AMS is a lighter lift as it is closer to on-premise architectures.  
+  
+## Is AMS a Fit?
+
+  
+The first question to ask is: is AMS a fit? AMS is not the best solution for all customers. AMS is good for organizations with a single development team, simple/limited integrations, and limited internal technical teams. Teams with complex integrations, extensive DevOps capabilities, or multiple teams will find AMS limiting.
+
+Once you've validated that AMS makes sense for your organization, here's how you can make sure your AMS migration is a success!  
+  
+## Environment and Stack
+
+  
+* Consider how to integrate existing CI/CD pipelines with Adobe Cloud Manager. Cloud Manager's limitations can have a ripple effect on code and configuration changes, e.g. possible consolidation of multiple AEM projects
+* [This Jenkins plug-in for Adobe Cloud Manager](https://plugins.jenkins.io/adobe-cloud-manager/) can trigger deployments from Jenkins
+* The selection of your Adobe Managed Services CSE is very important as there tends to be a wide variance in knowledge and personalities.
+* Use[Adobe IMS for federated authentication](https://docs.adobe.com/content/help/en/experience-manager-learn/foundation/authentication/adobe-ims-authentication-technical-video-understand.html) with Creative Cloud and Experience Cloud. This will make login scenarios simpler for your internal users as well as partners  
+##
+  
+## Application / Development Practices
+
+  
+* Evaluate integration patterns to ensure they use publicly available API endpoints or endpoints which can be whitelisted by IP
+* [Setup of a local SonarQube instance](https://blogs.perficient.com/2019/05/15/running-a-local-sonarqube-server-with-aem-rules/) to identify issues and speed-up development once you are in a steady state
+* Evaluate customizations to the AEM JAR execution or dispatcher configuration to ensure compatibility
+  
+## Migration and Testing
+
+  
+* Evaluate different tools for the physical migration based on the scope / size, e.g. VLT RCP vs Oak Backups vs Packages (which tend to be cumbersome when they get too large)
+* Leverage automated migration and testing to expedite the process
+* Crawl the site for backlinks and combine with historical analytics to identify key pages to perform manual testing
+
+## Rollout and Go-Live
+
+  
+* Be prepared to allow extra time in your project to meet requirements mandated by Adobe Managed Services. E.g. code coverage, dispatcher configurations, OSGi configurations
+* Plan in advance for performance testing. Adobe Cloud Manager does a very limited check, but it is not sufficient for go-live validation
+* Plan go-live well ahead of time as Adobe CSEs only work business hours in local time zones and have a large number of off days
+* If go-live is outside of CSE working hours, notify them at least a month ahead of time
+  
+## Next - to the Cloud!
+
+  
+Adobe Managed Services may run in a cloud environment, but to get to true Cloud Native capabilities you want to get to [AEM Cloud Service](https://blogs.perficient.com/tag/aem-as-a-cloud-service/). To help customers get started on their Cloud roadmap, Adobe is offering convertible contracts where you can start on AMS and then convert to AEM Cloud Service.  
+
+If you need some time to pay down technical debt or make architectural changes, moving to AMS is a great first step to uncouple your implementation before going all-in on cloud. Need help with your Adobe Cloud strategy? [We're here to help!](https://www.perficient.com/contact#contact)  
+  

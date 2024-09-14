@@ -1,0 +1,67 @@
+---
+title: The Unofficial Guide to the Adobe CQ5 Translator
+description: A guide to the Adobe CQ5 Translator, a tool for managing translated
+  content in Adobe CQ5.
+hideInNav: false
+tags:
+  - Adobe CQ
+  - i18n
+pubDate: 2012-05-25
+display: post
+image: /images/posts/2012-05-25-adobe-cq5-translator/CQ5_Translator.png
+published: true
+---
+
+The Adobe CQ5 Translator is a powerful tool for managing and updating translations. Using this tool you can create, update and remove i18n values across multiple languages in multiple translation dictionaries or groups of i18n keys.
+
+### Using the CQ5 Translator
+
+To use the CQ5 Translator access the URL http://`SERVER`:`PORT`/libs/cq/i18n/translator.html, replacing the server and port with the correct values for your environment. This will pull up the CQ5 Translator as shown below.
+
+![CQ5 Translator](/images/posts/2012-05-25-adobe-cq5-translator/CQ5_Translator.png) _The CQ5 Translator_
+
+The CQ5 translator allows you to manage multiple dictionaries, or sets of localized keys. This allows you to separate out site or application level keys from system keys and keep the keys organized by function or use. To change your dictionary, select the dictionary from the Dictionaries list on the top of the CQ5 Translator. It is recommended to avoid updating the dictionaries found under /libs as doing so will complicate your upgrade process.
+
+### Updating Keys
+
+To update the value of a key, double click on the key, enter the new value and select save. The CQ5 Translator will not update keys for language pages which do not exist in the current dictionary. Unfortunately it will not display an error either. If there are no translation values for the language you wish to update, ensure there is a translation page by checking for a translation page under the dictionary path in CRXDE Lite. If no translation page exists, please consult the [Creating a Translation Page](#creating-a-language-page) section for more information on creating one.
+
+### Importing and Exporting
+
+The CQ5 Translator supports importing and exporting keys using the [XLIFF format](http://en.wikipedia.org/wiki/XLIFF "XLIFF Format Documentation"), a XML format specifically designed for containing localization data.
+
+#### Exporting Keys
+
+To export keys, select Export then the language to export from the top menu. If you receive a 404 error on the resulting page, this means that there is not a language page for that language in the dictionary. See [Creating a Language Page](#creating-a-language-page), for information on how to create a language page.
+
+Unfortunately, the Exported language data will only contain keys which already have a value. Prior to exporting, you must enter a placeholder value in every un-translated key to get it to appear in the export file.
+
+#### Importing Keys
+
+Importing keys is simple, select the Import drop down and select the file to import. Unfortunately, the import process will also not create language pages. To import a XLIFF file for a language which previously did not have a language page, you must first [create the language page](#creating-a-language-page).
+
+### Creating a Dictionary
+
+Dictionaries are sets of translations grouped by application or functionality. Adobe CQ includes a number of out of the box dictionaries for internal functionality and the Geometrixx application. It is generally recommended to not update these dictionaries, as this may cause issues is subsequent upgrades.
+
+You can create a new dictionary under your application under any directory. I would recommend under /etc/i18n as localization keys are somewhat different than code and content and therefore best belong under neither tree. To create a new dictionary, simply create a sling:Ordered folder to contain the language pages and create [a language page](#creating-a-language-page). At this point, the dictionary should appear in the list when you refresh the CQ5 Translator.
+
+### Adding a Language
+
+Do the following to add a language to the available languages in the CQ5 Translator. 
+
+* Using CRXDE Lite, create a node at /ect/languages if one does not already exist.
+* Add a repeating String property called languages to this node, with the two or five letter language names you wish to see inside the CQ5 Translator. The value of this field determines all of the available translations, so make sure you include the predefined languages as well as the ones you mean to add.
+* [Create a language page](#creating-a-language-page) for each dictionary you intend to translate into the new language.
+
+Once you have completed these steps, you should be able to add translations in the new language.
+
+### Creating a Language Page
+
+The CQ5 Translator will not automatically create language pages when you add a language to a dictionary or create a new dictionary. To create a new language page, do the following:
+
+* Using CRXDE, create a new sling:Folder node in the dictionary root with the two or five letter, ISO 639-1 compliant, language name, ex: es or zh\_cn
+* Add the mixin type mix:language
+* Set the jcr:language property to the two or five letter, ISO 639-1 compliant, language name, ex: es or zh\_cn
+
+Once you have completed these steps you should be able to add translations for the relevant language into the dictionary.

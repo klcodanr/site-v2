@@ -1,0 +1,84 @@
+---
+title: SAML Authentication and AEM Permissions Sensitive Caching
+description: How SAML can break Permissions-Sensitive Caching in AEM Dispatcher
+hideInNav: false
+tags:
+  - Dispatcher
+  - Adobe Experience Manager
+pubDate: 2021-04-06
+display: post
+image: /images/posts/2021-04/permissions-sensitive-caching.jpg
+published: true
+---
+
+  
+I recently helped resolve an interesting issue from a former project. The issue was that un-authenticated users were getting access to assets were supposed to be protected by AEM Dispatcher permission-sensitive caching.
+
+[Permission-sensitive caching](https://experienceleague.adobe.com/docs/experience-manager-dispatcher/using/configuring/permissions-cache.html?lang=en#configuring) is a feature in the AEM Dispatcher where content permissions are checked before serving content out of cache. This feature is useful for caching large documents or files while controlling access at the user / group level. For example if you are serving product manuals or documentation for proprietary products.   
+
+![Permissions sensitive caching](/images/posts/2021-04/chlimage_1-1.png)
+
+Image Credit: [Caching Secured Content - Adobe Experience League ](https://experienceleague.adobe.com/docs/experience-manager-dispatcher/using/configuring/permissions-cache.html?lang=en#page-is-cached-and-user-is-authorized)
+
+  
+This feature in the dispatcher works by sending a head request back to a servlet on the renderer with the path of the resource to check and based on that response determine if the content should be served or not. 
+
+To configure Permissions-Sensitive Caching, you would add something like the configuration below and implement a servlet at /bin/permissioncheck to check the requested user's access to the requested resource.  
+  
+
+```
+/auth_checker
+  {
+  # request is sent to this URL with '?uri=<page>' appended
+  /url "/bin/permissioncheck"
+      
+  # only the requested pages matching the filter section below are checked,
+  # all other pages get delivered unchecked
+  /filter
+    {
+    /0000
+      {
+      /glob "*"
+      /type "deny"
+      }
+    /0001
+      {
+      /glob "/content/dam/secure/*"
+      /type "allow"
+      }
+    }
+  # any header line returned from the auth_checker's HEAD request matching
+  # the section below will be returned as well
+  /headers
+    {
+    /0000
+      {
+      /glob "*"
+      /type "deny"
+      }
+    /0001
+      {
+      /glob "Set-Cookie:*"
+      /type "allow"
+      }
+    }
+  }
+```
+
+  
+The second part of the issue is that the client is using AEM's SAML Authentication for logging into their Single Sign On service. With SAML, users are authenticated to AEM by redirecting the user to a SAML Identity Provider to perform Single Sign On and be redirected back to AEM.  
+
+![SAML Authentication Diagram](https://blogs.perficient.com/files/2017/04/saml2-flow-1-600x368.png)
+
+Image Credit: [AEM Infrastructure Series: A Guide to SAML2 SSO on AEM 6.x by Greg Dawson](https://blogs.perficient.com/2017/04/18/aem-infrastructure-series-a-guide-to-saml2-sso-on-aem-6-x/)
+
+  
+These two features came together to create the issue because AEM Dispatcher's permission-sensitive caching considers any 200 response a success. Since AEM SAML's implementation works by redirecting the user using a client-side redirect from AEM to the SAML IDP, the AEM Dispatcher's permission-sensitive caching module considered the AEM SAML authentication response to be successful and therefore served the assets out of cache when an un-authenticated user accessed the content.
+
+Luckily, this is a pretty easy issue to resolve. We need to have AEM not perform SAML authentication for the cache check url, which can be done via the Apache Sling Authentication Service configuration as shown below:  
+
+![Sling Authentication Service Configuration](/images/posts/2021-04/Sling-Authenticator-Config.png)
+
+  
+Once the Apache Sling Authentication Service is configured to no-longer require authentication, unauthenticated users who access assets restricted by the permissions-sensitive caching will no longer be served the assets out of cache and will have to authenticate.  
+  

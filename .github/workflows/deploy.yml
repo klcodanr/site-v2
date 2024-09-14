@@ -1,0 +1,62 @@
+name: SST Deploy
+on:
+  push:
+    branches:
+      - main
+
+# Concurrency group name ensures concurrent workflow runs wait for any in-progress job to finish
+concurrency:
+  group: merge-${{ github.ref }}
+
+permissions: write-all
+
+jobs:
+  DeployApp:
+    runs-on: ubuntu-latest
+    env:
+      SMTP_CONFIG: ${{ secrets.SMTP_CONFIG }}
+    steps:
+      - name: Git clone the repository
+        uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::677276093280:role/GitHubDeploy
+          role-duration-seconds: 3600
+          aws-region: us-east-2
+      - name: Install Dependencies
+        run: npm ci
+      - name: Lint
+        run: npm run lint --ws
+      - name: Build
+        run: 
+          ./node_modules/.bin/sst build --stage production
+        env:
+          PR_NUMBER: ${{ github.event.number }}
+      - name: Install Playwright Browsers
+        working-directory: ./packages/frontend
+        run: npx playwright install --with-deps
+      - name: Run Playwright tests
+        working-directory: ./packages/frontend
+        run: npx playwright test
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: ./packages/frontend/playwright-report/
+          retention-days: 30
+      - name: Deploy app
+        run: |
+          ./node_modules/.bin/sst deploy --stage production
+      - name: Run Pa11y CI
+        run:  
+          npx pa11y-ci --sitemap https://thecaringplace.info/sitemap-index.xml --config .pa11yci
+      - name: Page Speed Insights
+        uses: jakepartusch/psi-action@v1.3
+        with:
+          url: https://thecaringplace.info
+          threshold: 95
+          strategy: mobile

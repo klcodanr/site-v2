@@ -1,0 +1,75 @@
+---
+title: Apache Sling JVM Performance Followup
+description: Follow up on my initial performance comparison of Java Virtual
+  Machine implementations in running Apache Sling using more iterations to get
+  better data
+hideInNav: false
+tags:
+  - Java
+  - Apache Sling
+  - Apache Sling CMS
+  - Performance
+pubDate: 2020-08-26
+display: post
+image: /images/posts/2020-08/finish-banner.jpg
+published: true
+---
+
+  
+
+In a comment on my previous post [Apache Sling JVM Performance](https://blogs.perficient.com/2020/08/19/apache-sling-jvm-performance-comparison/), [Gil Tene](https://twitter.com/giltene) made an insightful comment about the potential possibility of performance impact from speed from the underlying environment or other tests.
+
+To accommodate for this possibility, I re-ran the tests inside a loop, randomizing order of the JVM execution for each iteration 25 times. As Gil predicted this did bring the OpenJDK implementations closer together with GraalVM and OpenJ9 as outliers.   
+  
+## Startup Performance
+
+  
+Interestingly, with the multiple iterations, OpenJ9 actually became the fastest starting JVM implementation, though practically tied with OpenJDK Hotspot and Azul Zulu. GraalVM was almost 6 seconds slower to start on average.
+
+  
+
+  
+
+## Package Installation Performance
+
+  
+Package performance was quite interesting as every JVM besides OpenJ9 averaged out nearly identically.   
+  
+
+  
+
+## Transaction Performance
+
+  
+The transaction performance varies significantly from the initial results with GraalVM taking the lead in the rate and quantity of transactions and OpenJ9 handles almost 5 transactions fewer per second than GraalVM.
+
+This is honestly quite different than I expected. My hypothesis was that the OpenJDK-based implementations would net out pretty similarly, but in actuality, there was a statistically significant difference between each implementation.  
+  
+
+  
+## Memory Usage
+
+  
+The full run of 25 iterations showed roughly the same results in terms of memory usage. OpenJ9 used significantly less memory and GraalVM significantly more with OpenJ9 using 60% of the average memory of the OpenJDK implementations.  
+  
+
+  
+
+## Outliers
+
+  
+One of the interesting things to observe is that there were some extreme outliers, for example package installation which generally took \~30 seconds, occasionally taking over 2.5 minutes. It _seems_ like this is related to the underlying hardware as there's not a pattern in the iteration order, iteration number of JVM implementation. To avoid skewing the data, I excluded these outliers from the other charts.  
+  
+
+  
+
+## Revised Summary and Findings
+
+  
+With multiple runs, the differences between the OpenJDK codebase implementations (e.g. OracleJDK, Amazon Coretto, Azul Zulu and OpenJDK Hotspot), reduces significantly. The performance and startup differences small enough, that licensing would be the primary criteria I'd recommend when considering the JVM implementation to use.
+
+If raw performance is the primary concern, GraalVM demonstrated a consistently higher transaction rate over the iterations at the cost of a slower startup and higher memory usage.
+
+For lower-end usages or container-based usages, OpenJ9 continues to be an excellent choice with it's low memory usage and especially after it demonstrated the promised faster startup on average over the multiple iterations. 
+
+  

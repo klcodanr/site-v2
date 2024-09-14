@@ -1,0 +1,127 @@
+---
+title: 4 Useful Features of Composum Browser
+description: Composum Browser is an Open Source JCR Node browser for Apache
+  Sling and bills itself as the Swiss knife for the repository. Composum Browser
+  has been included in Apache Sling since Sling 9 and is available in all
+  versions of Apache Sling CMS. Here are four useful features in Composum
+  Browser.
+hideInNav: false
+tags:
+  - Apache Sling
+  - Apache Sling CMS
+  - Composum
+  - Groovy
+pubDate: 2020-05-12
+display: post
+image: /images/posts/2020-05/composum-banner.jpg
+published: true
+---
+
+[](https://www.composum.com/home/nodes/browser.html)
+
+  
+[Composum Browser](https://www.composum.com/home/nodes/browser.html) is an Open Source JCR Node browser for Apache Sling which bills itself as "the Swiss knife for the repository". Composum Browser is included in Apache Sling since [Sling 9](https://sling.apache.org/news/sling-launchpad-9-released.html) and is available in all versions of [Apache Sling CMS](https://github.com/apache/sling-org-apache-sling-app-cms).
+
+While Composum Browser certainly supports navigating the JCR repository structure in Apache Sling, it can do much more. Here are four useful features in Composum Browser:
+
+  
+## Edit Files
+
+  
+Editing files in the repository using Composum is pretty straight-forward. First select the node for the file, select the _Text / Code View_ and then select the _Edit Text_ button which will open the editor.
+
+  
+
+![Edit a File in Composum](/images/posts/2020-05/Edit-File-Composum.png)
+
+  
+
+## Run Groovy Scripts
+
+  
+Groovy scripts are tremendously helpful to run ad-hoc scripts for extracting report data, performing bulk updates on the fly or debugging issues.  
+
+To execute a Groovy script, create a file with the .groovy extension and then execute the script in the Composum editor. One important thing to note is that you want to make sure your return is not session-bound, because it closes the resource resolver before printing the result. 
+
+  
+
+![Using Composum Groovy Executor](/images/posts/2020-05/Composum-Groovy.gif)
+
+  
+
+### Default Variables
+
+  
+The Composum Groovy script executor binds the following variables for your use:
+
+  
+* workspace: [javax.jcr.Workspace](https://docs.adobe.com/docs/en/spec/javax.jcr/javadocs/jcr-2.0/javax/jcr/Workspace.html)
+* resourceResolver: [org.apache.sling.resourceresolver.ResourceResolver](https://sling.apache.org/apidocs/sling11/org/apache/sling/api/resource/ResourceResolver.html)
+* log: [org.slf4j.Logger](http://www.slf4j.org/apidocs/org/slf4j/Logger.html) \- bound to com.composum.sling.core.script.GroovyRunner
+* session: [org.apache.jackrabbit.api.JackrabbitSession](https://www.javadoc.io/static/org.apache.jackrabbit/jackrabbit-api/2.6.8/org/apache/jackrabbit/api/JackrabbitSession.html)
+* queryManager: [javax.jcr.query.QueryManager](https://docs.adobe.com/docs/en/spec/javax.jcr/javadocs/jcr-2.0/javax/jcr/query/QueryManager.html?is-external=true)
+* jctx: [org.apache.sling.event.jobs.consumer.JobExecutionContext](https://sling.apache.org/apidocs/sling7/org/apache/sling/event/jobs/consumer/JobExecutionContext.html)
+* job: [org.apache.sling.event.jobs.Job](https://sling.apache.org/apidocs/sling7/org/apache/sling/event/jobs/Job.html)
+* resourceResolverFactory: [org.apache.sling.resourceresolver.ResourceResolverFactory](https://sling.apache.org/apidocs/sling11/org/apache/sling/api/resource/ResourceResolverFactory.html)
+* out: [java.io.PrintWriter](https://docs.oracle.com/javase/8/docs/api/java/io/PrintWriter.html) \- writer to the job output, you can also use println inside Groovy
+  
+### OSGi Services
+
+  
+Since Groovy is executing in the context of an OSGi container, you may want to retrieve an OSGi service, unfortunately, it's not quite as easy as the AEM Groovy Console, but it can be done:
+
+  
+
+```java
+import org.osgi.framework.*;
+import org.apache.sling.api.resource.*;
+
+BundleContext bundleContext = FrameworkUtil.getBundle(ResourceResolverFactory.class).getBundleContext();
+def serviceReference = bundleContext.getServiceReference(ResourceResolverFactory.class);
+def service = bundleContext.getService(serviceReference);
+println service;
+bundleContext.ungetService(serviceReference);
+```
+
+  
+
+### Installing Groovy
+
+  
+Naturally, to use the Groovy script execution feature in Composum Browser, you need Groovy installed. At the time this post was written, Groovy is not installed in the [Apache Sling Starter 11](https://sling.apache.org/news/sling-11-released.html) or [Sling CMS 0.16.2](https://github.com/apache/sling-org-apache-sling-app-cms/releases/tag/org.apache.sling.cms-0.16.2). The easiest way to install Groovy is to install [Groovy All 2.4.19](https://search.maven.org/artifact/org.codehaus.groovy/groovy-all/2.4.19/jar). In future versions of Sling CMS and Sling Starter the expectation is [Groovy 3 will be pre-installed](https://issues.apache.org/jira/browse/SLING-9421).
+
+  
+## View System Nodes
+
+  
+In more recent versions of Composum (at least 1.12+) you can see the system nodes in the JCR, including:
+
+  
+* JCR Namespaces
+* JCR Node Types
+* Supported Privileges
+* Privilege Storage
+* Version Storage
+  
+To see the system properties change the _Filter for tree_ option to _unfiltered_ and then expand /jcr:system.
+
+  
+
+![View System Configuration in Composum](/images/posts/2020-05/Composum-System-Properties.png)
+
+  
+
+## Download Query File
+
+  
+Composum supports executing queries in the search bar. In addition, you can download the results of the query by selecting the _Export Query Result_ dropdown on the right-hand side of the search bar. The export option supports JSON (full tree), CSV (summary), and TSV (summary). 
+
+  
+
+![Exporting Query Composum](/images/posts/2020-05/Composum-Download-Query.png)
+
+  
+
+Composum Node Browser is a powerful tool for managing Apache Sling based repositories. Check it out via the [Apache Sling Starter](https://sling.apache.org/downloads.cgi) or [Sling CMS ](https://github.com/apache/sling-org-apache-sling-app-cms/releases) or [download Composum directly from GitHub](https://github.com/ist-dresden/composum/releases).
+
+  

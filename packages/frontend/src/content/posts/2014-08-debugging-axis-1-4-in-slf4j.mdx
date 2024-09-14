@@ -1,0 +1,32 @@
+---
+title: Debugging Apache Axis 1.4 with SLF4J
+description: Explains the process for debugging Axis 1.4 requests and responses with SLF4J
+hideInNav: false
+tags:
+  - SOAP Web Services
+  - OSGi
+  - Adobe Experience Manager
+  - Adobe CQ
+  - SLF4J
+pubDate: 2014-08-15
+display: post
+image: /images/posts/shared/axis3.jpg
+published: true
+---
+
+In my previous blog post, I discussed [getting Apache Axis 1.4 working in AEM](/posts/2014-08-running-axis-1-4-in-aem.html). One of the more interesting things about Axis 1.4 is that it's not easy to log the actual request from the client and response from the server. You can configure the [LogHandler](https://axis.apache.org/axis/java/apiDocs/org/apache/axis/handlers/LogHandler), however it is somewhat problematic in AEM to configure due to the classpath complexity in OSGi and it will only log to the system outputstream. This is problematic in AEM as the stdout.log isn't setup by default when runnning in server mode and when running locally will not roll. Intead of this, I would suggest registering a custom SLF4J Log Handler to log the request and response to the AEM SLF4J logs.
+
+To do this, first, add the [SLF4JLogHandler](https://gist.github.com/klcodanr/d5305a7a985876854eee) to the project, which I adapted from the Apache Axis [LogHandler](https://axis.apache.org/axis/java/apiDocs/org/apache/axis/handlers/LogHandler.html). Next update the code which retrieves the handler port to add the SLF4JLogHandler to handle both requests and responses.
+
+```
+[WS_NAME]Locator locator = new [WS_NAME]Locator();
+		
+SimpleProvider sp = new SimpleProvider(locator.getEngine().getConfig());
+sp.setGlobalRequest(new SLF4JLogHandler());
+sp.setGlobalResponse(new SLF4JLogHandler());
+locator.setEngineConfiguration(sp);
+
+return locator.get[WS_NAME]WebServiceHandlerPort(wsURL);
+```
+
+Once you have this in place, you should see the web service requests and reponses logged to your SLF4J logs.

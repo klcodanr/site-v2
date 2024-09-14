@@ -1,0 +1,157 @@
+---
+title: The 12 Questions of AEM-mas
+description: "A tongue and cheek writeup of 12 different questions I regularly
+  ask myself about Adobe Experience Manager. "
+hideInNav: false
+tags:
+  - Adobe Experience Manager
+pubDate: 2019-12-27
+display: post
+image: /images/posts/2019-12/aem-mas.jpg
+published: true
+---
+
+T'was the week after Christmas and all through the blog not an author was writing nor viewing the log(s).
+
+Though my ideas are scarce I've had many a complaint and many had caused my language to not be that of a saint. 
+
+The 12 questions below are not constructive, but if Adobe were to consider them; it would not be destructive.
+
+In the new year my usual posts will return along with our staff, but for now I hope this post gives you a laugh.  
+  
+# The 12 Complaints of AEM-mas
+
+<br/><br/>![Setting up the AEM Project Archetype](/images/posts/2019-12/Setting-Up-AEM-Project-Archetype.gif)
+
+  
+
+## Why is setting up a project with the AEM project archetype like setting up a knockoff Android phone?
+
+  
+Holy Cow! Who knew that to develop a simple AEM project you needed 7 sub-modules!?!? I sure didn't and frankly, nor do I think anyone does. Setting up the AEM project archetype requires first deleting 75% of the junk it creates.   
+  
+There's far too much going on in this project to be comprehensible and in my opinion, the whole idea of jamming all of the various components of an AEM project into a single Maven project is a bad practice. Yes, we want to produce a single deliverable, but why should the HTML code, Service integrations and Dispatcher code all be in the same repo? Crazyness!  
+  
+
+<br/><br/>![JavaScript? Is that like jQuery?](/images/posts/2019-12/JavaScript.jpeg)
+
+  
+
+## Why do we pretend on AEM projects like Node JS builds don't exist?
+
+  
+To be fair the AEM Project Archetype _finally_ has an option to support Node builds, but it's not even enabled by default.
+
+ClientLibs were a great idea in the time of jQuery and downloading JavaScript libraries manually, but it's 2019\. Can we please just have good documentation on how to integrate front end build processes into AEM and retire ClientLibs?
+
+  
+
+<br/><br/>![I was going to find a meme about the AEM Projects console, but it's not worth wasting the time...]()
+
+## Why does the Projects console exist?
+
+  
+Seriously. Why?  
+  
+
+<br/><br/>![It's 'flexible' as long as you only do the 5 things it can do...](/images/posts/2019-12/Flexible.png)
+
+## Why is the Asset Metadata Schema Editor so Inflexible?
+
+  
+The AEM Assets Metadata Schema editor is a great idea! But holy cow, the implementation is _so_ bad!
+
+The only explanation I can come up with is that the team which created it had never worked on AEM before they started. It's so rigid, you can't even define your own field types! There's no real concept of extension so if it doesn't have what you want... too bad.  
+  
+
+<br/><br/>![Features!! All the features everywhere!!](/images/posts/2019-12/Reinvent-The-Wheel.jpeg)
+
+  
+
+## Why do we need to reinvent the wheel?
+
+  
+Theres no reason for a number of things in the AEM ecosystem to exist since there are already better options in the market and they provide no tangible value. Some of the more egregious examples:  
+  
+* HTL - who needs _another_ templating language when you already have JSP, Thymeleaf, Handlebars, etc. Everything in HTL could be created somewhere else and be better than HTL
+* Cloud Manager - why did Adobe custom make a CI tool instead of using Azure DevOps / GitHub Actions or Jenkins or name any established player? Yeah... I don't know either
+  
+
+<br/><br/>![In theory, they're great!](/images/posts/2019-12/Theory.jpeg)
+
+  
+
+## Has anyone at Adobe tried using the Core Components in Real Life?
+
+  
+Conceptually, the Core Components are great, but they are a nightmare from an extensibility perspective. Here's a clue: NO ONE WANTS TO ADAPT THEIR HTML TO YOUR CMS!!! Most projects are designed by people who have no reason to know or care about how the Core Components structure their HTML so why does making trivial changes to the Core Components HTML require completely overlaying the HTL for the component?
+
+Then there's the matter of the Sling Models backing the Core Components. I know that architecturally hiding the implementation details makes things easier for Adobe because they're not responsible for changes implementors make, but wow it makes simple changes hard.  
+  
+
+<br/><br/>![The number of clicks to do anything in AEM is too damn high!!](/images/posts/2019-12/Too-Damn-High.jpg)
+
+  
+
+## Does mobile support _really_ require a dozen clicks to do anything?
+
+  
+Touch UI does provide mobile support which is nice... for the 5 people who've ever authored a page on their phones, but it gives your index finger a workout. Most interactions which used to take 1-2 clicks now take at least 4-5\. I was under the impression that the idea of mobile first was to create a great experience on mobile, not drag desktop down to a mediocre experience.  
+  
+
+<br/><br/>![What we have here](/images/posts/2019-12/Failure-to-Communicate.jpg)
+
+  
+
+## Do any teams at Adobe communicate?
+
+  
+At least Adobe uses a relatively consistent UI framework, but holy cow, even within AEM parts of the application are implemented completely inconsistently. The UI and implementation details of Forms, Sites and Communities are radically different. These inconsistencies result in significant duplication and even security issues.
+
+It gets even worse when you integrate the rest of the Adobe Experience Cloud. It's painfully obvious that most people at Adobe only deal with one product and the products aren't set up to integrate together without additional work.   
+  
+
+<br/><br/>![I don't deprecate code](/images/posts/2019-12/deprecating.jpg)
+
+## Could we _please_ just deprecate _something_ eventually?
+
+  
+AEM is full of old code and semi supported features which have long sense outlived their utility, but still hang on like barnacles on a speedboat. Im sure many of them have some customer somewhere who still uses the, but is there a reason to not make the add one instead of part of the base product?   
+  
+Would you ever miss CRX Explorer or the legacy reports or the foundation components? Probably not! Just cut the fat!
+
+<br/><br/>![Who understands how AEM configurations are supposed to work?](/images/posts/2019-12/configuration.jpg)
+
+  
+
+## Can we please just use Sling Context Aware Configurations?
+
+  
+Configurations in AEM are a hot mess. Different parts of the application use different configuration methods and most are poorly implemented. The sad thing is that there is a flexible, well implemented option already, [Sling Context Aware Configurations](https://sling.apache.org/documentation/bundles/context-aware-configuration/context-aware-configuration.html) (CA Configs). 
+
+Instead of the current mess of Cloud Configurations, AEM Configs and whatever mess Content Fragments use, if AEM converted entirely to Sling CA Configs would make configurations more flexible, cleaner and easier to use and understand.
+
+  
+
+<br/><br/>![Daycare UX](/images/posts/2019-12/daycare-ux.jpg)
+
+  
+
+## When is the last time Daycare was updated?
+
+  
+Support sites don't usually win design awards but Daycare has to be one of the most dated and poorly designed applications in use at Adobe. Digging a little deeper, why is AEM support provided differently than the rest of the Experience Cloud?
+
+For a company that talks about experience driven business, Adobe's customer experience at least as it relates to Daycare and support is very lacking.  
+  
+
+<br/><br/>![No Extension for you!](/images/posts/2019-12/no-extension.jpeg)
+
+  
+
+## Why doesn't AEM have a module or plug-in system?
+
+  
+Yes, AEM is based on OSGI which has the concept of modularization, but AEM itself has no well-defined system for creating plugins or modules. Adobe has not produced good documentation on how to extend the tool template third-party integrations so developers do it themselves and often run into upgrade issues.
+
+  

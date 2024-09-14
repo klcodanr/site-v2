@@ -1,0 +1,54 @@
+---
+title: Three AEM / DPS Tips
+description: Three helpful tips on integrating Adobe Experience Manager and
+  Adobe Digital Publishing Suite.
+hideInNav: false
+tags:
+  - AEM 6.1
+  - DPS
+  - Best Practices
+pubDate: 2015-07-13
+display: post
+image: /images/posts/2015-07-13-3-aem-dps-tips/publish-folio.png
+published: true
+---
+
+I recently created a reference integration between [Adobe Experience Manager](http://www.adobe.com/marketing-cloud/enterprise-content-management.html) (AEM) and [Adobe Digital Pubishing Suite](https://digitalpublishing.acrobat.com/welcome.html) (DPS). AEM 6.1 ships with an integration between the two tools, along with a reference implementation, Geometrixx Media. This is a very exciting solution, as it allows non-technical authors to publish content to DPS apps. The AEM / DPS Integration provides organizations opportunities to reuse content, more frequent mobile updates and a more consistent, branded experience across web and mobile properties.
+
+![Publishing a DPS Folio with AEM](/images/posts/2015-07-13-3-aem-dps-tips/publish-folio.png)
+
+But of course, this does not come without a few challenges. Hopefully, the following tips will help ease your journey in implementing and AEM / DPS integration:
+
+## Tip 1: Make Sure Sessions are Disabled
+
+Generally when developing for AEM, you do want sessions to be disabled, however when using the AEM / DPS integration, this is essential. The AEM DPS integration uses a [Page Exporter](https://docs.adobe.com/docs/en/aem/6-1/administer/content/page-exporter.html) job to export the app content from AEM to the DPS folio, in order to do this, it uses a FakeRequest class to get the HTML content for the DPS pages. This class does not support accessing the HTTP Session and so if you do not set the session usage to false, you will see the following exception:
+
+```
+java.lang.UnsupportedOperationException: null
+	at com.day.cq.contentsync.impl.handler.util.FakeRequest$FakeHttpSession.getAttribute(FakeRequest.java:64)
+	at org.apache.sling.scripting.jsp.jasper.runtime.PageContextImpl.doFindAttribute(PageContextImpl.java:470)
+	at org.apache.sling.scripting.jsp.jasper.runtime.PageContextImpl.findAttribute(PageContextImpl.java:455)
+	at org.apache.jsp.apps.sixd_002ddps.components.pages.base.base_jsp._jspService(base_jsp.java:132)
+	at org.apache.sling.scripting.jsp.jasper.runtime.HttpJspBase.service(HttpJspBase.java:70)
+	at javax.servlet.http.HttpServlet.service(HttpServlet.java:725)
+```
+
+Unfortunately, the publication process is asynchronous so it will not report through the UI that publication has failed. To ensure you don't run into this issue, I recommend setting sessions to false in your application's global.jsp:
+
+![Setting page session to false in the global.jsp](/images/posts/2015-07-13-3-aem-dps-tips/global.png)
+
+## Tip 2: Ensure DAM Assets are Referenced within the Current Page Path
+
+As stated earlier, the process for building the DPS folios uses an AEM Page Exporter job to export the content out of AEM. This can be very problematic if you make references directly back to the AEM DAM or content stored under other paths. In my POC, I wanted authors to be able to set a background image for the page. To make this happen quickly, I added a pathfield for the user to set the background image. Unfortunately, this meant that in my Page Exporter Template, I ended up having to export every image used in the DAM directory for each folio, even if it wasn't used in that particular folio. This quickly bloated the folio from a couple MB to over 22MB.
+
+The complication with images also extends to referencing images from other pages or articles. Each page (article in DPS lingo) is saved as a separate item in the DPS. These folios can reference back to a shared content set which is exported through the Page Exporter, however a folio cannot reference images from another folio. Therefore, you can't do things like including an image component from another page.
+
+## Tip 3: If All Else Fails, Change the Folio Reference Number
+
+AEM, DPS and the mobile device all seem to cache the content for the folios, especially the supporting content (CSS, JS, etc). This can be problematic in development as it makes it much more difficult to figure out wherther or not your changes are actually taking effect.
+
+A failsafe for ensuring that you aren't running into caching issues when developing a folio layout is to increment the Folio Number. This can be configured at the folio level in AEM and forces all of the components of the publciation workflow to consider the folio as a new folio.
+
+![Set DPS Folio Number](/images/posts/2015-07-13-3-aem-dps-tips/set-folio-number.png)
+
+I hope these tips are helpful, if you run into anything else, leave a comment below!

@@ -1,0 +1,46 @@
+---
+title: AEM Component Placeholders the WCM Core Component Way
+description: The Adobe Consulting Services WCM Core Components provide a simple
+  way to add a placeholder for your AEM Components when they're first added to
+  the page.
+hideInNav: false
+tags:
+  - Adobe Experience Manager
+  - Authoring
+  - ACS WCM Core
+pubDate: 2017-08-07
+display: post
+image: /images/posts/2017-08-07-aem-component-placeholders-wcm-core-way/reserved.jpg
+published: true
+---
+
+I love the idea of the [ACS WCM Core components](https://github.com/Adobe-Marketing-Cloud/aem-core-wcm-components). A quality set of base components for us to base our work on and especially featuring the latest tools and techniques? Awesomesauce! Clearly, [I'm not the only one too](http://blogs.perficient.com/adobe/2017/05/15/aem-6-3-first-looks-aem-core-wcm-components/)!
+
+Here's a neat trick I picked up from the WCM Core Components, they make it really easy to provide a placeholder for when your component has not been configured or cannot display properly.
+
+This is required, especially in Touch UI as many components will not take up any space when first dropped on the page and without a placeholder are pretty much impossible to author. To get around this, we just simply add some placeholder text to display and allow the author to click on.
+
+Before WCM Core, there' were a bunch of hacky ways I've seen it done (including several monstrosities in the CQ5 Foundation Components), but now with the WCM Core Components, it's as easy as three lines of code to add an attractive placeholder link this:
+
+![Placeholder the WCM Core Way](/images/posts/2017-08-07-aem-component-placeholders-wcm-core-way/placeholder.png)
+
+So how do we do it? The secret is the placeholder template:
+
+[https://github.com/Adobe-Marketing-Cloud/aem-core-wcm-components/blob/master/content/src/content/jcr\_root/apps/core/wcm/components/commons/v1/templates.html](https://github.com/Adobe-Marketing-Cloud/aem-core-wcm-components/blob/master/content/src/content/jcr%5Froot/apps/core/wcm/components/commons/v1/templates.html)
+
+This template allows you to provide a condition and from there, if the condition is true and you are in edit or preview mode, it will display a placeholder div with the title of the component inside.
+
+## Using the WCM Core Placeholder
+
+To use the WCM Core placeholder, you need to:
+
+1. Add the template declaration: `data-sly-use.templates="core/wcm/components/commons/v1/templates.html` to a tag within your component, either the first one, or somewhere early on.
+2. Add in the call:  
+```  
+<sly data-sly-call="${templates.placeholder @ isEmpty = !text}"></sly>  
+```  
+The key here is the isEmpty parameter, this can be any boolean condition you want to check. In this case, they are checking if the property "text" is falsy, but you could check any property on your component or any set of properties. Just make sure that the property / properties are required in the dialog and for the component to display on the page.
+
+That's it! Two steps and you have an attractive placeholder for your component when it gets added to the page! If you want to see it in place check out WCM Core's [text component](https://github.com/Adobe-Marketing-Cloud/aem-core-wcm-components/blob/master/content/src/content/jcr%5Froot/apps/core/wcm/components/text/v1/text/text.html) to see an example. It's less code and it looks great! So why would you set a placeholder any other way?
+
+Please leave a comment below if you found any other useful tidbits when exploring the ACS WCM Core Components.

@@ -1,0 +1,84 @@
+---
+title: Debugging Dispatcher Deployment Issues with Cloud Manager
+description: "How to debug Cloud Manager pipeline issues where the dispatcher
+  deployment fails. "
+hideInNav: false
+tags:
+  - Cloud Manager
+  - Adobe Experience Manager
+  - Adobe Managed Services
+pubDate: 2020-07-23
+display: post
+image: /images/posts/2020-07/Cloud_Manager_Dispatcher_Banner.jpg
+published: true
+---
+
+  
+
+Adobe's Cloud Manager is quite feature rich in [unexpected features](https://xkcd.com/1700/). One of these features is that it is in no way obvious how one can diagnose dispatcher deployment issues when run through Cloud Manager.
+
+  
+> Note: due to AMS' wildly inconsistent environment setup, this article may not apply to everyone, but if you rely on your CSE to debug dispatcher deployment issues, this probably does for you. 
+
+  
+## Why did my Cloud Manager Build Fail to Deploy Dispatcher?
+
+  
+The problem is that to test your deployment, Cloud Manager will unpack the deployment on the instances and restart to validate that the configuration is correct. If this fails, it rolls back the changes and logs a single message to the Cloud Manager log.  
+  
+```
+2020-07-07T17:15:40+0000 Failed to deploy dispatcher on instance dispatcher1eastus. ActionId=[some-action-id]
+```
+  
+Based on that you're clear on what you need to do? Of course not! Normally, I'd expect the details of restart / issues to be written to a log accessible via the build tool, but Adobe Managed Services in their endless desire to defy normal expectations choose not to do this. 
+
+Apparently, Adobe Engineering is considering on a fix for this, but have not specified a timeframe or committed to the fix. At this point, you could reach out to your [Customer Success Engineer](https://www.dictionary.com/browse/irony), but really?? Isn't this something you should be able to self service?  
+  
+## Following the Trail Down the Systemd Journal
+
+  
+We know that Cloud Manager is using [systemd](https://www.freedesktop.org/wiki/Software/systemd/) to restart the Apache httpd web server powering the dispatcher, so theoretically the status will be written to the [systemd journal](https://www.freedesktop.org/software/systemd/man/journalctl.html). Unfortunately, as AMS will only provision non-privileged users, our user can only see their own journal, not the journal for the full system including Cloud Manager.
+
+Seemingly a dead end. However, if you execute `sudo -l`, you will see a number of interesting things AMS really should document / tell people about. 
+
+Among these is:  
+  
+```
+(ALL) NOPASSWD: /bin/journalctl -* *
+```
+
+  
+Note the format, we need to specify two parameters including a flag to call journalctl with sudo... No idea why and I would not expect AMS to set up every environment the same way, so your milage will vary.
+
+Based on this information, we can execute the following command, which will pull the most recent systemd journal entries for httpd, including the reason why Apache httpd failed to start with your dispatcher changes:  
+  
+sudo /bin/journalctl --system -u httpd
+
+  
+For example, if I missed a variable `_DISP_LOG_LEVEL_`, I would see something like:  
+
+```
+[date] [instance] httpd[8753]: [Wed Jul 22 21:47:34.643291 2020] [core:warn] [pid 8753] AH00111: Config variable ${DISP_LOG_LEVEL} is not defined  
+[date] [instance] httpd[8753]: AH00526: Syntax error on line 21 of /etc/httpd/conf.d/dispatcher_vhost.conf:  
+[date] [instance] httpd[8753]: Invalid value for directive DispatcherLogLevel, expected integer  
+[date] [instance] systemd[1]: httpd.service: main process exited, code=exited, status=1/FAILURE  
+[date] [instance] kill[8755]: kill: cannot find process ""  
+[date] [instance] systemd[1]: httpd.service: control process exited, code=exited status=1  
+[date] [instance] systemd[1]: Failed to start The Apache HTTP Server.  
+[date] [instance] systemd[1]: Unit httpd.service entered failed state.  
+[date] [instance] systemd[1]: httpd.service failed.  
+[date] [instance] systemd[1]: Starting The Apache HTTP Server...  
+[date] [instance] systemd[1]: Started The Apache HTTP Server.  
+```
+
+  
+Note that we see the dispatcher starting, this is because Cloud Manager watches to see if Apache restarts as expected with your dispatcher changes and will roll back the build if it fails. 
+
+Now that you can pull dispatcher deployment logs, you can diagnose dispatcher issues without waiting for hours for a CSE to respond to email.
+
+  
+> #### Want to learn more about Cloud Manager?
+> 
+> You may want to check out my previous Cloud Manager post on [pulling private dependencies in Cloud Manager](https://blogs.perficient.com/2020/07/15/pulling-private-dependencies-with-cloud-manager/).
+
+  

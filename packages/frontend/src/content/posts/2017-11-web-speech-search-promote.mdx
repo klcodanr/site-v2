@@ -1,0 +1,73 @@
+---
+title: Website Voice Search with the WebSpeech API and Adobe Search&Promote
+description: Users interact with websites in many different ways, learn how to
+  use the WebSpeect API to enable voice searching with Adobe Search&Promote
+hideInNav: false
+tags:
+  - Adobe Experience Manager
+  - Adobe Target
+  - Adobe Search&Promote
+  - WebSpeech
+  - Voice
+  - Experimental Web
+pubDate: 2017-11-09
+display: post
+image: /images/posts/2017-11-09-web-speech-search-promote/voice-search.jpg
+published: true
+---
+
+With the takeover of the [web by mobile browsers](http://www.telegraph.co.uk/technology/2016/11/01/mobile-web-usage-overtakes-desktop-for-first-time/), tailoring experiences to mobile users is critical to creating successful experiences. Nearly 21.6% of mobile visitors use [voice search on a daily basis](https://www.highervisibility.com/resource/research/how-popular-is-voice-search/), so providing voice search on mobile web experiences helps to create a more native experience for mobile users.
+
+Historically there has not been a good API for integrating voice recognition into websites, however, the (relatively) new [WebSpeech API](https://developer.mozilla.org/en-US/docs/Web/API/Web%5FSpeech%5FAPI) makes this possible right through JavaScript. This API is still experimental and [only works in certain browsers](https://developer.mozilla.org/en-US/docs/Web/API/Web%5FSpeech%5FAPI#Browser%5Fcompatibility), but has significant promise to more closely align web and native mobile experiences.
+
+## Using the WebSpeech API
+
+Using the WebSpeech API is pretty simple. First, you'll want to check if your browser supports it by checking if the SpeechRecognition or webkitSpeechRecognition properties are available on the window object as such:
+
+```javascript
+!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)
+```
+
+Once you have confirmed that, you can construct a new SpeechRecognition object and configure it:
+
+```javascript
+recognition = new webkitSpeechRecognition() || new SpeechRecognition();  
+recognition.continuous = true;  
+recognition.interimResults = true;  
+recognition.lang = navigator.language;
+```
+
+Here, I am setting the SpeechRecognition object to continuously listen, return interim results for display purposes and use the browser's language as the language for speech recognition. 
+
+After configuring the settings, you'll want to set the following functions on the recognition object:
+
+* onstart - called when the speech recognition starts, use this for initializing any variables and resetting the results
+* onerror - called when an error occurs starting voice recognition, this received an event object with an error parameter with more details as to why the speech recognition was not successful
+* onend - called when the speaking stops or is stopped by the user, this will be where we add the code to call the search results
+* onresult - called when the WebSpeech API recognizes a result. This can be either interim or final, so make sure you check if the results are final or interim
+
+Once you've added your custom code, you can call the start method to start the speech recognition:
+
+recognition.start();
+
+This will kick off the speech recognition and invoke your callback methods.
+
+## Combining WebSpeech + Adobe Search&Promote
+
+Website search is a nearly universal paradigm and aligns closely with what most website users expect for voice interactions: provide a term, get some results. With this in mind, why not integrate the WebSpeech API and [Adobe Search&Promote](http://www.adobe.com/marketing-cloud/target/search-and-promote.html)? 
+
+To try this out, I started with [Google's WebSpeech API Demonstration](https://www.google.com/intl/en/chrome/demos/speech.html) and extended it to componentize it for Adobe Experience Manager and add the callback to call my Search&Promote search results component via AJAX. The core of this code can be found in the AEM ClientLib JS file: 
+
+The code to fetch the results is in the finishRecognition method and is a pretty simple [jQuery load method](http://api.jquery.com/load/) call which fetches the results from the Search&Promote results component. I added a Sling Model to allow configuring the path to the page containing this component as well as the CSS Selector for the component in the DOM.
+
+You can see the [source code](https://github.com/PerficientDigital/web-speech-search-poc/) for this proof of concept on Perficient Digital's GitHub site. It will install into any AEM 6.3 instance with the command:
+
+mvn clean install -P autoInstallPackage
+
+Once installed, you will need to enable the component within your AEM Design configuration and set up a page with an Adobe Search&Promote component.
+
+## End Result
+
+The end result is pretty slick! As you can see in the video below, I can click on the mic icon and use voice search to get website search results from Adobe Search&Promote.
+
+[Download the source code](https://github.com/PerficientDigital/web-speech-search-poc/) from Perficient Digital's GitHub site to get started!

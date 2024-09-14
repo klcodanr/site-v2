@@ -1,0 +1,92 @@
+---
+title: Creating a Twitter Redirect App
+description: How to create a really simply bit.ly clone with MySQL, mod_rewrite and PHP.
+hideInNav: false
+tags:
+  - Development
+  - HTML/Web
+pubDate: 2009-06-09
+display: post
+image: ""
+published: true
+---
+
+After leaving my Twitter account alone for awhile, I finally decided to give it a try.
+
+One of the things I quickly noticed was how many people were using different redirect services to shrink longer urls to fit the 160 character limit. I didn't think the theory behind those services is really that hard, so I created my own. You can check it out at [http://r.klco.org/](http://web.archive.org/web/20091113044119/http://r.klco.org/).
+
+You can create your own Twitter redirect application with only two files, some knowledge of PHP, MySQL and Apache's mod_rewrite. 
+
+First create the database schema for the application. Create a table called 'redirects', and add the rows:
+
+* hash_code
+* redirect_url
+
+Next create a file called index.php in the base of your app to handle all of the url shrinking and redirection. Put in the following code, you will need to specify the database server url, username, password and database name.
+
+```php
+<?php
+// connect to the database
+$link = mysql_connect($db_url,$db_user,$db_password);
+if(!$link){
+  die('Could not connect to database server.');
+}
+$db_selected = mysql_select_db($db_name, $link);
+if(!$db_selected){
+  die('Could not connect to database.');
+}
+
+if(isset($_GET['redirect'])){
+  //check to see if a redirect url is specified and is in the database, if so redirect the url
+  $hash = $_GET['redirect'];
+  $result = mysql_query("SELECT redirect_url FROM redirects WHERE hash_code='$hash'",$link);
+  if(mysql_num_rows($result) != 1){
+    //no or too many rows found, display error
+    echo 'No url found matching code: '+$_GET['redirect'];
+  }else{
+    //url is valid (ie there is one resulting row), so redirect)
+    $redirect = mysql_result($result,0,'redirect_url');
+    header("Location: $redirect");
+  }
+}else{
+  //check to see if there specified a url to shrink
+  if(isset($_GET['url'])){
+    //make sure to nullify magic quotes
+    if (get_magic_quotes_gpc()) {
+      $url = stripslashes($_GET['url']);
+    } else {
+      $url = $_GET['url'];
+    }
+    //hash the url using the adler32 algorithm this algorithm returns 8 characters so it's perfect for us
+    $hash= hash('adler32',$url);
+    //escape the url before putting it using it with the database
+    $url = mysql_real_escape_string($url);
+    //keep hashing until you find a value that is not already used or matches the url
+    while(mysql_num_rows(mysql_query("SELECT hash_code FROM redirects WHERE hash_code='$hash' AND NOT redirect_url='$url'",$link)) > 0){
+      $hash=hash('adler32',$hash.time());
+    }
+    if(mysql_num_rows(mysql_query("SELECT hash_code FROM redirects WHERE hash_code='$hash'",$link)) == 0){
+      //insert the new hash and url into the database
+      mysql_query("INSERT INTO redirects (hash_code,redirect_url) VALUES ('$hash','$url')",$link);
+    }
+  }
+  //display the value to the user
+  echo 'http://r.klco.org/'.$hash;
+}
+?>
+
+```
+
+Finally .htaccess file to redirect all of the urls like r.klco.org/`HASH_CODE` to r.klco.org/index.php?redirect=`HASH_CODE`:
+
+```bash
+Options +FollowSymLinks
+RewriteEngine on
+RewriteRule ^[a-zA-Z0-9]{7,9}$ index.php?redirect=$0
+```
+
+To do this, it looks for any request to my site that contains only seven to nine the alphanumeric characters, which matches the result the adler32 hashing algorithm returns. I then put that value into the redirect query string attribute, then pass that to the page index.php. 
+
+Once you have all of this put together, test and enjoy!
+
+This software is licensed under the [BSD Open Source License](http://www.opensource.org/licenses/bsd-license.html)

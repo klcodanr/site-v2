@@ -1,0 +1,47 @@
+---
+title: Visualize OSGi Service Graphs with Composum
+description: "Here's a neat trick for AEM developers and architects: you can
+  create a diagram representation of the service dependencies using Composum."
+hideInNav: false
+tags:
+  - Apache Sling
+  - Open Source
+  - Architecture
+pubDate: 2019-10-09
+display: post
+image: /images/posts/2019-10/graph-hero.jpg
+published: true
+---
+
+  
+Here's a neat trick for AEM developers and architects: you can create an diagram representation of the service dependencies using [Composum](https://github.com/ist-dresden/composum). For those not familiar, Composum is an Open-Source project based on [Apache Sling](http://sling.apache.org). 
+
+To create a service dependency diagram, you will need to install two additional dependencies:  
+* [Composum Sling Core Console](https://search.maven.org/search?q=g:com.composum.sling.core%20a:composum-sling-core-console)
+* [Composum Sling Core Commons](https://search.maven.org/search?q=g:com.composum.sling.core%20a:composum-sling-core-commons)
+
+Once you install the dependencies you can access the Composum Service Graph web console at /system/console/servicegraph.  
+  
+
+![Screenshot of the Service Graph Web Console](/images/posts/2019-10/Service-Graph-Screenshot.png)
+
+  
+
+## Using the Service Graph Web Console
+
+  
+The Service Graph Web Console has a couple fields, the most important being the Classnames Regex. You can put any regular expression to filter what classes should be including:
+
+* ^com.composum
+* ^com.day.cq.wcm.foundation.forms
+Every OSGi Service matching the regular expression will be included in the graph. Note that having too broad of a regular expression, such as ^com.adobe or ^org will cause the graph to fail to render, so make sure to narrow down as much as possible.   
+  
+## Downloading as an Image
+
+  
+Currently, the Service Graph is only available as a SVG, not a downloadable image, but using the following JavaScript snippet you can download the Service Graph:
+  
+  
+I've also created [an issue](https://github.com/ist-dresden/composum/issues/183) with the Composum team to include this in their next release.
+
+  

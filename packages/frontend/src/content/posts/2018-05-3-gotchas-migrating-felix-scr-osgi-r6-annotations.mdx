@@ -1,0 +1,127 @@
+---
+title: 3 Gotchas in Migrating from Felix SCR to OSGi R6 Annotations
+description: "If you use AEM 6.3+ you should be using the OSGi R6 DS
+  Annotations, but how do you avoid gotchas when upgrading old projects? "
+hideInNav: false
+tags:
+  - OSGi
+  - Apache Felix
+  - Gotcha
+  - Apache Sling
+pubDate: 2018-05-21
+display: post
+image: /images/posts/2018-05/rebuilding.jpg
+published: true
+---
+
+  
+If you are on or considering upgrading to AEM 6.3+ and not already migrating to the [OSGi R6 DS annotations](https://enroute.osgi.org/FAQ/300-declarative-services.html), you need to start! These annotations are the officially supported method of defining OSGi Services, Components and Configurations and should be used on any new AEM development. 
+
+Getting older codebases upgraded, however can be a bit more of a challenge. You _could_ leave legacy projects using the [Apache Felix SCR annotations](http://felix.apache.org/documentation/subprojects/apache-felix-maven-scr-plugin/scr-annotations.html), however these are now officially deprecated by the Apache Felix project and will not be receiving any further updates so you may miss out on new features and capabilities available in the OSGi annotations.
+
+[Carsten Ziegeler](https://github.com/cziegeler) of Adobe R&D wrote a good series of posts to help understand migrating to the OSGi DS annotations including:
+
+* [Annotation Mapping Overview](https://blog.osoco.de/2016/05/migrating-from-the-apache-felix-scr-annotations-to-the-osgi-declarative-services-annotations/)
+* Components & Services [Part 1](https://blog.osoco.de/2015/08/osgi-components-simply-simple-part-i/) & [Part 2](https://blog.osoco.de/2015/08/osgi-components-simply-simple-part-ii/)
+* [Metatype / Configuration Overview](https://blog.osoco.de/2015/11/osgi-components-simply-simple-part-iii/)
+
+These guides as well as a wealth of other resources on the web will give you a good start in migrating to the OSGi DS Annotations, however there are some gotchas that you'll want to be aware of so you (unlike me) don't spend hours doing something like this:
+
+  
+
+![Oh I know what it is!! ... nope ...](/images/posts/2018-05/headdesk.gif)
+
+  
+## Gotcha #1 - Periods in Configuration IDs
+
+  
+OSGi DS Annotations use three methods to provide configuration parameters:
+
+* Static in Properties File
+* Static in a property list in the annotation
+* Dynamic using a _@ObjectClassDefinition_ annotation interface
+
+If you need to allow administrators to update the configuration or want to supply different configuration values per environment using runmodes, the _@ObjectClassDefinition_ annotation interface is really your only option. 
+
+To use the _@ObjectClassDefinition_ annotation you'd add a @Delegate annotation to your component class and then create an annotation interface with the _@ObjectClassDefinition_ annotation to contain methods for accessing the parameters as such:
+
+  
+
+```java
+@Component
+@Designate(ocd = MyComponent.Configuration.class)
+public class MyComponent {
+
+    @Activate
+    protected void Activate(Configuration config) {
+        boolean enabled = config.enabled();
+    }
+
+    @ObjectClassDefinition(name="OSGi Annotation Demo Component")
+    public @interface Configuration {
+        @AttributeDefinition(
+            name = "Enable",
+            description = "Enable the component",
+            type = AttributeDefinition.BOOLEAN
+        )
+        boolean enabled() default false;
+    }
+}
+```
+
+  
+What do you do if you want to create a dynamic configuration with an id that contains a period? Periods are reserved characters in Java, so if you needed to make a configuration with the ID service.enabled, it wouldn't be a valid method name. Thankfully, the OSGi Alliance thought of this and maps underscores "\_" in the method names to periods in the configuration ID, so if I had a method like:
+
+  
+
+```java
+@AttributeDefinition(
+    name = "Enable",
+    description = "Enable the component",
+    type = AttributeDefinition.BOOLEAN
+)
+boolean component_enabled() default false;
+```
+
+  
+This would retrieve a configuration with the id "component.enabled".
+
+  
+## Gotcha #2: Typos, Updates & Mismatches
+
+  
+Any time you're making changes across a codebase, it's nearly impossible to prevent any mistakes from creeping in, especially when dealing with a large number of property changes. 
+
+To help detect these, [Julian Sedding](https://github.com/jsedding) developed a command line tool to compare the metatype generated between two different bundles. Thus, you can easily compare the pre to post migration bundles to see what you missed.
+
+To download and use Julian's tool follow these simple steps:  
+
+  
+
+```bash
+git clone https://github.com/jsedding/osgi-ds-metatype-diff.git
+cd osgi-ds-metatype-diff
+mvn clean install
+java -jar target/osgi-ds-metatype-diff-0.0.1-SNAPSHOT.jar [old_bundle] [new_bundle]
+```
+
+  
+This will generate a report comparing all of the differences between the metatype definitions of the two Bundles including names, configurations or anything else allowing you to easily identify any differences.  
+
+  
+## Gotcha #3 Include the @Activate Annotation
+
+  
+I ran into this gotcha while I was upgrading the [Sling Form Based Authentication](https://github.com/apache/sling-org-apache-sling-auth-form) bundle from Felix SCR Annotations to OSGi R6 DS Annotations. The [FormBasedAuthenticationHandler](https://github.com/apache/sling-org-apache-sling-auth-form/blob/master/src/main/java/org/apache/sling/auth/form/impl/FormAuthenticationHandler.java) was supposed to retrieve a number of configuration values in an activate method to register itself correctly. In the old version of the code, these were defined using the typical _@Property_ annotations on constants, however I migrated the properties to a new annotation interface [FormBasedAuthenticationHandlerConfig](https://github.com/apache/sling-org-apache-sling-auth-form/blob/master/src/main/java/org/apache/sling/auth/form/impl/FormAuthenticationHandlerConfig.java). 
+
+What kept driving me nuts was that when the activate method fired, the annotation interface would be provided, but all of the values were null (or the primitive equivalent), even though I had provided defaults. As [Jason Bailey](https://github.com/JEBailey) found out and Julian Sedding elaborated, the problem was the activate method was missing the @Activate annotation.
+
+> Properties from configuration annotations are only included in the XML if the configuration annotation is used in the signature of the activate/deactivate methods (maybe modified as well, possibly others).  
+> Now, in this case, the activate method was not recognized and thus the config annotation was not referenced from any of the lifecycle method signature. Ergo: no properties in the XML. \- Julian Sedding
+
+Adding in the @Activate method resolved the issue and I was able to successfully migrate the bundle from the Felix SCR annotations to the OSGi R6 DS Annotations.
+
+  
+Hopefully, knowing about these gotchas will make your migration from the Felix SCR annotations easier. If you find your own gotcha or need help upgrading to the OSGi R6 DS Annotations, please leave a comment below.
+
+  

@@ -1,0 +1,108 @@
+---
+title: "Sightly vs Handlebars vs JSP: Comparing Scripting Languages"
+description: Compare and contrast Sightly and Handlebars, the new scripting
+  languages available in AEM6.
+hideInNav: false
+tags:
+  - AEM 6
+  - Best Practices
+  - HelloAEM6
+  - JSP
+pubDate: 2014-05-22
+display: post
+image: ""
+published: true
+---
+
+The latest release of Adobe Experience Manager, version 6.0, introduces two new languages for front end scripting in CQ. The two languages are both attempting to address the problems found in the existing foundation and Geometrixx reference code, namely the lack of separation of concerns between business and presentation logic and the sloppy use of scriplet. 
+
+The two new templating languages are:
+
+#### Sightly
+
+Sightly has come from Adobe user groups and seems to be trumpeted by the Adobe Professional Services team. There is [official documentation](http://dev.day.com/docs/en/cq/pre-release/overview/sightly.html) for Sightly and Adobe has produced a number of blog posts and webinars about it:
+
+* [http://cq-ops.tumblr.com/post/83123568521/aem-6-new-markup-language-called-sightly](http://cq-ops.tumblr.com/post/83123568521/aem-6-new-markup-language-called-sightly)
+* [https://www.youtube.com/watch?v=ugqcqr6uZrg](https://www.youtube.com/watch?v=ugqcqr6uZrg)
+
+Essentially, Sightly extends HTML5 adding a number of data attributes for server side processing. These attributes support basic logic and writing content to the page.
+
+#### Handlebars
+
+Handlebars is based mostly from the Adobe Social Communities project. Essentially, the Social Communities ported the [Handlebars JS Library](http://handlebarsjs.com/) to Java and added some hooks into AEM. Unfortunately, as of yet, there is no documentation available or any major posts about it, but there is a [published API](http://dev.day.com/content/docs/en/cq/pre-release/overview/api/javadoc/com/adobe/cq/social/handlebars/api/package-summary.html).
+
+### What do they look like?
+
+We'll lets go ahead and take a simple task in JSP and see what it looks like in each scripting language. 
+
+#### JSP
+
+This code block below would be found in a JSP script called mycomponent.jsp in a component at the path /apps/myapp/components/mycomponent. This component outputs the title property, then if the layout is set to left it will include the component at the subpath left and otherwise the component at the subpath right.
+
+```
+ <div>  
+   <h2>${properties.title}</h2>  
+   <c:choose>  
+     <c:when test="${properties.layout = 'left'}">  
+       <cq:include path="left" resourceType="myapp/components/mycomponent/layouts/left" />  
+     </c:when>  
+     <c:otherwise>  
+       <cq:include path="right" resourceType="myapp/components/mycomponent/layouts/right" />  
+     </c:otherwise>  
+   </c:choose>  
+ </div>
+ ```
+
+  
+#### Sightly
+
+In Sightly the code would exist in a file at the same path with the name mycomponent.html. The code would look like:  
+
+```
+ <div>  
+   <h2>${properties.title}</h2>  
+   <div data-sly-test="${properties.layout == 'left'}">  
+     <div data-sly-resource="${'left' @ resourceType='myapp/components/mycomponent/layouts/left'}"></div>  
+   </div>  
+   <div data-sly-test="${properties.layout != 'left'}">  
+     <div data-sly-resource="${'right' @ resourceType='myapp/components/mycomponent/layouts/right'}"></div>  
+   </div>  
+ </div>
+ ```
+
+#### Handlebars
+
+In Handlebars the code would exist in a file at the same path with the name mycomponent.hbs. Unlike the other templating languages, handlebars is billed as being 'logicless'; practically what this means is you can't do some typical things like comparisons in the if statement. The code would look like:  
+
+```
+<div>  
+  <h2>{{ title }}</h2>  
+  {{#if layoutLeft}}  
+    {{include 'left' resourceType='myapp/components/mycomponent/layouts/left'}}  
+  {{else}}  
+    {{include 'right' resourceType='myapp/components/mycomponent/layouts/right'}}  
+  {{/if}}  
+</div>
+```
+
+### Comparing Language Features
+
+Each language has it's own advantages and disadvantages, below is a feature comparison for the different languages:
+
+|            |  JSP                                      | Sightly  | Handlebars           |
+| ------------------------------------------- | -------- | ---------- | ---------- |
+| Based on Published Standards / Open Source? | Y (\*)   | N          | Y          |
+| IDE Support?                                | Y        | N          | N          |
+| Officially Documented / Supported?          | Y        | Y          | N          |
+| Documented Extension Model?                 | Y        | N          | N          |
+| Includes XSS escaping?                      | Y (\*\*) | Y          | N          |
+| Allows Basic Logic?                         | Y        | Y          | Y (\*\*\*) |
+| Enables Bad Coding Practices?               | Y        | N          | N          |
+
+\* - Some custom TagLibs used for interacting with CQ  
+ \*\* - Provided by additional tag libraries  
+ \*\*\* - Yes-ish, but very limited
+
+### So what should I use?
+
+In the end, each scripting language has it's strengths and weaknesses, but JSP is the clear winner. Yes, you can develop (and Adobe/Day has developed) really bad code with scriptlet, but given the extensibility, universal support, longevity and number of pre-existing examples, JSP is heads above the other scripting languages. Sightly is very young and likely immature, lacks a published standard and offers disadvantages when trying to figure out what is plain markup and what is logic code. Handlbars starts with a well documented Open Source project, but the CQ-specific extensions are not documented and it does not seem to be supported by the entire Adobe team.

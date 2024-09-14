@@ -1,0 +1,95 @@
+---
+title: "Demystifying Oak Search Part 2: Traversal"
+description: Traversal is the bane of query performance in Apache Jackrabbit
+  Oak, learn what traversal means and how to avoid it.
+hideInNav: false
+tags:
+  - Apache Jackrabbit Oak
+  - JCR
+  - Oak Search & Indexing
+pubDate: 2022-06-20
+display: post
+image: /images/posts/2022-06/turtle-hero.jpg
+published: true
+---
+
+Have you ever seen this log message?
+
+> The query read or traversed more than 100000 nodes. To avoid affecting other tasks, processing was stopped. for query \[some query here\]  
+
+This and the following messages indicate that your Oak query is using traversal. Traversal is the bane of query performance in Apache Jackrabbit Oak.
+
+> org.apache.jackrabbit.oak.plugins.index.Cursors$TraversingCursor Traversed \[number\] nodes with filter Filter(query=\[query\]) called by org.apache.jackrabbit.commons.iterator.RangeIteratorAdapter.next; consider creating an index or changing the query
+
+> org.apache.jackrabbit.oak.query.QueryImpl Traversal query (query without index): \[query\]; consider creating an index
+
+So what is query traversal and how do you avoid queries with traversal? First, to understand traversal, you must understand how Oak search works.
+
+  
+## An Oversimplified Summary of Oak Search
+
+  
+Conceptually Oak Search has three phases:
+
+  
+### Phase 1: Query Analysis 
+
+The query is interpreted from the query string into code, applicable indexes are identified and scored and the best (if any) index is selected. It's important to note that only one index can be selected per query.
+
+  
+###  Phase 2: Node Identification
+
+If an index is selected, Oak executes a query against the index to identify the scope of potential nodes. Otherwise it will identify the nodes via traversal.
+
+**Note** this index query may not include all of the fields in the original query so even if your query uses an index it may still require traversal.  
+  
+### Phase 2a: Ordering 
+
+There are certain circumstances, most commonly when the query is ordered, but the index does not returned ordered results, where the entire result set needs to be read into memory. Needless to say this is not good for performance, especially if the result size is not small.   
+
+  
+### Phase 3: Iterating Results
+
+Query results are lazy iterators, thus the results of the query are only read as needed. When the next result is requested, the result iterator seeks the potential nodes to find the next node matching the query. This is where traversal comes into play.
+
+During the seek process, Oak reads and filters the nodes from the potential nodes until it finds a match to the query, thus there is a counterintuitive behavior where when a query is not indexed or is poorly indexed, the fewer nodes a query matched by the query, the worse it performs per potential node.
+
+Scale is important here, having to read 3 nodes to find 1 will have virtually no impact, but reading 10,000 nodes to find 100 will.  
+
+  
+## Nothing is Free: The Cost of Availability 
+
+  
+AEM as a Cloud Service uses MongoDB for document storage to back Oak on Author. This allows for the zero downtime deployments, scaling of AEM and high availability. _However_ there is a tradeoff in raw performance vs TarMK as reading nodes require network calls vs reading off a local memory mapped disk. Oak does provide caching, but this is optimized for a small number of nodes being read frequently, not sequentially reading a large number of nodes.
+
+Therefore, in AEM Cloud Service, even more than AMS or on premise, it's important to be cogent of indexing in queries as the impact of reading too many nodes is significant.
+
+As a rule, for any user-facing query should not read more than 1,000 nodes. Even at this limit, there could still be a visible performance impact from the query.
+
+  
+## Avoiding Traversal in Oak Queries
+
+  
+This topic could be (and I hopefully plan for it to be) a whole other blog post, but the basics of avoiding traversal boils down to a few practices:
+
+  
+### #1 - Use an index
+
+Whenever you are developing code that executes a query it should either use one of the OOTB indexes or a custom index.  
+  
+### #2 - Use Path Constraints
+
+Whenever possible, using path constraints helps by reducing the number of nodes that you would possibly need to traverse or read (which is especially helpful if you're avoiding large OOTB areas such as the version store) and allows you to be more specific in your index if you need to create a custom index.  
+  
+### #3 - Test with real data
+
+Without realistic data, it's easy to write a query that works fine with 100 items that drags the system down or fails with 10,000  
+  
+### #4 - Set a query limit
+
+Even if your query is perfectly indexed, if you don't specify a limit, you could hit the traversal limit just reading the results in a large repository. Always set a limit.  
+  
+  
+ These are just the tip of the iceburg when it comes to optimizing query performance in Oak. Check out the [next post](/posts/2022/07/demystifying-oak-search-part-3-five-indexing-gotchas.html) in the [Demystifying Oak Search series](/search.html?q=Demystifying+Oak+Search) for a deep dive into the various scenarios and edge cases you need to consider when defining your indexes.  
+  
+  

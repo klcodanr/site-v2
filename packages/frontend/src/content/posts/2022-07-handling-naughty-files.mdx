@@ -1,0 +1,16 @@
+---
+title: Handling "Naughty" Files
+hideInNav: false
+tags: []
+display: post
+image: ""
+published: false
+---
+
+One of the marvels of software development is the sheer variety of bad input you must anticipate. While it may seem easier, especially with an internal application, to just trust users, this introduces problems, including:
+
+* **Unpredictable behavior** \- if you do not define and document expected inputs, how will your application behave with non-ASCII characters? What about ASCII control characters or filesystem path separators?
+* **Downstream problems** \- if you don't validate on input, what happens when you process or download a file? How do you know the correct behavior of you are not sure what behavior to expect from inputs? These problems are especially pernicious as they take several steps to test and reproduce and can even happen when only one input or update mechanism is out of sync with others.
+* **Integration discrepancies** \- it's challenging enough handling inputs within a system, but once you need to integrate with outside systems, your challenges with undefined inputs compound as you need to handle the same challenges with the external system
+
+With these issues it is important to define, document and enforce what inputs are valid. 

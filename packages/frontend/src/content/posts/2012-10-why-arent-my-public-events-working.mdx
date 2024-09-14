@@ -1,0 +1,54 @@
+---
+title: Why Aren't My Public Events Working?
+description: Learn how to diagnose and fix issues with dialog events
+hideInNav: false
+tags:
+  - Adobe CQ
+  - Dialog
+  - How To
+pubDate: 2012-10-01
+display: post
+image: ""
+published: true
+---
+
+Creating widgets with Public Events and other widget JavaScript functionality allows for the creation of extremely powerful and user friendly dialogs. Unfortunately, it can be difficult and frustrating to figure out what is the cause when the functions fail to work.
+
+Often, Public Events won’t fire and there will be no indication in the console or errors as to why. Here are some tips which may make it easier to figure out why your Public Event or other widget function isn’t working.
+
+### Missing Listener?
+
+Adobe CQ’s [Widget’s API](http://dev.day.com/docs/en/cq/current/widgets-api/index.html "Adobe CQ Widget's API") is a great resource for finding information on the JavaScript widgets used for creating CQ Dialogs. Unfortunately, one fact that does not seem to be documented is, to use the Public Events, you must add the events into a subnode to the widget called listener. Its easy to forget this and add the Public Event method’s into the widget node, this will result in the method being simply interpreted as a string. Only Public Events put in a subnode called listeners will be evaluated as JavaScript functions. 
+
+Adding the listeners node into a dialog is easy, the listeners node can be of any type, such as nt:unstructured. For example, lets say I want to automatically set a hidden field called failureURL to the path of the page plus an extension. The resulting widget in the dialog.xml would look like this:
+
+```
+<failureURL
+	jcr:primaryType="cq:Widget"
+	name="./failureURL"
+	xtype="hidden">
+	<listeners jcr:primaryType="nt:unstructured"
+		beforeloadcontent="function(field, record, path){
+			record.data.failureURL = CQ.WCM.getPagePath()+'.html?success=false';
+			return true;
+		}"
+	/>
+</failureURL>
+
+```
+
+### Bad Comments
+
+One thing to keep in mind when writing Public Event and other widget functions is that the JavaScript code will be inlined when it is evaluated. This means that you cannot use single line (// double slash) comments. Instead use multiline comments (/\* slash star \*/) as they will not cause subsequent code to not be evaluated.
+
+### Can’t find your code?
+
+Finally, when attempting to debug Public Event and other widget functions, the code will be evaluated as the widget is processed. Because of this, when debugging in FireBug the function will be found in a numeric script under: `server`/libs/cq/ui/widgets.js/eval/seq instead of a more helpful name. For this reason, when starting work on a widget JavaScript function, I would recommend adding an easy to find comment or variable as in FireBug you can search inside the available scripts.
+
+### Invalid dialog.xml
+
+I like code formatting, it makes code easier to read and promotes consistency. Unfortunately, formatting your dialogs can cause issues. CQ does not seem to like when your dialog.xml has the namespaces on separate lines. When this happens, the dialog.xml will be evaluated as a file instead of a dialog definition and your dialog will not appear correctly. Undoing the formatting will fix the issue.
+
+### Other Tips?
+
+Do you have any other tips you’ve found useful? Please leave a comment!

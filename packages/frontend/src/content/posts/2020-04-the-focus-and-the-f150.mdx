@@ -1,0 +1,67 @@
+---
+title: The Focus and the F-150
+description: The most important part of identifying the correct architecture is
+  to approach the current context without bias and chose the simplest solution
+  that meets the need.
+hideInNav: false
+tags:
+  - Architecture
+  - Single Page Applications
+  - Headless
+  - Microservices
+pubDate: 2020-04-08
+display: post
+image: /images/posts/2020-04/focus-f150-banner.jpg
+published: true
+---
+
+import Embed from '../../components/Embed.astro';
+
+  
+
+My favorite car is still my second car after college, a [2001 bright yellow Ford Focus ZX3](https://en.wikipedia.org/wiki/Ford%5FFocus%5F%28first%5Fgeneration%29). The reason is simple: it was the absolute minimum car required for my needs. 
+
+Manual cranks worked as both to open the windows and as the sole method of air conditioning in the car and the manual transmission enabled me to have fine grained control over how the small amount of torque from the engine was applied to the wheels.  
+  
+## Do you really need a F-150?
+
+  
+Recently, I re-posted a circa-2015 post about a script I use on a nearly daily basis to [manage multiple AEM installations concurrently](https://blogs.perficient.com/2015/12/08/managing-multiple-aem-instances/). I received several responses on different platforms to the effect of "it's 2020, use Docker"  
+  
+
+<Embed media="https://www.linkedin.com/embed/feed/update/urn:li:share:6652935886172418049" type="undefined" />
+
+  
+Using Docker to manage local AEM development to me is like using a F-150 for grocery shopping. Sure, you can toss an infinite number of bags into the back of the cab, but do you need a light truck to haul 50lbs of groceries? 
+
+We can apply this same logic to many different trends within the industry:
+
+* Do your users benefit from your marketing site being implemented as a SPA?
+* Do your content authors like publishing standard web-pages via a headless architecture?
+* Does converting your tightly integrated service into a web of microservices make it easier to understand and manage?
+
+One of the most memorable experiences in the rubber ducky, as my Focus was affectionately christened, was creeping over a frozen overpass in a near whiteout blizzard south of downtown Chicago. I crept past spun out SUVs in third gear, carefully providing just enough gas to make it up the incline without spinning out myself. Based on the sparse traffic on the toll-pike to Gary, I was one of the few people able to make it out of Chicago that evening.  
+
+All abstractions and features have cost, whether it's an automatic transmission or a hypervisor. Taking the simplest option over the more complex buzzword is usually the best choice, at least, until you can prove that you need a more complex solution.  
+  
+
+## When a Focus isn't Enough
+
+  
+While my Ford Focus was the best car to carry me around town, it had obvious deficiencies for some activities. I could drop the clutch and get 0-35 in a hurry, but getting to highway speeds was like coaxing a [reticent teenager](https://www.merriam-webster.com/dictionary/tautology) to get ready for school. And while the hatchback could hold more than anyone would reasonably expect, moving, yard-work or carrying more than two adults was a cramped affair.
+
+Knowing when to replace your simple-as-possible solution for a more complex solution requires a clear-eyed assessment of what the needs are now and what they will be in the near future. Projecting too far out usually ends with over-estimating your future needs and required complexity. Instead of assuming your app will become the next Netflix or Amazon, instead think of what it will need if growth doubles over the next year?
+
+Once you have the needs, balance that against the cost of the more complex solution, again being realistic. Does anything as complex as Kubernetes "just work" without any care or feeding? Often, you may find that an overly-simple solution will work much longer and with a lower cost than a more complex solution.
+
+There are of course solutions which because of their nature require complexity. A banking app or customer portal probably should be a Single Page Application, just like leveraging Adobe I/O or Amazon Lambda for Microservices may allow you to avoid creating servers or running unrelated code on AEM, but you'll have to work really hard to show that your marketing website needs a deployment of OpenShift.  
+  
+
+## The "Right" Architecture
+
+  
+One of the hardest things to grasp in architecture is to grasp how important context is to defining the correct architecture. As humans, we have a tendency to find similarities between situations and use patterns as a mental short-cut. 
+
+The most important part of identifying the correct architecture is to approach the current context without bias and chose the simplest solution that meets the need. 
+
+  

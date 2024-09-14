@@ -1,0 +1,154 @@
+---
+title: Website Performance with the Adobe Experience Cloud
+description: Performance is a critical concern for any web implementation. Users
+  expect high performance, responsive web experiences and will abandon
+  experiences that don't deliver. There are a number of different factors for
+  ensuring Adobe solution performance.
+hideInNav: false
+tags:
+  - Adobe Experience Manager
+  - Adobe Launch
+  - Adobe Target
+  - Single Page Applications
+  - Performance
+  - Adobe Dynamic Media
+pubDate: 2020-02-19
+display: post
+image: /images/posts/2020-02/speed-banner.jpg
+published: true
+---
+
+  
+
+Performance is a critical concern for any web implementation. [Users expect high performance, responsive web experiences and will abandon experiences that don't deliver.](https://developers.google.com/web/fundamentals/performance/why-performance-matters) Here are some things you need to consider to ensure Adobe solution performance:  
+
+* Scaling of Underlying Hardware
+* Development Best Practices
+* Author Instance Performance
+* Publish Instance Performance
+* Dispatcher Caching Percentage
+* Website Performance
+  
+##  Sizing the Underlying Hardware
+
+  
+ Properly sizing and scaling the underlying server instances is a critical initial step to ensuring AEM performance. Perficient recommends consulting with Adobe Managed Services and / or Adobe Launch Foundation Services on properly sizing instances. 
+
+In general, the key performance needs are sufficient processing and memory. An important point to consider is AEM will allocate Sling Job pools according to the number of cores on a machine, so for Job-heavy use cases, such as ingesting assets or processing forms, having enough cores is critical.
+
+In addition, since AEM leverages disk storage when using the TarFS, provisioning with IOps-optimized SSDs vs spinning hard drives provides a significant performance improvement. Leveraging S3 for blob storage can provide better cost and resiliency, but at the cost of higher latency.  
+  
+ Beyond individual servers, provisioning reasonable supporting hardware / services such as Load Balancers and a Content Distribution Network (CDN) will ensure performance and scalability of the overall application.  
+  
+##  Development Best Practices
+
+  
+ There are a number of development best practices to ensure performance. These include avoiding JCR Queries as much as possible, evaluating OAK Indexes for any queries, ensuring all Resource Resolvers are closed, ensuring as much of the content of the website can be cached, caching API responses and avoiding data structures which create too many child nodes of a single node.
+
+One important interaction a lot of team miss are background and non-web services, such as servlets. All non-trivial services [should be monitored for failure and slow responses](https://blogs.perficientdigital.com/2018/08/14/anatomy-of-the-ideal-background-job/). Beyond just simple success / failure monitoring, in combination with [Commons StopWatch](https://commons.apache.org/proper/commons-lang/apidocs/org/apache/commons/lang3/time/StopWatch.html), [Sling / Felix Health Checks](https://github.com/apache/felix/blob/trunk/healthcheck/README.md) or [Sling Metrics](https://sling.apache.org/documentation/bundles/metrics.html) can be used to ensure background processes are executing in a reasonable timeframe.   
+
+During the development process, Static Code Analysis tools can help identify memory leaks and best practice compliance. Leveraging performance testing tools such as [Tough Day](https://helpx.adobe.com/experience-manager/6-5/sites/developing/using/tough-day.html) and / or JMeter to performance test every release will ensure that applications should perform well under load.
+
+**Note:** For customers using Cloud Manager, both Static Code Analysis and performance testing are included in the Cloud Manager deployment process.   
+  
+##  AEM Instance Performance
+
+  
+Regular [maintenance tasks](https://helpx.adobe.com/experience-manager/kb/AEM6-Maintenance-Guide.html) should be configured such configuring cleanup tasks such as Version Purging, Workflow Cleanup, [Online Compaction](https://docs.adobe.com/content/help/en/experience-manager-65/deploying/deploying/revision-cleanup.html) and Audit Log cleanup.All production and pre-production environments should be installed in [Production-Ready mode](https://helpx.adobe.com/experience-manager/6-5/sites/administering/using/production-ready.html).   
+  
+### AEM Author Performance
+
+Author performance is difficult to scale since AEM instances generally can't scale authors horizontally without creating a separate application stack. Generally speaking, the AEM Author instance should be 2x the specs of the Publisher instances. 
+
+It is especially critical to ensure maintenance tasks are run on author as there is more repository churn on the authors than publishers in most cases. 
+
+The most common performance issues with Author instances are workflows and blocked activations so make sure the activation queue, job queue and workflow instances are monitored. Too many of any of these will bring an author instance to a crawl.  
+
+Content structure and taxonomy are important consideration for author instances. How pages are assembled, navigated and edited can have a significant effect on author productivity. Effectively leveraging Editable Templates and Experience Fragments can reduce authoring time by separating out common content from page-specific content and thus reducing content entry time.   
+  
+### Publisher Performance
+
+  
+ Unlike authors, publishers can be scaled horizontally, the primary limitation here is licensing. Beyond following development and server best practices, to ensure performance in publisher performance, ensure that the Publisher is configured for production and has the [Link Checker disabled](https://blogs.perficientdigital.com/2019/07/22/attack-of-the-aem-link-checker/).
+
+If your application does serve a significant amount of non-cacheable content, such as an intranet or logged in site, Publisher instances should be correspondingly expanded in CPU Cores and Memory to accommodate. 
+
+For applications with a significantly large number of users and groups, using external group membership can have a significant performance improvement. This will be the subject of a future blog post.   
+  
+## Dispatcher Performance
+
+  
+ The most critical aspect of dispatcher performance is to ensure as much content on the site is cached as possible. [Sling Selectors and Suffixes ](https://sling.apache.org/documentation/the-sling-engine/url-decomposition.html)can be used in the place of query strings to create dynamic, but still cachable pages. All query strings not needed for server side processing (such as campaign ID's), should be [ignored by the dispatcher](https://docs.adobe.com/content/help/en/experience-manager-dispatcher/using/configuring/dispatcher-configuration.html#ignoring-url-parameters).
+
+Blocking non-authorized requests will help prevent DDOS attacks as well as reducing server time serving invalid requests. 
+
+Balancing the needs of referential content and creating a structure to allow a lower stats level will help ensure that replication does not need to invalidate the entire cache. 
+
+From a delivery perspective, the dispatcher web engine should be configured to optimize the delivery of the website to the user’s browser. This includes client-side caching, compression and HTTP/2 support. [mod\_pagespeed](https://www.modpagespeed.com/) can provide a "quickstart" for optimizing dispatcher performance, though not all options are appropriate for every site.  
+  
+### Performant Personalization  
+
+For content which needs to be individualized to the user, leveraging Ajax or [Sling Dynamic Includes](https://sling.apache.org/documentation/bundles/dynamic-includes.html) can allow for creating a personalized experience. For personalizing content via segments, leveraging [Adobe Target](https://www.adobe.com/marketing/target.html) brings a much more powerful, marketing friendly tool for personalizing content, so we would recommend using Target over personalizing via segments in AEM.
+
+Though AEM does support an integration to edit Targeted content in AEM, generally we would recommend authoring Targeted content in Target as it offers a richer, nicer experience and requires less client side code to execute.  
+  
+### Managing Redirects
+
+Managing redirects from the legacy system can also be an issue when there are large number of legacy redirects. Perficient contributed a tool for managing these redirects to [ACS AEM Commons called Redirect Map Manager](https://adobe-consulting-services.github.io/acs-aem-commons/features/redirect-map-manager/index.html). With this tool, each migrated page can indicate its legacy URL, marketers can define vanity URLs and lists of redirects can be loaded as flat files.  
+  
+  
+##  Website Performance
+
+  
+ In the end, what users care about is how fast the website loads. Optimizing the server performance will not overcome a poorly developed HTML page. 
+
+A few key performance best practices include combining and minifying CSS and JavaScript via [Client Libraries](https://helpx.adobe.com/experience-manager/6-5/sites/developing/using/clientlibs.html) or [NPM Builds](https://blogs.perficientdigital.com/2017/06/09/aem-with-font-end-technologies-like-grunt/) (Note: HTTP/2 does influence this, however without ensuring two different copies of the stylesheets can be served for HTTP/1.1 vs HTTP/2, this is still a best practice until HTTP/2 support becomes more prevalent) and avoiding document.write or inline styling / scripts.  
+  
+### Optimizing Images
+
+Images represent the largest assets served on most websites, thus resizing images to the smallest workable size represents one of the biggest wins for optimizing website performance. 
+
+There are a number of options to resize images in Adobe, including:  
+
+* [Core Components Adaptive Images ](https://github.com/adobe/aem-core-wcm-components/wiki/the-adaptive-image-servlet) \- Most useful for out of the box image components
+* [ACS AEM Commons Named Image Transformations](http://aempodcast.com/2016/acs-aem-commons/named-transform-image-servlet-quick-review/#.Xk2GcxNKh24) \- Useful for retrofitting existing components or sizing images in a non-Adaptive image based component
+* [Adobe Dynamic Media](https://docs.adobe.com/content/help/en/experience-manager-65/assets/dynamic/dynamic-media.html) \- The most powerful option, especially useful for sharing images with multiple Adobe and non-Adobe tools
+
+No matter which option you choose, optimizing image sizes is a must for delivering a performant site.  
+  
+### Optimizing Digital Marketing Tags
+
+The most basic step is optimizing marketing tag delivery via a Tag Management System such as [Launch by Adobe.](https://www.adobe.com/experience-platform/launch.html) The Tag Management System should deliver all tags and to avoid multiple includes. To avoid page flicker, Adobe Target should be integrated into the body or head, as high as possible. 
+
+Consider integrating Launch via [Asynchronous deployment](https://docs.adobe.com/content/help/en/launch/using/reference/client-side-info/asynchronous-deployment.html) instead of the default synchronous method.
+
+Teams should careful consider which tags to execute immediately and which to defer to balance the needs of the marketing teams to measure and optimize and the performance needs of users.
+
+  
+### Single Page Applications
+
+ Single Page Applications such as AngularJS or React are a solution for delivering a "reload-less" experience, however they come with significant downsides from a Content Management, Digital Marketing and SEO perspective vs traditional server-rendered websites. By developing with ES6 / TypeScript and transpiling to vanilla JavaScript we can develop experiences with similar usability, but without the bloat or downsides of Single Page Applications.
+
+To determine whether or not to implement an application in a SPA, consider what kind of application you are creating. Is this a content application or a functional application? Functional applications such as profile editors, social interactions and customer portals fit well into the SPA model, but managing a content heavy site such as a marketing website, documentation portal or intranet proves cumbersome with a SPA.   
+  
+## Where to Start
+
+  
+With all of these potential ideas on how to ensure website performance with Adobe, where should you start? It's best to start front to back. Use a performance testing tool such as [Google Page Speed Insights](https://developers.google.com/speed/pagespeed/insights/) or [GTMetrics](https://gtmetrix.com/) to identify issues directly impacting users and work backwards through the stack identifying and optimizing issues.   
+  
+### Additional Reading
+
+* [https://helpx.adobe.com/experience-manager/kb/performance-tuning-tips.html](https://helpx.adobe.com/experience-manager/kb/performance-tuning-tips.html)
+* [https://helpx.adobe.com/experience-manager/6-5/sites/deploying/using/configuring-performance.html](https://helpx.adobe.com/experience-manager/6-5/sites/deploying/using/configuring-performance.html)
+* [https://blogs.perficientdigital.com/tag/mastering-the-aem-dispatcher/](https://blogs.perficientdigital.com/tag/mastering-the-aem-dispatcher/)
+* [](https://blogs.perficientdigital.com/tag/mastering-the-aem-dispatcher/)[https://helpx.adobe.com/experience-manager/kb/optimizing-the-dispatcher-cache.html](https://helpx.adobe.com/experience-manager/kb/optimizing-the-dispatcher-cache.html)
+
+  
+**Acknowledgements**
+
+  
+This blog post was improved by ideas and contributions from:  
+* [Jay Jackson](https://blogs.perficientdigital.com/author/jjackson/)
+* [Paul Bjorkstrand](https://blogs.perficientdigital.com/author/pbjorkstrand/)
+* Paul Goodrich
+  

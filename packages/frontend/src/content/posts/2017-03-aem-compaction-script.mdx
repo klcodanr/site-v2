@@ -1,0 +1,112 @@
+---
+title: 3 Scripts to Make AEM Compaction Easy
+description: Scripts to help easily run TarMK compaction on AEM 6.0 - AEM 6.2
+hideInNav: false
+tags:
+  - Adobe Experience Manager
+  - Apache Jackrabbit Oak
+  - Oak Compaction
+pubDate: 2017-03-16
+display: post
+image: /images/posts/2017-03-16-aem-compaction-script/garbage-collection.jpg
+published: true
+---
+
+When provisioning a new AEM 6.0-6.2 environment, one of the first things you should configure is a TarMK compaction process. This process will remove deleted content from the underlying data store and compress the size of the AEM repository on the disk. This is especially important in the lower environments up front as they will be heavily utilized for development and testing activities which can generate a lot of content churn.
+
+A recent project I was on had a catastrophic issue in a lower environment because compaction was not enabled and the server simply ran out of disk. Don't let this happen to you!
+
+## Compacting Servers
+
+AEM requires offline compaction for these versions, so this will require downtime. I've found the easiest way to do this is to schedule an automatic job to run off hours to stop AEM, run the compaction and then restart AEM when complete.
+
+To do this, I created a script, [compact.sh](https://github.com/PerficientDigital/AEM-Compaction/blob/master/compact.sh) which will automatically stop the AEM server, perform the compaction and restart AEM. This script is based on others I've seen online, however the advantage here is that this one will stop the AEM server and fully wait until it is stopped before start the compaction. In order to use the script, you should:
+
+* Create a folder `help` as a sibling to `crx-quickstart`
+* Download the appropriate [oak-run.jar](http://search.maven.org/#search%7Cga%7C1%7Ca%3A%22oak-run%22) into the help folder
+* Download the compact.sh into the help folder
+* Add a cron trigger to run the script periodically, here we do it at 5:00 AM on Saturdays:  
+`0 5 * * 5 aem /opt/aem/help/compact.sh`
+
+  
+[ Check out compact.sh on GitHub](https://github.com/PerficientDigital/AEM-Compaction/blob/master/compact.sh)   
+  
+## Compacting a Whole Environment
+
+ So how do you run a compaction across an entire environment without causing downtime? To do this, I created a script which will sequentially stop the instances in an environment and the associated dispatchers, ensuring the load balancer will direct traffic to the alternate instance during the compaction process.
+
+ This script is set up to run in a 2-publish, single author environment, but you could adapt it to more significant buildouts. To use the script, deploy the compaction script to all of the servers, then replace the relevant server information in the ssh commands below for your particular environment.
+
+```
+
+#!/bin/bash
+
+cat << EOF
+
+WARNING!!!
+
+-------
+
+This script will run compaction on the Prod environment.
+
+During the course of this operation, the Author and Publish AEM Instances will not be available.
+
+Please ensure before starting appropriate backups have been taken!
+
+EOF
+
+read -p "Do you want to continue? (y/n) " CONT
+if [ $CONT = "y" ]; then
+    echo "Starting compaction of Prod environment..."
+
+	echo "Stopping Author Dispatcher..."
+	ssh -i ~/.ssh/client-prod.pem -t user@dispatcher-author.prod.client.com 'sudo service httpd stop'
+
+	echo "Running compaction script in Author..."
+	ssh -i ~/.ssh/client-prod.pem -t user@aem-author.prod.client.com 'sudo su - aem /opt/aem/help/compact.sh'
+
+	echo "Stopping Publish Dispatcher 1..."
+	ssh -i ~/.ssh/client-prod.pem -t user@dispatcher-publish-01.client.com 'sudo service httpd stop'
+
+	echo "Running compaction script in Publish 1..."
+	ssh -i ~/.ssh/client-prod.pem -t user@aem-publish-01.client.com 'sudo su - aem /opt/aem/help/compact.sh'
+
+	echo "Starting Publish Dispatcher 1..."
+	ssh -i ~/.ssh/client-prod.pem -t user@dispatcher-publish-01.client.com 'sudo service httpd start'
+
+	echo "Waiting for ELB resumption..."
+	sleep 5m
+
+	echo "Stopping Apache 2..."
+	ssh -i ~/.ssh/client-prod.pem -t user@dispatcher-publish-02.client.com 'sudo service httpd stop'
+
+	echo "Running compaction script in Publish 2..."
+	ssh -i ~/.ssh/client-prod.pem -t user@aem-publish-02.client.com 'sudo su - aem /opt/aem/help/compact.sh'
+
+	echo "Starting Apache 2..."
+	ssh -i ~/.ssh/client-prod.pem -t user@dispatcher-publish-02.client.com 'sudo service httpd start'
+
+	echo "Starting Author Dispatcher..."
+	ssh -i ~/.ssh/client-prod.pem -t user@dispatcher-author.prod.client.com 'sudo service httpd start'
+
+	echo "Prod Compacted!"
+fi
+
+```
+  
+  
+## Compacting a Local Instance
+
+I also updated the [aem-mgr.sh](https://github.com/PerficientDigital/AEM-Manager/blob/master/aem-mgr.sh) script I described in [Managing Multiple AEM Instances](http://blogs.perficient.com/adobe/2015/12/08/managing-multiple-aem-instances/) to add a new compaction option.
+
+This script will not stop and start AEM, but will run compaction on your local author and publish instances. In order to enable compaction, update every local instance you would want to compact with the following:
+
+* Create a folder `help` as a sibling to `crx-quickstart`
+* Download the appropriate [oak-run.jar](http://search.maven.org/#search%7Cga%7C1%7Ca%3A%22oak-run%22) into the help folder
+
+  
+[ Check out aem-mgr.sh on GitHub](https://github.com/PerficientDigital/AEM-Manager/blob/master/aem-mgr.sh)   
+  
+## Looking forward to AEM 6.3
+
+ With the upcoming release of AEM 6.3, we anticipate support for online compaction. This will significantly ease the maintainance of AEM by eliminating the need for offline compaction. In the meatime, I hope this article is helpful for anyone using AEM 6.0, 6.1 or 6.2.

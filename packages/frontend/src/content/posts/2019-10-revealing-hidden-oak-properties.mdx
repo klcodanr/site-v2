@@ -1,0 +1,81 @@
+---
+title: Revealing Hidden OAK Properties
+description: Did you know there are properties you can't see in your Apache
+  Sling / Adobe Experience Manager repository? You can see them with Apache Oak
+  Run.
+hideInNav: false
+tags:
+  - Apache Jackrabbit Oak
+  - Apache Sling
+  - Adobe Experience Manager
+pubDate: 2019-10-21
+display: post
+image: /images/posts/2019-10/hidden-oak-properties-banner.jpg
+published: true
+---
+
+  
+Did you know there are properties you see underlying your Apache Sling / Adobe Experience Manager repository? Jackrabbit OAK includes the concept of hidden properties. Hidden properties are prefixed with a colon and are not visible to consuming applications. 
+
+Examples include [:nestedCugs and :topCugCnt](https://jackrabbit.apache.org/oak/docs/apidocs/org/apache/jackrabbit/oak/spi/security/authorization/cug/impl/CugConfiguration.html#HIDDEN%5FTOP%5FCUG%5FCNT) which are used to store the state of [Jackrabbit Closed User Groups](https://jackrabbit.apache.org/oak/docs/security/authorization/cug.html).
+
+If you are lucky, you will never have to deal with hidden properties, but if you do, you should know that the Oak Run JAR includes a couple of very helpful utilities for revealing these properties. 
+
+* [Oak Run Console](https://github.com/apache/jackrabbit-oak/tree/trunk/oak-run#console) \- Interactive CLI console for traversing down through the Jackrabbit Oak repository
+* [Oak Run Explore](https://github.com/apache/jackrabbit-oak/tree/trunk/oak-run#explore) \- Java GUI tool for exploring the current state of the Jackrabbit repository
+
+Both of these tools have similar functions but operate quite similarly. In my experience, the console is quicker whereas the GUI is easier to use.   
+  
+## Getting Oak Run
+
+  
+The first step to getting Oak Run is to find the version required for your Apache Sling / AEM instance. You can find it by checking the version of the Oak Core bundle:  
+[http://localhost:4502/system/console/bundles?filter=(Bundle-SymbolicName=org.apache.jackrabbit.ok-core)](http://localhost:4502/system/console/bundles?filter=%28Bundle-SymbolicName=org.apache.jackrabbit.ok-core%29)  
+
+![Searching for the OAK Core Bundle](/images/posts/2019-10/Oak-Bundle-Search.png)
+
+  
+
+From there, you can download the correct version of the Oak Run jar from Maven:  
+[https://search.maven.org/search?q=g:org.apache.jackrabbit%20AND%20a:oak-run&core=gav](https://search.maven.org/search?q=g:org.apache.jackrabbit%20AND%20a:oak-run&core=gav)
+
+  
+## Using Oak Run Console / Explore
+
+  
+Once you have the Jar downloaded copy it into the installation directory and then run the commands as such:
+
+AEM:  
+
+```bash
+java -jar oak-run-[version].jar [command] crx-quickstart/repository/segmentstore
+```
+
+[Sling CMS](https://github.com/apache/sling-org-apache-sling-app-cms) / [Apache Sling](https://sling.apache.org/downloads.cgi):  
+
+```bash
+java -jar oak-run-[version].jar [command] sling/repository/segmentstore
+```
+
+Running the commands you will get a screen like the following.  
+  
+### Oak Run Explore  
+  
+
+![Oak Run Explorer](/images/posts/2019-10/Oak-Run-Explorer.png)
+
+  
+A few nice things you'll notice in the explore GUI:  
+* Tree view of the Oak repository
+* ALL nodes and properties including the hidden ones
+* Repository size by node tree
+  
+### Oak Run Console
+
+  
+
+![Oak Run Console](/images/posts/2019-10/Oak-Run-Console.png)
+
+  
+
+The console allows you to navigate the Oak repository like a filesystem and has a number of nifty commands. You can find out more by entering `:h` or `:help`

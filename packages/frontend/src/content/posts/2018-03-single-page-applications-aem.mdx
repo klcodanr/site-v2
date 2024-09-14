@@ -1,0 +1,79 @@
+---
+title: Single Page Application Approaches in AEM
+description: Discusses architectural options around integrating Web Content
+  Management Systems, such as Adobe Experience Manager with Single Page
+  Applications. Including which integration paradigms are most appropriate for
+  certain situations.
+hideInNav: false
+tags:
+  - Adobe Experience Manager
+  - AEM 6.4
+  - Single Page Applications
+  - Architecture
+pubDate: 2018-03-20
+display: post
+image: /images/posts/2018-03/architect.jpg
+published: true
+---
+
+With all the buzz around Single Page Applications (SPA), there are many unanswered architectural questions. What happens to traditional Web Content Management systems? Who will own the glass? What is the right approach?
+
+The answer is more nuanced than a blanket response. The right approach for your experience will depend based on the type of content, the experience you're creating and the needs of your consumers. Generally, there are one of three different options for approaching the delivery of content. These include Traditional Web Content Management, Headless Content Management and Integrated SPA+CMS.
+
+## Traditional Web Content Management
+
+For many experiences, using a Content Management System and having that system on the glass makes a lot of sense. This is especially applicable for your content-heavy websites, which are primarily informational. These sites have a very high content to interactive ratio and have a primary challenge of keeping this content up-to-date and making it easy to author. SPAs can be added as embedded applications, but are for the most part treated as black boxes. Examples of where this would be appropriate would include Consumer Packaged Goods websites, medical facility websites, and manufacturer websites.
+
+  
+### Architecting a Traditional WCM Solution
+
+  
+The WCM application is the fulcrum of a traditional WCM solution. This system will deliver the content to the glass, composing pages from it's internal content and any external inputs. Single Page Applications, in Traditional WCM setups, will be treated as black boxes, in AEM, they may exist as components with a few, if any, configuration parameters.
+
+  
+
+![Traditional Web Content Management](/images/posts/2018-03/SPA-Traditional-WCM.png)
+
+## Headless Content Management
+
+For some sites, the needs for interactivity outweighs the content needs or the two solutions need only to coexist. In these sites, Headless Content Management may be the best pattern for integrating content with Single Page Applications. There may be a portion of the experience that is largely informational or marketing-driven but won't contain many direct user interactions. This can be managed through Traditional WCM.
+
+The other portion of the experience can consume consistent content from the Content Management System via Content Services and be delivered through a Single Page Application. Adobe Experience Manager [Experience Fragments](https://helpx.adobe.com/experience-manager/kt/platform-repository/using/content-fragments-experience-fragments-article-understand.html) and [Content Services](https://helpx.adobe.com/experience-manager/kt/sites/using/content-services-tutorial-use.html) are useful for exposing content from the AEM repository to SPA applications. 
+
+Examples where this paradigm would apply include a banking website where you may have informational content for prospective clients and an online portal application for users to bank online. Or a grocer which offers coupons and marketing materials through Content Management and has a dynamic application for ordering groceries online. The two experiences sit side-by-side, share content through a headless integration and co-deliver to the glass.
+
+  
+### Architecting a Headless Content Management Application
+
+  
+A Headless Content Management application is has a more complex topology, with the WCM both owning the content publication and acting as a consumption service for Single Page Applications. 
+
+  
+
+![An example architectural diagram for Headless Content Management solution, showing the WCM acting as the content provider](/images/posts/2018-03/SPA-Headless-Content-Management.png)
+
+## Integrated SPA+CMS
+
+Some experiences require the integration of user interactivity with extensive Content Management needs. In this experiences, the integration between the Content Management System and Single Page Application must be as seamless as possible. 
+
+[AEM 6.4's SPA Editor](https://www.adobe.com/marketing-cloud/experience-manager/new-capabilities.html) and the Content Services framework are great tools to deliver the power of AEM's content management capabilities through a SPA-driven solution. With AEM's SPA Editor, creating rich experiences does not mean you have to forgo the drag and drop, seamless WYSIWYG offering we've grown to know and love for the interactive power of a Single Page Application, you can get both!
+
+These integrations can take two forms. Either (as AEM's SPA Editor works) the CMS can publish integrated content to the SPA framework in context. Or the SPA will pull down the content from the Content Management System, include hooks to allow direct editing and deliver the experience on the glass to the user. Depending on the exact needs and tools available, one or both solutions will be the best fit.
+
+ Some examples of Integrated SPA+CMS applications include e-commerce applications for retail, client web and mobile applications and anything which provides around extensive interactivity with content.
+
+  
+### Architecting a Integrated SPA+CMS Solution
+
+  
+In an Integrated SPA+CMS solution, the Web Content Management application acts as a content publication engine, while being deeply integrated with the consuming applications to enable a robust authoring experience. 
+
+  
+
+![An example architectural diagram for an Integrated SPA+CMS Solution showing how the content is edited within the SPA](/images/posts/2018-03/SPA-Integrated-SPA+CMS.png)
+
+## Choosing the right approach
+
+No single approach is going to be correct for every situation. To create a successful and sustainable solution, you must carefully weight your needs and options and make the choice. Not every solution needs to be a Single Page Applications, nor do our interactions need to be limited by what Content Management Systems can do out of the box. 
+
+By evaluating your needs and choosing the correct approach, you can reduce the effort for your implementation, ensure your solution will scale, and avoid locking yourself into a poorly suited solution.

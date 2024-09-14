@@ -1,0 +1,143 @@
+---
+title: Bringing AEM Back to Life with JConsole
+description: How to use JConsole do diagnose a "bricked" AEM instance
+hideInNav: false
+tags:
+  - Adobe Experience Manager
+  - Java
+  - OSGi
+pubDate: 2021-09-15
+display: post
+image: /images/posts/2021-09/give-my-creation-life.jpg
+published: true
+---
+
+  
+
+One of the most frustrating experiences in AEM development is "bricking" an instance. This happens when you do something that renders the instance unusable due to no longer being able to login or access the repository when it's running. 
+
+ Most of the times when this has happened to me when I've been messing with the authentication portions of AEM. Most, recently while working on the com.adobe.granite.auth.oauth bundle. This bundle is the basis for a number of AEM authentication features including Adobe IMS. 
+
+ I installed my updated bundle and bam! I got this lovely screen:
+
+  
+
+![Sad face](/images/posts/2021-09/Login-Sadness.png)
+
+  
+
+I checked the logs and saw a nastygram:
+
+  
+
+```
+15.09.2021 14:52:34.780 *WARN* [127.0.0.1 [1631731954777] GET /libs/granite/core/content/login.html HTTP/1.1] com.adobe.granite.metrics.knownerrors.impl.ErrorLoggingComponentFilter Exception in component: category=CUSTOMER_CODE, resourceType=granite/core/components/login, exceptionType=org.apache.sling.api.scripting.ScriptEvaluationException, errorId=CUSTOMER, resource=/libs/granite/core/content/login, exceptionMessage = org.apache.sling.scripting.jsp.jasper.JasperException: Unable to compile class for JSP: 
+
+An error occurred at line: 25 in the generated java file
+Only a type can be imported. com.adobe.granite.auth.ims.ImsConfigProvider resolves to a package
+
+An error occurred at line: 26 in the generated java file
+Only a type can be imported. com.adobe.granite.security.user.UserManagementService resolves to a package
+
+An error occurred at line: 362 in the jsp file: /libs/granite/core/components/login/login.jsp
+UserManagementService cannot be resolved to a type
+359:     }
+360: 
+361:     final XSSAPI xssAPI = sling.getService(XSSAPI.class).getRequestSpecificAPI(slingRequest);
+362:     final UserManagementService userManagementService = sling.getService(UserManagementService.class);
+363:     final ValueMap cfg = ResourceUtil.getValueMap(configs);
+364: 
+365:     final String authType = request.getAuthType();
+
+
+An error occurred at line: 362 in the jsp file: /libs/granite/core/components/login/login.jsp
+UserManagementService cannot be resolved to a type
+359:     }
+360: 
+361:     final XSSAPI xssAPI = sling.getService(XSSAPI.class).getRequestSpecificAPI(slingRequest);
+362:     final UserManagementService userManagementService = sling.getService(UserManagementService.class);
+363:     final ValueMap cfg = ResourceUtil.getValueMap(configs);
+364: 
+365:     final String authType = request.getAuthType();
+
+
+An error occurred at line: 409 in the jsp file: /libs/granite/core/components/login/login.jsp
+ImsConfigProvider cannot be resolved to a type
+406:     &lt;%-- optimized for mobile, zoom/scaling disabled --%&gt;
+407:     &lt;meta name="viewport" content="width=device-width, initial-scale=1" /&gt;
+408:     &lt;meta http-equiv="X-UA-Compatible" content="chrome=1" /&gt;&lt;%
+409:         ImsConfigProvider imsConfigProvider = sling.getService(ImsConfigProvider.class);
+410:         if (imsConfigProvider != null) {
+411:             imsLoginUrl = imsConfigProvider.getImsLoginUrl(slingRequest);
+412:             %&gt;&lt;meta name="granite.login.imsLoginUrl" content="&lt;%= xssAPI.getValidHref(imsLoginUrl) %&gt;"&gt;&lt;%
+
+
+An error occurred at line: 409 in the jsp file: /libs/granite/core/components/login/login.jsp
+ImsConfigProvider cannot be resolved to a type
+406:     &lt;%-- optimized for mobile, zoom/scaling disabled --%&gt;
+407:     &lt;meta name="viewport" content="width=device-width, initial-scale=1" /&gt;
+408:     &lt;meta http-equiv="X-UA-Compatible" content="chrome=1" /&gt;&lt;%
+409:         ImsConfigProvider imsConfigProvider = sling.getService(ImsConfigProvider.class);
+410:         if (imsConfigProvider != null) {
+411:             imsLoginUrl = imsConfigProvider.getImsLoginUrl(slingRequest);
+412:             %&gt;&lt;meta name="granite.login.imsLoginUrl" content="&lt;%= xssAPI.getValidHref(imsLoginUrl) %&gt;"&gt;&lt;%
+
+
+```
+
+  
+
+Clearly something is wrong with the Granite Auth IMS bundle, so now I can't login to anything in AEM (including the System Console) because I completely broke login. Great.
+
+  
+## JConsole to the Rescue!
+
+  
+Luckily, I have an ace up my sleeve: [JConsole](https://docs.oracle.com/javase/7/docs/technotes/guides/management/jconsole.html)! JConsole is a GUI for monitoring the Java Virtual Machine (JVM) via J[ava Management Extensions (JMX)](https://en.wikipedia.org/wiki/Java%5FManagement%5FExtensions). In our case, this allows us to connect directly to the JVM and invoke AEM's various MBeans.   
+
+AEM (as well as it's dependencies such as Jackrabbit OAK, Felix, and Sling) provide a large number of JMX MBeans for us to manage the instance.
+
+JConsole comes with Java JDKs so if you have a Java JDK installed, you can run JConsole with the command: `jconsole`.
+
+Once JConsole starts, select AEM's entry from the Local Process list:  
+
+![Selecting AEM from the JConsole list](/images/posts/2021-09/Select-JVM.png)
+
+  
+
+Then allow insecure connections and select the MBeans tab. This tab lists out all of the MBeans organized by package name:
+
+  
+
+![JMX MBeans](/images/posts/2021-09/AEM-JMX-MBeans.png)
+
+  
+
+I'm having an issue with a bundle not resolving, so let's take a look at `osgi.core/bundleState/1.7/org.apache.felix.framework/[uuid]/Operations/getBundle`. This takes a bundle ID number and returns information about the bundle.  
+
+So how do i know which bundle ID to use? There is a MBean to list the bundles, but then you'll need to page through a couple hundred bundles to find the one you want. Instead, I found the easiest way was to grep for the bundle's PID inside the crx-quickstart/launchpad/felix folder:
+
+  
+
+```
+> grep 'com.adobe.granite.auth.ims' -r crx-quickstart/launchpad/felix 
+crx-quickstart/launchpad/felix/bundle240/bundle.info:launchpad:resources/install/20/com.adobe.granite.auth.ims-1.4.18.jar
+```
+
+  
+Once you have the bundle ID you can look up the bundle info. If you want to see more about any of the fields (e.g. the string arrays) you can double click on the field.  
+
+![Get a bundle info from JConsole](/images/posts/2021-09/Get-Bundle-JConsole.png)
+
+  
+
+Once I saw the version for the com.adobe.granite.auth.oauth package I knew the issue. I'd previously made a breaking change which bumped the version to 4.0.0 and when I reverted the change I forgot to update the package-info.java. A quick update to the package-info.java and maven build later the environment was back up and running!
+
+![Bundle Exports](/images/posts/2021-09/Bundle-Exports.png)
+
+  
+
+Bricking an AEM instance is no fun, but at least with JConsole you have _some_ ability to diagnose what happened and potentially navigate out of the situation.
+
+This post covers a single use case, but _most_ of the activities you can do in the OSGi console can also be done via JMX MBeans in JConsole. It also provides excellent tooling for diagnosing performance issues in the JVM or the Oak repository. Take a quick spin around JConsole, so next time you can get yourself out of that sticky situation.   
+  

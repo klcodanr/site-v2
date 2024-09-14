@@ -1,0 +1,38 @@
+---
+title: "Gotcha: Sling Servlet Requires a Name"
+description: In order to create a sling servlet you must set a name for it - learn why
+hideInNav: false
+tags:
+  - Adobe CQ
+  - Apache Sling
+  - Gotcha
+pubDate: 2012-12-01
+display: post
+image: /images/posts/shared/sling.jpeg
+published: true
+---
+
+I recently had the opportunity to delve into the code for the Sling Resources to document the @SlingServlet annotation. One of the more interesting things I discovered was that in addition to everything stated on the Sling documentation about [what is required to register a servlet](http://sling.apache.org/site/servlets.html), there is one additional requirement.
+
+Each Servlet which is to be created and registered, must have an unique name. The [SlingServletResolver](http://svn.apache.org/repos/asf/sling/trunk/bundles/servlets/resolver/src/main/java/org/apache/sling/servlets/resolver/internal/SlingServletResolver.java), which handles the resolution of Servlets, generates the name based on one of the following properties (in order):
+
+* sling.core.servletName
+* component.name
+* service.pid
+* service.id
+
+The value of this property must be \*\*explicitly \*\*set for the servlet service. It will not use the default value, which is the fully-qualified class name. If this value is not set, your service will register correctly within OSGi, will seem to be configured correctly, but will not be registered as available in the SlingServletResolver.
+
+Setting the property is as easy as setting the name attribute in the @Component or @SlingServlet annotation:
+
+```
+@SlingServlet(label = "Test Servlet", metatype = true, methods = { "POST",
+		"GET" }, paths = "/bin/testservlet", name="com.myco.TestServlet")
+@Properties({
+		@Property(name = "service.vendor", value = "My Co"),
+		@Property(name = "service.description", value = "Servlet testing Sling") })
+public class TestServlet extends SlingAllMethodsServlet {
+
+```
+
+So, if you have created a servlet which seems to be configured properly, but is not appearing, make sure you have one of the name properties set so the Sling Servlet Resolver will pick it up

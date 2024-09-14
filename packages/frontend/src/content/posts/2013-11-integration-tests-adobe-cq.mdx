@@ -1,0 +1,194 @@
+---
+title: Integration Tests in Adobe CQ
+description: Learn about how to execute automated integration tests in the Adobe CQ platform
+hideInNav: false
+tags:
+  - Adobe CQ
+  - Best Practices
+  - Integration Testing
+  - jUnit
+pubDate: 2013-11-26
+display: post
+image: /images/posts/shared/CQ5.png
+published: true
+---
+
+Awhile back I wrote a post on running [integration tests in Apache Sling](http://labs.sixdimensions.com/blog/dan-klco/2013-06-05/creating-integration-tests-apache-sling). This technique is useful for developers working directly on Apache Sling, but doesn’t support downstream platforms like Adobe CQ/AEM.
+
+After some finagling and testing I was able to get a similar technique working using Adobe CQ / AEM instead of Apache Sling. To enable integration tests using Adobe CQ, add the following into your POM.
+
+### Dependencies
+
+First, add plugins to copy required dependencies and the current project output into the CQ instance:
+
+```
+<!-- Copy the required dependencies -->
+<plugin>
+	<groupId>org.apache.maven.plugins</groupId>
+	<artifactId>maven-dependency-plugin</artifactId>
+	<executions>
+	   <execution>
+		   <id>copy-dependencies</id>
+		   <goals>
+			  <goal>copy-dependencies</goal>
+		   </goals>
+		   <phase>package</phase>
+		   <configuration>
+		   	  <outputDirectory>${project.build.directory}/sling/additional-bundles</outputDirectory>
+		   	  <includeArtifactIds>artifact-id-1,artifact-id-2</includeArtifactIds>
+		   	  <excludeTransitive>true</excludeTransitive>
+			  <overWriteReleases>false</overWriteReleases>
+			  <overWriteSnapshots>false</overWriteSnapshots>
+		   </configuration>
+		</execution>
+	</executions>
+</plugin>
+<!-- Copy the project output -->
+<plugin>
+	<artifactId>maven-antrun-plugin</artifactId>
+	<executions>
+		<execution>
+			<phase>package</phase>
+			<configuration>
+				<tasks>
+					<copy file="${project.build.directory}/${project.build.finalName}.jar" toDir="${project.build.directory}/sling/additional-bundles" verbose="true" />
+				</tasks>
+			</configuration>
+			<goals>
+				<goal>run</goal>
+			</goals>
+		</execution>
+	</executions>
+</plugin>
+
+```
+
+The artifact id’s specified must be dependencies of the current project to be copied.
+
+### Failsafe Configuration
+
+Next, add a similar failsafe configuration to the one in the Apache Sling integration tests:
+
+```
+<plugin>
+	<groupId>org.apache.maven.plugins</groupId>
+	<artifactId>maven-failsafe-plugin</artifactId>
+	<version>2.12.4</version>
+	<executions>
+		<execution>
+			<id>integration-test</id>
+			<goals>
+				<goal>integration-test</goal>
+			</goals>
+		</execution>
+	</executions>
+	<configuration>
+		<includes>
+			<include>**/*IT.java</include>
+		</includes>
+		<systemPropertyVariables>
+			<jar.executor.work.folder>${cq.dir}/crx-quickstart</jar.executor.work.folder>
+			<jar.executor.jar.options>-p $JAREXEC_SERVER_PORT$ -nobrowser -nofork</jar.executor.jar.options>
+			<jar.executor.vm.options>-XX:MaxPermSize=256m -Xmx1024M</jar.executor.vm.options>
+			<jar.executor.jar.folder>${cq.dir}</jar.executor.jar.folder>
+			<jar.executor.jar.name.regexp>cq5.*jar$</jar.executor.jar.name.regexp>
+			<additional.bundles.path>${project.build.directory}/sling/additional-bundles</additional.bundles.path>
+			<keepJarRunning>false</keepJarRunning>
+			<server.ready.timeout.seconds>240</server.ready.timeout.seconds>
+			<sling.testing.timeout.multiplier>1.0</sling.testing.timeout.multiplier>
+			<server.ready.path.1>/libs/granite/core/content/login.html:QUICKSTART_HOMEPAGE</server.ready.path.1>
+			<start.bundles.timeout.seconds>30</start.bundles.timeout.seconds>
+			<bundle.install.timeout.seconds>20</bundle.install.timeout.seconds>
+			<sling.additional.bundle.0>artifact-id-1</sling.additional.bundle.0>
+			<sling.additional.bundle.1>artifact-id-2</sling.additional.bundle.1>
+			<sling.additional.bundle.2>artifact-id-3</sling.additional.bundle.2>
+		</systemPropertyVariables>
+	</configuration>
+</plugin>
+
+```
+
+The changes here to note, is that this will be looking for a JAR with a name like cq5-`SOMETHING`.jar in the directory specified by the `cq.dir` property. This property should be set as a command line parameter so that different environments can be easily supported. The test configuration will start the CQ with enough memory, suppress the new browser window and prevent CQ from forking the process. The server.ready.path.1 property is set to the welcome page for CQ 5.6.1, if you are using a different version of CQ, this URL may need to change.
+
+At this point, when you run the build, a CQ5 instance will be automatically started, any test classes with names like `SOMETHING`IT will be run and the CQ instance will be stopped.
+
+### CQClient
+
+One odd thing I have noticed is that when uploading files, CQ sometimes returns 201 and sometimes returns 200\. This causes errors when trying to upload files with the SlingClient, to get around this, I created a class CQClient, which allows uploads if 200 or 201 is returned:
+
+```
+package com.myco.project.test;
+
+import java.io.IOException;
+import java.io.InputStream;
+
+import junit.framework.Assert;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.entity.InputStreamEntity;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.sling.testing.tools.http.RequestBuilder;
+import org.apache.sling.testing.tools.http.RequestExecutor;
+import org.apache.sling.testing.tools.sling.SlingClient;
+
+public class CQClient extends SlingClient {
+
+	private RequestBuilder builder;
+	private RequestExecutor executor;
+	private String username;
+	private String password;
+
+	public CQClient(String slingServerUrl, String username, String password) {
+		super(slingServerUrl, username, password);
+		builder = new RequestBuilder(slingServerUrl);
+		executor = new RequestExecutor(new DefaultHttpClient());
+		this.username = username;
+		this.password = password;
+	}
+
+	/**
+	 * Upload using a PUT request.
+	 * 
+	 * @param path
+	 *			the path of the uploaded file
+	 * @param data
+	 *			the content
+	 * @param length
+	 *			Use -1 if unknown
+	 * @param createFolders
+	 *			if true, intermediate folders are created via mkdirs
+	 */
+	public void upload(String path, InputStream data, int length, boolean createFolders) throws IOException {
+		final HttpEntity e = new InputStreamEntity(data, length);
+		if (createFolders) {
+			mkdirs(getParentPath(path));
+		}
+		HttpResponse response = executor.execute(
+			builder.buildOtherRequest(new HttpPut(builder.buildUrl(path)))
+					.withEntity(e).withCredentials(username, password))
+			.getResponse();
+		int status = response.getStatusLine().getStatusCode();
+		Assert.assertTrue("Expected status code 201 or 202, received: "+status,status == 201 || status == 200);
+	}
+}
+
+```
+
+From this point on, the integration test works exactly the same as the [integration tests for Apache Sling](http://labs.sixdimensions.com/blog/dan-klco/2013-06-05/creating-integration-tests-apache-sling#Integration%20Test%20Class).
+
+### Debugging Tests
+
+If you are having issues with the tests and you want to do some debugging within your IDE, you can execute a Maven build like the following:
+
+```
+mvn clean install -Dmaven.failsafe.debug test -Pcq.dir=/Users/username/cq/5.6.1 -PforkMode=never
+
+```
+
+This will prevent maven from forking and allow you to debug through your integration test class execution.
+
+### Example
+
+You can find an example of a working Adobe CQ / AEM integration test in the [Component Bindings Provider project](https://github.com/SixDimensions/Component-Bindings-Provider) simply clone the project and call `mvn clean install -Pcq.dir={SOME_CQ_DIRECTORY}` inside the project directory to see the integration tests execute.

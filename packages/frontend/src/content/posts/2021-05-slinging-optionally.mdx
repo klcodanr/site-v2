@@ -1,0 +1,75 @@
+---
+title: Lambda, Optional and Streams with Apache Sling
+description: Tips on using Java's Lambda Expressions, Streams and Optionals with
+  Apache Sling
+hideInNav: false
+tags:
+  - Apache Sling
+  - Java
+pubDate: 2021-05-27
+display: post
+image: /images/posts/2021-05/empty-stadium.jpg
+published: true
+---
+
+  
+Anyone who's listened to me or reviewed my code will know: I love Java's [Lambda Expressions](https://www.baeldung.com/java-8-lambda-expressions-tips), [Optionals](https://www.freecodecamp.org/news/optional-in-java-and-anti-patterns-using-it-7d87038362ba/) and [Streams](https://www.baeldung.com/java-8-streams-introduction). Unfortunately, the Sling API predates the introduction of these language so many Sling API methods can return null values instead of using Optionals and Iterators instead of Streams. So what are we to do?  
+  
+## Optionals
+
+  
+While they are all useful, in my opinion, Optionals are by far the most essential of the bunch for modern Java programming, for one simple reason: they help you avoid the dreaded NullPointerException. Optionals do this by making it explicit when a value may not be returned thus reducing the incidents of missed null checks. This is especially valuable in a dynamic framework like Apache Sling as depending on the value of the content and the state of the OSGi container, many calls will legitimately return empty values.   
+
+Unfortunately, since Apache Sling does predate Optionals, so many of the common methods we use for writing applications on Sling can return null values. For example in a Sling [Resource](https://sling.apache.org/apidocs/sling11/index.html?org/apache/sling/api/resource/Resource.html), the following methods can return null:
+
+* AdapterType adaptTo(java.lang.Class type)
+* Resource getChild(String relPath)
+* Resource getParent()
+* String getResourceSuperType()
+
+Along with following methods in a Sling [ResourceResolver](https://sling.apache.org/apidocs/sling11/index.html?org/apache/sling/api/resource/ResourceResolver.html): 
+
+* Resource copy(java.lang.String srcAbsPath, java.lang.String destAbsPath)
+* java.lang.Object getAttribute( java.lang.String name)
+* Resource getParent( Resource child)
+* java.lang.String getParentResourceType(Resource resource)
+* java.lang.String getParentResourceType(java.lang.String resourceType)
+* Resource getResource(Resource base, java.lang.String path)
+* Resource getResource( java.lang.String path)
+* java.lang.String getUserID()
+* java.lang.String map( javax.servlet.http.HttpServletRequest request, java.lang.String resourcePath)
+* Revert all pending changes.
+* AdapterType adaptTo(java.lang.Class type)
+
+Add Optional support to the Sling API at this point is infeasible, but you can still leverage Optionals in your custom code. Simply wrap any Nullable call to the Sling API with:
+
+Optional.ofNullable(slingObject.nullableMethod());
+
+From there you can use the full power of optionals to provide a fallback value, throw a specific exception if the value is not provided or safely map the object. 
+
+I'd also note that the Resource.getValueMap() method is _not_ nullable, so when possible, prefer this to resource.adaptTo(ValueMap.class). I've found that an IDE plugin like SonarLint helps significantly in reducing my incidents of missing Optionals.  
+  
+## Streams / Lambda Expressions
+
+  
+Streams and Lambda Expressions make working with complex data structures far simpler by giving you a fluent way to convert objects, filter objects, change collection types and all sorts of other useful operations. 
+
+As with Optionals, the Sling API pre-dates the introduction of Streams and Lambda Functions in the Java language, so there's not any default support. There is a [Resource Filter library](https://blogs.perficient.com/2018/10/09/resource-streams-in-apache-sling/) available with some support, but with vanilla Sling or when calling other methods like ResourceResolver.findResources or Resource.getChildren it would be nice to be able to work with the result as a Stream.
+
+Luckily you can convert both Iterators and Iterables to Streams by using one of the following snippets:  
+  
+```java
+// Convert an Iterator to Stream
+Iterable iterable = () -> sourceIterator;
+Stream stream = StreamSupport.stream(iterable.spliterator(), false);
+
+// Convert an Iterable to Stream
+Stream stream = StreamSupport.stream(iterable.spliterator(), false);
+
+```
+
+  
+While it does mean a bit of clunky "magic" code to perform the conversion, the benefits of working with Streams, in my experience, far outweigh this cost. 
+
+Well, those are my tips for working with some of the new Java language features with Apache Sling. Do you have any tips you've found helpful in your development? Leave a comment!  
+  

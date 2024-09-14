@@ -1,0 +1,90 @@
+---
+title: "Demystifying Oak Search Part 1: Exploring Indexes with Luke"
+description: Exploring Apache Jackrabbit Oak indexes with Luke
+hideInNav: false
+tags:
+  - Apache Jackrabbit Oak
+  - Adobe Experience Manager
+  - Lucene
+  - Oak Search & Indexing
+pubDate: 2022-03-31
+display: post
+image: /images/posts/2022-03/Demystifying-Hero.jpg
+published: true
+---
+
+  
+
+The Oak Indexes and Queries used by AEM and Apache Sling for searching content are powerful and cloaked in an aura of mystery. Let's work together to pierce that veil, so you can develop AEM / Apache Sling applications to take advantages of the strengths of searching in Oak without experiencing the painful pitfalls. 
+
+Let's start with Oak Indexes, the feature that makes Oak queries performant.   
+  
+To understand something, we must observe it. While there are some features in AEM to give us a glimpse into the indexes, such as:  
+
+* [Oak Index Stats WebConsole](http://localhost:4502/system/console/status-oak-index-stats)
+* [Oak Index Definitions WebConsole](http://localhost:4502/system/console/status-oak-index-defn)
+* [Lucene Index statistics MBean](http://localhost:4502/system/console/jmx/org.apache.jackrabbit.oak%3Aname%3DLucene+Index+statistics%2Ctype%3DLuceneIndex)
+
+However, they provide a limited, abstracted view of the indexes. We need to dive deeper. To do so, we can use a tool called [Luke](https://github.com/DmitryKey/luke) to open and explore the [Lucene indexes](https://jackrabbit.apache.org/oak/docs/query/lucene.html) used by AEM & Apache Sling.
+
+> **An aside on Lucene vs Other Index Types**  
+>  
+> This series will be referring to Lucene indexes as AEM as a Cloud Service _only_ supports specifying Lucene indexes and Lucene indexes have a much richer and more robust feature set than property indexes. You can read more on Property indexes in the [Oak documentation](https://jackrabbit.apache.org/oak/docs/query/lucene.html#lucene-vs-property). Elastic indexes are implemented with a different tech stack than Lucene indexes, but are (as of now) functionally identical to Lucene indexes.
+
+  
+## Running Luke
+
+  
+There is [documentation](https://jackrabbit.apache.org/oak/docs/query/lucene-old.html#Analyzing%5Fcreated%5FLucene%5FIndex) on using Luke on the Oak site. However, Oak uses a relatively old version of Lucene and a custom Lucene codec so getting the right version of Luke and the classloader setup correctly to read an Oak index is not a trivial task. To make it easier, I made a bash script. Simply [download the Gist](https://gist.github.com/klcodanr/d9bdb8671f055d1e0f24c9713ba0e833#file-oak-luke-sh):  
+
+and run:  
+
+/bin/bash oak-luke.sh [path-to-oak-index]
+
+The indexes themselves are located under the `./crx-quickstart/repository/index` folder in AEM and the `./launcher/repository/index` in Apache Sling. For example:   
+
+/bin/bash oak-luke.sh ./launcher/repository/index/slingFile-1648209254334
+
+This will open up the Luke UI:
+
+  
+
+![The Luke UI](/images/posts/2022-03/Luke-UI.png)
+
+  
+
+## Using Luke
+
+  
+Let's break down the relevant parts of the Luke UI:
+
+First, the Overview screen allows you to explore the index summary, field and terms contained in the index.
+
+  
+
+![Luke Overview](/images/posts/2022-03/Luke-Overview-Annotated.png)
+
+  
+1. **Summary** \- a quick summary of the index including the number of documents and fields
+2. **Fields** \- all of the fields defined in the index along with the number of distinct terms for each field
+3. **Decoder** \- set the decoder to display the terms. Note that you may need to change the decoder to see int or long terms, including Dates (which will be longs) and booleans (which will be ints)
+4. **Top Terms** \- displays the top Terms for the field in the index. Note that the terms may display incorrectly if you have not set the correct decoder for the field
+
+While there are several other tabs in Luke, though honestly I've found the overview to be the most helpful.
+
+As a quick overview, the documents tab allows you to page through the documents in the index, however since Oak essentially only stores the path to the node on the index documents, this is not very illuminating. Similarly, since Oak handles the updating and index queries, the Commit and Search tabs are also less helpful for most use cases.
+
+  
+
+## What Luke Reveals
+
+  
+Lucene indexes are composed of:
+
+* **Documents** \- each maps to a node in Oak
+* **Fields** \- each maps to one or more properties in Oak
+* **Terms** \- the values extracted for the fields from the properties in Oak
+Using Luke we can divine the contents of each Oak index by exploring how the Nodes are represented and exactly which fields are indexed from the Oak repository.  
+  
+ How do these fields make their way into the Lucene indexes? Next we'll explore Oak Index Definitions and how they are translated into Lucene.  
+  

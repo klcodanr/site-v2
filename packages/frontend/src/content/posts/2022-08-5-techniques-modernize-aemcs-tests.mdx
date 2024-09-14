@@ -1,0 +1,348 @@
+---
+title: 5 Techniques to Modernize Your AEMCS Tests
+description: You've modernized your CMS, now modernize your tests!
+hideInNav: false
+tags:
+  - Integration Testing
+  - Apache Sling
+  - Adobe Experience Manager
+  - AEM as a Cloud Service
+pubDate: 2022-08-24
+display: post
+image: /images/posts/2022-08/test-hero-2.jpg
+published: true
+---
+
+  
+
+## #1 - Switch to OSGi Constructor Activation
+
+  
+OSGi R7 adds support for injecting referencces into a component's constructor. Why does this matter for tests?
+
+In order to mock dependencies when using a @Reference annotation on a field, you must either:
+
+* Set a more permissive scope on the field - Exposing fields through overly permissive field restrictions breaks the encapsulation of your code
+* Use reflection to set the field - Reflection makes for more complex and fragile tests and makes code refactoring harder as you don't get compile-time exceptions when the code changes
+  
+Neither option is great, but instead with a constructor references, all of the services used by a component are injected when constructing the component. Let's see it in action! First, an example using field @Reference annotations:
+
+  
+
+```java
+public class BeforeComponent {
+
+  @Reference
+  private ResourceResolverFactory resolverFactory;
+
+  [... your code here...]
+}
+
+class BeforeComponentTest {
+  @Test
+  void testResourceResolverFactory() throws Exception {
+    BeforeComponentTest testObj = new BeforeComponentTest();
+    Field rrf = testObj.getClass().getDeclaredField("resolverFactory");
+    rrf.setAccessible(true);
+    rrf.set(testObj, mockResourceResolverFactory);
+    [...test code here...]
+  }
+}
+```
+
+  
+
+And the same class updated to use constructor references:
+
+```java
+public class AfterComponent {
+
+  private final ResourceResolverFactory resolverFactory;
+
+  @Activate
+  public AfterComponent(@Reference ResourceResolverFactory resolverFactory) {
+    this.resolverFactory = resolverFactory;
+  }
+
+  [... your code here...]
+}
+
+class AfterComponentTest {
+  @Test
+  void testResourceResolverFactory() throws Exception {
+    AfterComponentTest testObj = new AfterComponentTest(mockResourceResolverFactory);
+    [...test code here...]
+  }
+}
+```
+
+## #2 - Upgrade to JUnit 5
+
+  
+Who wants to spend a bunch of time rewriting tests!?! Me neither, however JUnit 5 both great new features _and_ an easy upgrade process via the [junit-vintage-engine.](https://junit.org/junit5/docs/current/user-guide/#migrating-from-junit4) This allows you to run your existing JUnit 3/4 tests alongside the new JUnit 5 Jupiter tests.
+
+  
+ So what's the big deal about JUnit 5? In my opinion, there are two features that make JUnit 5 a huge productivity upgrade from JUnit 4\. 
+
+  
+### Parametrized Tests
+
+  
+JUnit 4 has support for Parametrized Tests, but it's a pretty clunky process. With JUnit 5 you can easily implement common scenarios such as testing input validation with just annotations. For example if I wanted to test a node name validator, I could write a test like the following:
+
+  
+
+```java
+@ParameterizedTest
+@ValueSource(strings = {"ns:ns2:id", "name/other"})
+@NullAndEmptySource
+void rejectsInvalidNames(String name) {
+    assertFalse(nameValidator.accept(name));
+}
+```
+
+  
+This just scratches the surface of what you can do with [Parameterized Tests](https://junit.org/junit5/docs/current/user-guide/#writing-tests-parameterized-tests), but hopefully it gives you an idea of the capabilities of this feature.
+
+  
+### Lambda Support
+
+  
+JUnit 5 adds Lambda support for Assertions, Assumptions and other testing features. This allows for some really neat features such as grouping assertions and asserting against exceptions within a test (rather than being the entire scope of the test).  
+
+```java
+@Test
+void groupedAssertions() {
+    assertAll("can read",
+        () -> assertEquals("/content/dam", resource.getPath()),
+        () -> assertEquals("AEM Assets", resource.getValueMap().get("jcr:content/jcr:title","")
+    );
+}
+
+@Test
+void exceptionTesting() {
+    Exception exception = assertThrows(RepositoryException.class, () ->
+        doSomeJcrOperation(session));
+    assertTrue("SOME MESSAGE HERE", exception.getMessage());
+}
+```
+
+  
+
+## #3 - Use Mockito for Simple Mocking   
+
+  
+AEM is a complex beast. While you can certainly try to isolate your code as much as possible, there are still interactions with AEM that you'll need to test. Mockito enables you to mock services and application state without requiring instantiating the full dependency tree.  
+
+```java
+class SimpleMockedTest {
+  @Test
+  void testMockedObject() {
+    Resource myTestResource = mock(Resource.class);
+    when(myTestResource.getResourceType()).thenReturn("test/type");
+    System.out.println(myTestResource.getResourceType()); // will print test/type
+  }
+}
+```
+
+  
+
+Mockito's power really shines with answers and verifiers. While you may have mocks which can simply always return a value, with Mockito you can also verify that your mock's methods have been called, assert values passed to mocked methods or dynamically call code based on a mocked method execution.  
+  
+
+```java
+class ComplexMockedTest {
+  @Test
+  void testMockedObject() {
+    ValueMap myValueMap = mock(ValueMap.class);
+    Map<String,String> values = Map.of("hello", "world");
+    when(myValueMap.get(anyString(), anyString())).thenAnswer(inv -> values.get(inv.get(0));
+    
+    myMethodThatGetsFromTheValueMap();
+    verify(myValueMap.get(anyString(), anyString()));
+  }
+}
+```
+
+  
+
+## #4 - Use Sling / AEM Mocks to Mock the Repository
+
+  
+ Mocking has diminishing returns, especially for services where you don't own the contract or the contract isn't fixed. In these cases, bringing in [Sling](https://sling.apache.org/documentation/development/sling-mock.html#junit-4-sling-context-junit-rule-1) or [AEM Mocks](https://wcm.io/testing/aem-mock/) can vastly simplify the process of setting up a mocked environment and be a powerful tool for testing against a repository state.
+
+Sling and AEM Mocks come loaded with the basic services you need as well as an empty mocked repository for loading content, you just need to add any custom (or non-standard) services and load the required content in your test setup:  
+
+  
+
+```java
+@ExtendWith(SlingContextExtension.class)
+public class ExampleTest {
+
+  private final SlingContext context = new SlingContext();
+
+  @BeforeEach
+  public void beforeEach(){
+    // initialize state
+  }
+
+  @Test
+  public void testSomething() {
+    Resource resource = context.resourceResolver().getResource("/content/sample/en");
+    // further testing
+  }
+
+}
+```
+
+  
+
+## #5 - Reduce IT Flakiness with Awaitility
+
+  
+Integration tests in a CMS like AEM are... complex. Since AEM will renders markup based on the content provided to your code, writing ITs is challenging as you need to account for the markup variability.   
+
+AEM As a Cloud Service brings a bit more complexity due to it's cloud scalability. Due to the constraints of the [CAP theorem](https://en.wikipedia.org/wiki/CAP%5Ftheorem), AEM as a Cloud Service trades Consistency for Availability and Partition Tolerance, e.g. that while changes may not appear immediately in AEM, it should always be available and should not fail due to networking issues.
+
+The impact to integration tests is that unlike running a test against a local AEM instance, there's no guarantee that changes made in AEM as a Cloud Service are immediately reflected if your requests land on different servers running your instance.
+
+Therefore writing resilient tests is key. To write resilient tests with eventual consistency, your tests should:
+
+* Validate the assumption that the repository is in the expected state
+* Re-ensure state repository state after every mutation
+* Ensure the expected state and execute assertions in one request (rather than multiple sequential assertions)
+* Retry on expected incorrect responses until a timeout occurs
+How is this different? Before you could do something like this since you knew that the changes to the JCR would be immediately updated on every request:  
+1. Assert that myOption=false
+2. Send POST\[myOption=true\]
+3. Assert that myOption=true
+With eventual consistency, however, you need to:  
+1. Assert that myOption=false
+2. Send POST\[myOption=true\]
+3. Check that myOption=true on an exponential backoff until 60 seconds has expired
+
+This gets even more complicated when testing side-effects. This is where ensuring the expected state before performing the assertion based on a single request is critical. If the expectation and assertion span multiple requests, it's impossible to ensure that the changes are fully propagated before the two requests.  
+
+This is where [awaitility](https://github.com/awaitility/awaitility) comes in. With Awaitility, you can wait for a condition to eventually be true:
+
+  
+
+```java
+@Test
+public void setsProperties() {
+    slingClient.sendPost("/content/dam", myProperties)
+    // Awaitility lets you wait until the asynchronous operation completes:
+    await().atMost(30, SECONDS).until(propertiesUpdated());
+    ...
+}
+```
+
+But you can combine that with dynamic polling intervals and the ability to ignore expected exceptions to make a truly resilient helper for executing ITs:
+
+```java
+import java.time.Duration;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
+
+import org.awaitility.Awaitility;
+import org.awaitility.core.ConditionFactory;
+import org.awaitility.pollinterval.IterativePollInterval;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class ResiliencyHelper<T> {
+
+    private static final Logger log = LoggerFactory.getLogger(ResiliencyHelper.class);
+
+    private final ConditionFactory defaultRetry;
+
+    public ResiliencyHelper(Class<?>... defaultRetryOn) {
+        defaultRetry = getExponentialBackoff(Duration.ofSeconds(1), 2,
+                Duration.ofMinutes(2), defaultRetryOn);
+    }
+
+    public ResiliencyHelper(Duration defaultInitial, long defaultMultiplier, Duration defaultTimeout,
+            Class<?>... defaultRetryOn) {
+        defaultRetry = getExponentialBackoff(defaultInitial, defaultMultiplier, defaultTimeout, defaultRetryOn);
+    }
+
+    public static ConditionFactory getExponentialBackoff(Duration initial, long multiplier, Duration timeout,
+            Class<?>... retryOn) {
+        AtomicInteger it = new AtomicInteger(0);
+        return Awaitility.await().atMost(timeout)
+                .pollInterval(IterativePollInterval.iterative(duration -> {
+                    Duration next = duration.multipliedBy(multiplier);
+                    log.info("Executing retry {}, next interval: {}ms", it.incrementAndGet(), next.toMillis());
+                    return next;
+                }, initial)).ignoreExceptionsMatching(ex -> {
+                    for (Class<?> ro : retryOn) {
+                        if (ex.getClass().isAssignableFrom(ro)) {
+                            log.info("Handling retryable exception", ex);
+                            return true;
+                        }
+                    }
+                    log.error("Encountered non-retryable exception", ex);
+                    return false;
+                });
+    }
+
+    public final T retryUntilCondition(Callable<T> request,
+            Predicate<T> condition) {
+        return retryUntilCondition(request, condition, defaultRetry);
+    }
+
+    public final T retryUntilCondition(Callable<T> request,
+            Predicate<T> condition, ConditionFactory retry) {
+        return retry.until(request, (response) -> {
+            boolean conditionMet = condition.test(response);
+            log.info("Condition met: {}, Value: {}", conditionMet, response);
+            return conditionMet;
+        });
+    }
+
+}
+
+
+public class SlingHttpResponseHelper extends ResiliencyHelper<SlingHttpResponse> {
+
+    public SlingHttpResponseHelper() {
+        super(ClientException.class, IOException.class);
+    }
+
+    public SlingHttpResponseHelper(Duration defaultInitial, long defaultMultiplier, Duration defaultTimeout,
+            Class<?>... defaultRetryOn) {
+        super(defaultInitial, defaultMultiplier, defaultTimeout, defaultRetryOn);
+    }
+
+    public final SlingHttpResponse retryUntilStatus(Callable<SlingHttpResponse> request,
+            int... expected) {
+        return retryUntilCondition(request,
+                resp -> Arrays.stream(expected).anyMatch(ex -> ex == resp.getSlingStatusAsInt()));
+    }
+
+    public final SlingHttpResponse retryUntilContains(Callable<SlingHttpResponse> request,
+          String expected) {
+        return retryUntilCondition(request, resp -> resp.getContent().contains(expected));
+    }
+
+    public final SlingHttpResponse retryUntilMatches(Callable<SlingHttpResponse> request,
+            String expectedBodySubStr, int... expectedStatus) {
+        return retryUntilCondition(request,
+                resp -> Arrays.stream(expectedStatus).anyMatch(ex -> ex == resp.getSlingStatusAsInt())
+                        && resp.getContent().contains(expectedBodySubStr));
+    }
+}
+
+```
+
+Which you can then use to ensure state and then assert the expected value, for example the following ensures that your test will only receive the cardResponse when myRequest returns a 200 status:  
+
+```java
+SlingHttpResponse cardResponse = resiliencyHelper
+                .retryUntilContains(() -> authorAdmin.doGet(myRequest Collections.emptyList(), true, 200), folderPath);
+        assertTrue("View did not contain title", cardResponse.getContent().contains(folderTitle));
+```
+
+  
+Hopefully these help you build better tests for your AEM as a Cloud Service application. Have any other tips? Leave a   

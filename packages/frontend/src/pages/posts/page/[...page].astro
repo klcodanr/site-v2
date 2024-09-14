@@ -1,0 +1,29 @@
+---
+import { getCollection } from "astro:content";
+import ListPosts from "../../../components/ListPosts.astro";
+import Content from "../../../layouts/Content.astro";
+
+export async function getStaticPaths() {
+  const posts = (await getCollection("posts")).filter((p) => p.data.published);
+
+  const pages = posts.length / 12;
+  return Array.from({ length: pages }, (_, idx) => ({
+    params: { page: idx.toString() },
+    props: {
+      page: idx,
+      start: idx * 12,
+      limit: 12,
+    },
+  }));
+}
+type Props = { start: number; limit: number; page: number };
+---
+
+<Content title={`Posts Page ${Astro.props.page}`}>
+  <h1>My Musings</h1>
+  <p>
+    My recent blog posts, webinars and whitepapers. Mostly about technology and
+    digital marketing.
+  </p>
+  <ListPosts {...Astro.props} includePagination={true} format="card" />
+</Content>

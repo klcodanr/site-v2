@@ -1,0 +1,114 @@
+---
+title: "Exploring the Sling Feature Model: Part 1"
+description: My initial learnings in updating Sling CMS to the Sling Feature Model
+hideInNav: false
+tags:
+  - Apache Sling
+  - Feature Model
+  - Open Source
+  - Apache Sling CMS
+pubDate: 2020-07-27
+display: post
+image: /images/posts/2020-07/Feature-Model-Hero.jpg
+published: true
+---
+
+  
+In my previous post about [AEM as a Cloud Service, How AEM Scales](https://blogs.perficient.com/2020/02/21/how-aem-as-a-cloud-service-scales/), I discussed the new Sling Feature Model which is a key part of how Adobe scales their new AEM as a Cloud Service solution using Kubernetes. 
+
+The goal of the Feature Model is to create a better way to provision Sling instances by creating a more descriptive, flexible grammar for building targeted instances instead of building a fat JAR file and adding bundles after the fact.
+
+This week / weekend, I took some time to finally upgrade my pet project, [Sling CMS](https://github.com/apache/sling-org-apache-sling-app-cms/tree/SLING-8913-multiple-instance-types) to use the Sling Feature Model and wanted to take a moment to document the process and my learnings.  
+
+Once you understand the process and model, the process of converting a Provisioning Model-based project to Feature Model is straight-forward. To get started, I followed along with the [Feature Model How-To Guide](https://sling.apache.org/documentation/feature-model/feature-model-howto.html) and then dug into the code for the [Sling Kickstart](https://github.com/apache/sling-org-apache-sling-kickstart) and [(Feature Model compatible branch of) Sling Starter](https://github.com/apache/sling-org-apache-sling-starter/tree/feature/SLING-9595).   
+  
+## Converting a Provisioning Model Project to Feature Model
+
+  
+The first step was using the [sling-feature-converter-maven-plugin](https://github.com/apache/sling-feature-converter-maven-plugin) to convert the legacy Provisioning Model configuration to the Feature Model. To do this, I created a temporary sub-module to execute the conversion process:  
+  
+[https://github.com/apache/sling-org-apache-sling-app-cms/blob/SLING-8913-multiple-instance-types/converter/pom.xml](https://github.com/apache/sling-org-apache-sling-app-cms/blob/SLING-8913-multiple-instance-types/converter/pom.xml)  
+
+  
+I've modified this POM based on the Sling Kickstart POM to look up the Provisioning files in the builder sub-module of Sling CMS, configured it with my desired artifact information and added a step to create an aggregated Feature Model so I could validate the conversion.
+
+Interestingly, I found that _mvn clean_ after failed builds seemed to often result in Maven dependency resolution issues (I'm assuming because it was evaluating the Feature files) so _rm -rf target/_ was my go to cleaning action.   
+
+To run the conversion, I can execute _mvn clean install -Dbnd.baseline.skip=true_. Once the process is complete, the feature files can be found under _target/fm_ and you can validate by downloading the Feature Model Launcher and running:  
+  
+java -jar org.apache.sling.feature.launcher-1.1.4.jar -f target/slingfeature-tmp/feature-slingcms.json
+
+  
+One feature file will be created per Provisioning Model file and the contents of the Provisioning Model file will be transformed into the format used by the Feature Model.
+
+During this step, I also found that the Sling Feature Model is more strict than the Provisioning Model and called out a few mistakes in the Provisioning Model, including duplicate configurations (for example I had duplicated the configuration org.apache.sling.serviceusermapping.impl.ServiceUserMapperImpl.amended-sling.rewriter).  
+  
+Once I successfully converted the Provisioning files to Feature Models, I copied them from target/fm into a new features submodule and updated the Artifact ID accordingly.   
+  
+## Aggregating the Feature Model
+
+  
+The purpose of the new [feature submodule](https://github.com/apache/sling-org-apache-sling-app-cms/tree/SLING-8913-multiple-instance-types/feature) is to produce the final artifacts based on the Feature Model files. The first and easiest artifact is to create an aggregate feature to execute with the Sling Feature Model Launcher. 
+
+To do this, I added the following goals from the [slingfeature-maven-plugin](https://github.com/apache/sling-slingfeature-maven-plugin) plugin:  
+* aggregate-features - aggregate the feature files into a single feature file
+* analyse-features - analyse the feature files to ensure they didn't have any issues
+* attach-features - attach the feature models as Maven artifacts
+* attach-featurearchives - attach the feature archives as Maven artifacts
+
+The outcome of all this is a consolidated Feature Model and Feature Archive for Sling CMS based on the input Feature Model files we migrated from the Provisioning Model. Before we can complete the process however, there are a few issues which need to be resolved.   
+  
+### Feature Models vs. Feature Archives
+
+  
+Quick segue about Feature Archives. By default the Sling Feature Model will download dependencies as artifacts from the Maven repository. To avoid having to download files at runtime, package private artifacts or to enable Sling Features to run offline Sling Feature Model supports Feature ARchives or FAR files. The FAR file packages the Feature descriptor and binary dependencies into a ZIP archive.  
+
+Feature Archives can be used in the same manner as Feature Models, reference the path to the Feature Archive instead of the Feature Model in the -f or -sf flags for the Sling Feature Launcher.
+
+###   
+
+### Resolving Feature Errors
+
+  
+The analyse-features goal of the slingfeature-maven-plugin flagged a number of issues with the legacy Sling CMS Provisioning Model setup around the start order of the bundles. Each error will be logged with a message like the following:  
+  
+[ERROR] Artifact org.apache.sling:org.apache.sling.servlets.resolver:2.7.2 requires [org.apache.sling.servlets.resolver/2.7.2] osgi.ee; filter:="(&(osgi.ee=JavaSE)(version=1.8))" in start level 20 but no artifact is providing a matching capability in this start level.
+
+  
+Blindly updating start order to resolve the build issues caused Sling to not be able to render content. I would recommend making changes one bundle (or set of bundles) at a time and validating with every change. In the Sling CMS setup, the primary problem I had was with the ordering of the Apache Sling integration with Apache Oak and the bundles _org.apache.sling.jcr.jackrabbit.usermanager_ and _org.apache.sling.jcr.jackrabbit.accessmanager._  
+  
+### Version Variables
+
+  
+One of the conveniences in the Provisioning model is Variables, which allow you to set shared variables for things like version numbers when you have multiple bundles from the same project (Oak, Jackson, Composum, etc) you want to keep in sync. The Feature Model has a similar concept called Placeholders.
+
+The great thing about Placeholders is they can be injected from the POM. For example, I created the following properties in my POM's properties elements:
+
+  
+1.12.0composum.version>  
+2.20.0jackrabbit.version>  
+2.11.1jackson.version>  
+1.26.0oak.version>  
+1.7.25slf4j.version>  
+  
+Each instance of these variables will be replaced within all of the Feature Model files.  
+  
+## Creating a Runnable JAR
+
+  
+While the goal of the Feature Model is to create a more flexible model and get away from running a fat JAR, but for local development and getting started quickly having a runnable JAR is just easier. 
+
+To create a runnable JAR as a part of the same build, I configured Maven to [combine the Sling Feature Model Launcher and my Sling CMS Feature Archive at build time into a standalone JAR](https://github.com/apache/sling-org-apache-sling-app-cms/blob/SLING-8913-multiple-instance-types/feature/pom.xml#L110) using the [Maven Assembly Plugin](http://maven.apache.org/plugins/maven-assembly-plugin/).
+
+The [Main class / method](https://github.com/apache/sling-org-apache-sling-app-cms/blob/SLING-8913-multiple-instance-types/feature/src/main/java/org/apache/sling/cms/feature/Main.java) is quite brief, it:
+
+* Gets the version number passed via a properties file
+* Resolves the URL for the Feature Archive from the classpath
+* Appends (if not present) the -f flag with URL of the Feature Archive to the arguments
+* Calls the Sling Feature Model Launcher Main method
+
+With that, we now have a standalone JAR which provides a double click run of Sling CMS as well as the rich Feature Model based aggregation in the form of Feature Models and Feature Archives all in one build.
+
+In the next blog post in the Exploring the Feature Model series, I will be setting up an [Oak Composite Node Store](https://jackrabbit.apache.org/oak/docs/nodestore/compositens.html). 
+
+  

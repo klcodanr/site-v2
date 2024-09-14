@@ -1,0 +1,96 @@
+---
+title: What Developers Can't Abide in Your API
+description: As developers, we're looking to make APIs that other developers
+  love, but before such a lofty goal, how about making APIs other developers
+  don't hate.
+hideInNav: false
+tags:
+  - API Design
+  - Best Practices
+  - Architecture
+pubDate: 2022-11-17
+display: post
+image: /images/posts/2022-11/checklist.jpg
+published: true
+---
+
+  
+
+Recently, I was listening to a podcast where the host introduced an interesting concept: to understand your values, understand what you _would not_ accept.   
+
+The premise being most negative reactions are visceral and more easily understood. Therefore identify what you cannot stand, the opposite is likely to be a core value. For example if you were to hate it when other people make messes, then cleanliness could be a core value.
+
+As developers, we're looking to make APIs that other developers love, but before such a lofty goal, how about making APIs other developers _don't hate._ Thinking back to the podcast, here are four things I cannot abide in APIs.  
+
+![Line in the Sand](/images/posts/2022-11/line-in-the-sand.gif)
+
+  
+
+## #1 No / Secret API
+
+  
+If you are going to expose a user interface to customers and call a back-end from the front-end, it's an API. Now you may not think of your application as an API or a browser as an API client, but you are exposing a surface that consumers could call outside of the intended use cases.
+
+Having an undocumented API is both a security risk on your side if it's not evaluated for public consumption and a frustration for clients. 
+
+  
+
+![Inconsistency](/images/posts/2022-11/inconsistent.jpg)
+
+  
+
+## #2 Inconsistent Representation
+
+  
+APIs should consistently represent entities and classes across requests. This means both that discrete units of data / content should be represented the same way, no matter what method using to retrieve them, but that endpoints should only return one type of entity.  
+
+For example, when getting an entity directly, it should return the same data as when the entity is returned from search. Finally, entities should have consistent identification, sometimes using a GUID vs numeric identifier vs who knows what else across methods makes it harder for clients to understand how to retrieve an entity across methods.
+
+Not having a consistent representation of entities and classes makes it harder for clients to work with and understand the API as well as introducing more complexity on both the client and server side to represent all of the variations.  
+
+All this being said, entities can be logically sub-typed and containing sub-entities.   
+  
+### Sub-Types
+
+Sub-types enable APIs to represent commonalities across multiple types.   
+
+For example, you could have an endpoint which returns content. This content could include documents and assets, each of which would have different data, however both share a common set of file data and must have a clear distinction between the document and asset sub-types.  
+  
+### Sub-Entities
+
+Sub-entities enable APIs to represent discrete groups of data and functionality as a part of a larger entity.   
+
+Going back to the file example, you could have sub-entities to represent the publication state, metadata and binary representation of the file to enable interacting with the aspects of the file without having to consider unrelated data and operations.  
+
+![Signs](/images/posts/2022-11/signs.jpg)
+
+  
+
+## #3 Incoherent Operations
+
+  
+As an API client, you really want to be sure you know what every call is going to do. An API which presents incoherent operations makes this _much_ harder. Incoherency here means that the name or method of an operation doesn't match what it does.   
+
+Examples of incoherent operations include:  
+
+* HTTP PUTs which only take changed fields not a full entity
+* Delete via HTTP POST
+* Returning HTML for .json endpoints
+* Returning HTTP Status 200 error messages
+* Write on get methods
+This inconsistency is confusing to developers and confused developers get frustrated and make mistakes. Therefore whether writing a HTTP or language API, be coherent in the naming and method of operations.   
+  
+
+![Large Book](/images/posts/2022-11/large-book.jpg)
+
+  
+
+## #4 Requiring Documentation
+
+  
+Do not get me wrong, you must document your API. _But_ an API is like a joke, if you need to explain it, it's not good.
+
+Developers should be able to start using an API after reading a getting started document. Over-reliance on documentation versus consistency increases the mental load on developers, much less if you have to read a small novel to understand an API. 
+
+  
+What can you not abide in an API? Leave a comment below with your thoughts!

@@ -1,0 +1,82 @@
+---
+title: Setting the Selected Value in CoralUI 3
+description: Shows how to set the selected value in a CoralUI 3 Select Element
+hideInNav: false
+tags:
+  - Adobe Experience Manager
+  - AEM 6
+  - CoralUI
+  - Quick Tip
+pubDate: 2017-12-12
+display: post
+image: /images/posts/2017-12-12-coralui3-set-select-value/lockers.jpg
+published: true
+---
+
+Setting the value of a coral-select element in the [CoralUI framework v3](https://helpx.adobe.com/experience-manager/6-3/sites/developing/using/reference-materials/coral-ui/coralui3/index.html) is somewhat complicated. It is also different than the process for [CoralUI v2](https://forums.adobe.com/external-link.jspa?url=https%3A%2F%2Fdocs.adobe.com%2Fdocs%2Fen%2Faem%2F6-1%2Fref%2Fcoral-ui%2Fdocs%2F2.17.0-granite-004%2Fselect.html) and for standard HTML5 select elements.
+
+With standard HTML5 select elements, you can simply use a snippet like this to set the selected value:
+
+```javascript
+$('#my-select').val(value);
+```
+
+This does not work for a coral-select, however, as a coral-select contains several sub-elements to render the look and feel of the select and to see the actual form value.
+
+```html
+<coral-select class="coral-Form-field coral3-Select" name="order" data-foundation-validation="" data-validation="" placeholder="" __vent-id__="2" aria-mutiselectable="false" aria-required="false" aria-invalid="false" aria-disabled="false" aria-readonly="false">  
+  <button is="coral-button" class="coral-Button coral-Button--secondary coral-Button--block coral3-Select-button" size="M" variant="secondary" handle="$button" type="button" block="" role="combobox" aria-expanded="false" aria-haspopup="true" id="coral-id-0" aria-controls="coral-id-1" aria-owns="coral-id-1">  
+    <coral-button-label></coral-button-label>  
+    <coral-icon class="coral-Icon coral3-Select-openIcon coral-Icon--chevronDown coral-Icon--sizeXXS" icon="chevronDown" size="XXS" handle="icon" role="img" aria-label="chevron down"></coral-icon>  
+    <span handle="label" class=" coral3-Select-label">Default</span>  
+  </button>  
+  <input handle="input" type="hidden" name="order" value="SCORE()">  
+  <select handle="nativeSelect" class=" coral3-Select-select" tabindex="-1">  
+    <option selected="selected" value="SCORE()">Default</option>  
+    <option value="[jcr:content/cq:lastModified] DESC">Last Modified</option>  
+    <option value="[jcr:content/cq:lastModified] ASC">Oldest</option>  
+  </select>  
+  <coral-taglist class="coral-TagList coral3-Select-tagList" name="" role="listbox" aria-live="off" aria-atomic="false" aria-relevant="additions" handle="taglist" aria-disabled="false" aria-invalid="false" aria-required="false"></coral-taglist>  
+  <coral-overlay class="coral-Overlay coral3-Select-overlay" aria-hidden="true" handle="overlay" trapfocus="on" tabindex="0" focusonshow="on" target="#coral-id-0" role="presentation" offset="-1" alignmy="left top" alignat="left bottom" style="display: none;">  
+    <div coral-tabcapture="top" tabindex="0"></div>  
+    <div coral-tabcapture="intermediate" tabindex="0"></div>  
+    <div coral-tabcapture="bottom" tabindex="0"></div>  
+    <coral-selectlist class="coral3-SelectList coral3-Select-selectList" role="listbox" tabindex="-1" handle="list" id="coral-id-1" style="max-height: 252px;" aria-multiselectable="false">  
+      <coral-selectlist-item class="coral3-SelectList-item is-selected" role="option" value="SCORE()" selected="" tabindex="0" aria-disabled="false" aria-selected="true">Default</coral-selectlist-item>  
+      <coral-selectlist-item class="coral3-SelectList-item" role="option" value="[jcr:content/cq:lastModified] DESC" tabindex="-1" aria-selected="false" aria-disabled="false">Last Modified</coral-selectlist-item>  
+      <coral-selectlist-item class="coral3-SelectList-item" role="option" value="[jcr:content/cq:lastModified] ASC" tabindex="-1" aria-selected="false" aria-disabled="false">Oldest</coral-selectlist-item>  
+    </coral-selectlist>  
+  </coral-overlay>  
+  <coral-select-item value="SCORE()" selected="">Default</coral-select-item>  
+  <coral-select-item value="[jcr:content/cq:lastModified] DESC">Last Modified</coral-select-item>  
+  <coral-select-item value="[jcr:content/cq:lastModified] ASC">Oldest</coral-select-item>  
+  <input class="foundation-field-related" type="hidden" name="order@Delete">  
+</coral-select> 
+```
+
+If you attempt the HTML5 approach, it will set the form value but the selection in the user-visible dropdown will not change.
+
+## Setting the Value
+
+Instead, use the following code:
+
+```javascript
+var $sel = $('#my-select');  
+$sel.each(function(idx, select){  
+  select.items.getAll().forEach(function(item, idx){  
+    if(item.value === val){  
+      item.selected = true;
+    }
+  });  
+});
+```
+
+ This will:
+
+1. Loop through the raw CoralUI object(s)
+2. Extract their items
+3. Set the item with the value matching your value as selected
+
+As you can see in the demo below, this will set the value and update the user selection in the CoralUI dropdown.
+
+![Setting the CoralUI coral-select Programatically](/images/posts/2017-12-12-coralui3-set-select-value/Setting-Select.gif)

@@ -1,0 +1,126 @@
+---
+title: Checklist for a Successful Website Migration
+description: Relaunching or migrating a website is an intensive process and it's
+  very easy for small issues to slip through the cracks. Here are some things to
+  watch out for I've seen observing and being involved in several dozen
+  migrations over the course of my career
+hideInNav: false
+tags:
+  - Migration
+  - Best Practices
+pubDate: 2020-04-28
+display: post
+image: https://images.unsplash.com/photo-1529528744093-6f8abeee511d?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1950&q=80
+published: true
+---
+
+  
+Relaunching or migrating a website is an intensive process and it's very easy for small issues to slip through the cracks. Especially when teams either lack institutional knowledge, are gapped on critical skills or are working against an aggressive timeline.
+
+Here are some things to watch out for I've seen observing and being involved in several dozen migrations over the course of my career.  
+  
+## Get the Experience Right
+
+  
+The most critical part of relaunching or migrating an experience is the experience itself.   
+  
+### Coordinate with Content Authors
+
+  
+Content authors frequently know the site better than business stakeholders. During the migration / refresh / whatever you call it, make sure to pull content authors into the process, after all they know the content and use the system of the daily basis. 
+
+Rather than surprising content authors with a new launch and hoping it matches their requirements, pull them in ahead of time to validate website authoring functionality as well as the content. A good content author is passionate about their content and willing to pitch in to validate so you can fix issues ahead of time instead of scrambling afterwards.  
+  
+### Confirm Content Renders Correctly
+
+  
+This may seem like an obvious basic, but it's surprising how often someone has not checked _every_ page on the website to make sure that it's rendering correctly. Automated tools can certainly help here, a good crawler like Screaming Frog, is a must have in every migration toolbox.
+
+If you are doing a 1:1 migration, you can leverage AI based automated testing tools to compare the website before to after migration, however if you are changing the UI this is not a viable option.
+
+In the end, nothing compares to having good ol' fashioned eyeballs looking at the website and making sure that it's subjectively rendering correctly.   
+  
+A simple, but effective mechanism for verifying website rendering is to crawl the website, create a spreadsheet of the URLs in a share such as Sharepoint or Google Drive and then coordinate with a QA team / content authors to review and check off each URL.   
+  
+While testing, ensure to use multiple browsers and screen sizes to ensure the content appears correctly no matter the device. Responsive design is table stakes so there's no good reason to not have images scale down to the viewport.  
+  
+### Validate Website Interactivity
+
+  
+Beyond initial content rendering, pay special attention to interactive functionality on the website such as:
+
+* Web Forms
+* Quizzes
+* Tabs / Content Switchers
+* Personalization
+Prior to migration, the team should identify all such functionality, document a list of interactive functions and perform regression testing prior to re-launch.  
+  
+### Don't forget Web Search!
+
+  
+One frequent miss is website search. This is one of the top features in most websites, but can easily be missed in preparation, planning or testing. It's especially important to remember if the content needs to be re-indexed once the site is cut-over to plan enough time.  
+  
+## Track Consistently
+
+  
+You need reliable data to prove that a migration is successful and identify any issues. Therefore, it's critical to ensure tracking is consistent and accurate pre and post-relaunch.   
+  
+### Validate Analytics Tracking
+
+  
+Along with testing the experience, the QA team should be validating that Analytics tags are firing correctly and conveying the correct data. This should be comprehensive, not just testing a small sub-set, but validating across at least a large, representative sample of the experiences.  
+  
+### Preserve Tracking Consistency
+
+  
+There's no good reason to abandon the website data from before migration so make sure to use the same Google Analytics Property or Adobe Analytics Report Suite. If there are issues with the way tracking is implemented, it's better to fix them before migrating to ensure good data than wait until the migration is complete.  
+  
+## Put the Website through the Wringer
+
+  
+Before the site goes live, check with every tool you can think of to ensure the website will not crash, be compromised or otherwise not work as expected.  
+  
+### Search Engine Optimization
+
+  
+Crawl the whole site to identify metadata issues, bad redirects and other SEO issues. Make sure to use tools like a [SERP Simulator](https://mangools.com/free-seo-tools/serp-simulator) and [Rich Results tester](https://search.google.com/test/rich-results) to ensure the metadata is correct on the pages.  
+
+  
+### Validate Redirects
+
+  
+Prior to migrating / relaunching the site, you should ensure you have a full set of the URLs and legacy redirects on the site. Prior to migration, validate that each redirect leads to the expected page.  
+  
+### Security Testing
+
+  
+Security and penetration testing is a whole realm of expertise and the implementation varies drastically between platforms. From a basics perspective, during the migration and relaunch development, make sure to comply with the [OWASP Top 10.](https://owasp.org/www-project-top-ten/) On top of development, ensure you have all of the recommended [security headers](https://securityheaders.com/) to enforce SSL, prevent XSS and prevent framejacking and are following best practices for securing the web server and infrastructure access.   
+  
+### System Performance
+
+  
+There are a number of tools for testing system performance from [Apache Benchmark](https://httpd.apache.org/docs/2.4/programs/ab.html) to [JMeter](https://jmeter.apache.org/). Find the appropriate tool for your use case, test the site until it breaks and improve until you are a few standard deviations above the expected traffic.  
+  
+### User Performance
+
+  
+Having a well-performing server is great, but the front-end code will drastically influence the perceived website performance. [Google PageSpeed Insights](https://developers.google.com/speed/pagespeed/insights/) and [Google Lighthouse](https://developers.google.com/web/tools/lighthouse) are great tools for evaluating perceived performance.  
+  
+### Accessibility
+
+  
+Building a website accessible to everyone is both a business and moral imperative. Browser tools such as [WAVE](https://wave.webaim.org/) or [ANDI](https://www.ssa.gov/accessibility/andi/help/install.html) can help perform technical accessibility compliance tests for websites and should be used to validate the delivered code as well as the authored content.  
+  
+Some common Accessibility issues include designs that are difficult to read, insufficient contrast and non-required accessibility metadata.  
+  
+  
+## Not Just a Website
+
+  
+Finally, a relaunch / migration should consider more than _just_ the website. Make sure that 3rd party services, internal / external branding and communications are aligned to support the relaunch.   
+  
+## Ensure a Successful Relaunch
+
+  
+There's a lot to consider when approaching a website migration or relaunch. Perficient's expert consultant teams can support your success no matter the platform.  
+  

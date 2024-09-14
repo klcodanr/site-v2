@@ -1,0 +1,54 @@
+---
+import { getCollection } from "astro:content";
+import Grid from "./Grid.astro";
+import PostCard from "./PostCard.astro";
+
+const { start, limit, includePagination, format, display } = Astro.props;
+
+const actualStart = start || 0;
+const stop = limit ? actualStart + limit : 12 + actualStart;
+
+let allPosts = (await getCollection("posts"))
+  .filter((p) => p.data.published)
+  .sort((a, b) => (b.data.pubDate?.valueOf() || 0) - (a.data.pubDate?.valueOf() || 0));
+
+if (display) {
+  allPosts = allPosts.filter((p) => p.data.display === display);
+}
+
+const posts = allPosts.slice(actualStart, stop);
+
+const pages = Array.from({ length: allPosts.length / 12 }, (_, idx) => ({
+  params: { page: idx.toString() },
+  props: {
+    start: idx * 12,
+    limit: 12,
+  },
+}));
+---
+
+{
+  format === "card" && (
+    <Grid data-pagefind-ignore>
+      {posts.map((post) => {
+        return <PostCard post={post} />;
+      })}
+    </Grid>
+  )
+}
+
+{
+  includePagination && (
+    <ul class="list-inline">
+      {pages.map((page) => {
+        return (
+          <li>
+            <a href={`/posts/page/${page.params.page}`}>
+              {parseInt(page.params.page, 10) + 1}
+            </a>
+          </li>
+        );
+      })}
+    </ul>
+  )
+}

@@ -1,0 +1,29 @@
+---
+title: "Ask the Experts: MVC in Adobe CQ5"
+description: Answers from experts on how MVC is implemented in Adobe CQ5
+hideInNav: false
+tags:
+  - Adobe CQ
+  - Development
+  - CQ Deploy
+  - Apache Maven
+pubDate: 2013-05-20
+display: post
+image: /images/posts/shared/CQ5.png
+published: true
+---
+
+In this series of blog posts we pose a question to experts in the Adobe CQ5 platform about Adobe CQ5, Enterprise Content Management and Web Development.
+
+**How does CQ5’s architecture compare to a standard MVC scenario?**
+
+> As we all know, MVC stands for Model, View, & Controller. This is the logical separation of work into those three buckets to allow for more modular and readable code. CQ follows this model (even if you may not notice you’re doing it!). In CQ, we utilize JSP and the JCR for the model, a combination of JSP and Client libs for the view, and OSGi Services for the controller.  
+> — [Ryan McCullough, Staff Engineer](http://ca.linkedin.com/in/ryanmccullough "Ryan McCullough's Profile")
+
+> Technically speaking, CQ5 IS MVC, just a form that seems to be unfamiliar to most MVC developers. I think that most people find CQ5’s architecture “too coupled” to call it MVC. The biggest complaint I hear is that they would like the data more decoupled from the rendition. Regardless, Sling provides the controller, CRX provides the model, and JSP’s/Scripts (ecma, etc) provide the view.  
+> — [Michael Kelleher, Technical Lead](http://www.linkedin.com/in/mjke11eher "Michael Kelleher's Profile")
+
+> Adobe CQ5’s architecture has an overall MVC based approach, however the foundation components do a poor job of following MVC based best practices. In CQ5 the Sling Resource Resolver and default Sling/CQ Servlets provide the controllers, the Resources and ValueMaps provide the Models and the Sling Scripting support provides the Views as JSPs or other scripting files.
+> 
+> Project teams and CQ developers should attempt to follow MVC practices when developing on CQ5 by avoiding business logic in their JSPs, putting business logic in OSGi Services and leveraging new tools such as the upcoming [Sling Proxy](https://github.com/SixDimensions/sling-proxy "Sling Proxy - Make easy modals in Apache Sling"), to create the models.  
+> — [Daniel Klco, Technical Lead](http://www.linkedin.com/in/danielklco/ "Dan Klco's Profile")

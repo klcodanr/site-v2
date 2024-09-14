@@ -1,0 +1,61 @@
+---
+title: Long Running Jobs Hate Him! One Simple Trick for Quicker AEM Content Jobs
+description: Introducing a new contribution to the ACS AEM Commons library which
+  allows developers to easily mass-activate content in AEM.
+hideInNav: false
+tags:
+  - AEM 6
+  - Open Source
+  - ACS AEM Commons
+  - Performance
+pubDate: 2017-05-18
+display: post
+image: /images/posts/2017-05-18-one-simple-trick-aem-bulk-jobs/mechanic.jpg
+published: true
+---
+
+## _That Job_
+
+Many projects have _that_ _job._ You know the one. It's every Sys Admin's nightmare, but it performs some critical task for the website. It also takes several hours to run and has the occasional tendency to do bad things like... take down a server. What if I told you there's a way to make _that job_ quicker and reliable _and_ to reduce the amount of code you have to write? Unbelievable? Believe it!
+
+## The Solution: Automatically Build & Replicate a Content Package
+
+Recently, I contributed a new service to the [Adobe Consulting Services AEM Commons](https://adobe-consulting-services.github.io/acs-aem-commons/) open source library. The service is based on the code we implemented at a client which reduced the execution time of their _that job_by approximately 50%. In this case, _that job_ was importing content from an internal data source to create a large number of pages on the website. It then performed a tree activation on the content to get it from Author to the Publishers. This would take hours and had the occasional tendency to take down a server as it would get overloaded with the thousands of replication events.
+
+Instead of relying on tree activation, we switched over to package replication. This cut the replication time from hours to minutes and eliminated the performance issues. 
+
+Based on this tremendous performance improvement, I developed a new, genericized service for AEM ACS Commons. The new feature in ACS AEM Commons, [Automatic Package Replication](https://adobe-consulting-services.github.io/acs-aem-commons/features/automatic-package-replicator/index.html) allows you to automatically build and replicate a package on a schedule, as a part of a workflow or through a Sling Event. 
+
+## Using ACS AEM Commons Automatic Package Replicator
+
+Incorporating the Automatic Package Replication service in your _that job_ is a pretty simple trick. Let's assume you want to fire replication after your job completes. You'd just follow these steps:  
+  
+1. [Download and install AEM ACS Commons 3.9.0+ or 2.12.0+](https://github.com/Adobe-Consulting-Services/acs-aem-commons/releases) (depending on your version of AEM)
+2. Create a package definition for the content you want to replicate. I'd be a good idea to test this a couple times to make sure it's got everything you need and nothing you don't.  
+    
+![Creating an AEM Package for the Automatic Package Replicator](/images/posts/2017-05-18-one-simple-trick-aem-bulk-jobs/Create-Package.png)
+3. Navigate to the [Automatic Package Replication configuration](http://locahost:4502/miscadmin#/etc/acs-commons/automatic-package-replication) and create a new configuration
+4. Set the Trigger to "Sling Event" and the Event Topic to a unique value for your job. If you have multiple different packages your job may replicate or multiple instances of the job, you can use the Event Filter to further limit when the package will be replicated.  
+    
+![Configuring the Automatic Package Replication service](/images/posts/2017-05-18-one-simple-trick-aem-bulk-jobs/Configure-Replication.png)
+5. Add the code into your job to fire off a Sling, for example:
+
+```
+@Reference
+private EventAdmin eventAdmin;
+[... more code ...]
+final Event event = new Event("customer/app/job1-replicate", new HashMap<String, String>() {
+	private static final long serialVersionUID = 1L;
+	{
+		put("package", "my-package");
+	}
+});
+eventAdmin.postEvent(event);
+```
+
+  
+This will trigger the Automatic Package Replicator configuration you defined to run which will build the package and replicate it to the publisher servers. 
+
+## More Information
+
+For more information on the Automatic Package Replication service, consult the [documentation on the ACS AEM Commons website](https://adobe-consulting-services.github.io/acs-aem-commons/features/automatic-package-replicator/index.html). If you have any questions, leave a comment or [drop me a line](/contact)!

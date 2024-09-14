@@ -1,0 +1,109 @@
+---
+title: How AEM as a Cloud Service Scales
+description: With AEM as a Cloud Service, Adobe has solved some challenging
+  problems to make AEM scale in the cloud. Here's how Adobe can scale AEM as a
+  Cloud Service, vs the fixed model for AEM "Classic".
+hideInNav: false
+tags:
+  - AEM as a Cloud Service
+  - Adobe Experience Manager
+  - Apache Jackrabbit Oak
+  - Apache Sling
+pubDate: 2020-02-21
+display: post
+image: /images/posts/2020-02/cloud-structure-banner.jpg
+published: true
+---
+
+  
+
+With AEM as a Cloud Service, Adobe has solved some extremely challenging problems in order to make AEM scale in the cloud. These challenges relate to the underlying implementation and concepts behind how a standard AEM "Classic" installation works:
+
+* Each AEM instance stores the application code in the repository which is therefore mutable
+* Each AEM instance (especially AEM Authors) stores the content repository on the filesystem
+* Publishing content from an author to publisher instances is not journaled and therefore cannot be reproduced on new instances
+
+How did Adobe overcome these challenges? And what's so different between AEM as a Cloud Service's approach from AEM "Classic"? [Adobe's architectural documentation](https://docs.adobe.com/content/help/en/experience-manager-cloud-service/core-concepts/architecture.html) is fairly high level, so let's dive in deeper.
+
+As I discussed in my [previous blog post dissecting the bundles in AEM as a Cloud Service](https://blogs.perficientdigital.com/2020/01/30/comparing-aem-as-a-cloud-service-and-aem-6-5/), AEM "Classic" and AEM as a Cloud Service share _most_ of the same underlying technologies. The key difference is how two tools _use_ these technologies. There are some key differences which enable Adobe to dynamically scale AEM as a Cloud Service, vs the fixed model for AEM "Classic".
+
+  
+## Apache Sling OSGi Feature Model
+
+  
+AEM as a Cloud Service is provisioned with the [Apache Sling OSGi Feature Model (or Feature Model)](https://github.com/apache/sling-org-apache-sling-feature). The Feature Model is a different provisioning model than the [Sling Provisioning Model](https://sling.apache.org/documentation/development/slingstart.html) it replaced which has been used for the previous versions of AEM.   
+
+The key difference, is that in the Sling Provisioning Model, the application was assembled using configuration files to define the dependencies, initial content and configurations. From that built release, the customizers and customers would make changes to the application, installing packages, bundles, etc. 
+
+The Feature Model, on the other hand has a rich grammar, which allows for the creation of "Features" or aggregations of Bundles, Packages, initial content, configurations, etc. Each Feature can then be combined with other features to create the end application. This allows Adobe to create a complete representation of the configured application with the customer's customizations and the base AEM application code.  
+  
+
+![Apache Sling OSGi Feature Model](https://github.com/apache/sling-org-apache-sling-feature/raw/master/diagrams/RunningSystem.jpg)
+
+  
+
+It's reasonable to ask, why does this matter? The use of Feature Model has a number of implications. 
+
+First, Content Package projects deployed to AEM as a Cloud Service are converted by Cloud Manager to Feature Models. You can see this if you check the Package Manager in your AEM as a Cloud Service instance.
+
+  
+
+![Package Manager in AEM as a Cloud Service](/images/posts/2020-02/Package-Manager-AEMaaCS.png)
+
+  
+For _most_ situations, this shouldn't cause any issues, but it's a good thing to know just in case.
+
+Next and more importantly, this allows Adobe to make the instances effectively immutable. Unlike AEM "Classic" hosted by Adobe Managed Service, AEM as a Cloud Service does not support making ad-hoc configuration and code changes outside the Cloud Manager process. This is _because_ of the scaling model for AEM as a Cloud Service. Since AEM as a Cloud Service autoscales with Kubernetes, each instance's configurations must be consistent. 
+
+Just scaling instances however doesn't solve the big problem with scaling AEM. How do I keep the repository contents in sync for new instances without copying Gigabytes or even Terabytes of data?  
+  
+
+  
+
+## Composite NodeStore
+
+  
+Adobe's solution to the problem of synchronzing the repository contents of Author instances while scaling is a new feature in Apache Jackrabbit Oak, the [Composite NodeStore.](https://jackrabbit.apache.org/oak/docs/nodestore/compositens.html) The Composite NodeStore exposes multiple different NodeStore providers using a singular interface at the JCR level.
+
+Using the Composite NodeStore, AEM as a Cloud Service combines [Segment NodeStores](https://jackrabbit.apache.org/oak/docs/nodestore/segment/overview.html) for the _/apps_ and _/libs_ directories and fragments of _/oak:index_ with a [MongoDB backed Document NodeStore](https://jackrabbit.apache.org/oak/docs/nodestore/document/mongo-document-store.html) for the remainder of the repository. 
+
+This enables four important things:
+
+* New instances can connect to the same MongoDB instance to instantly synchronize repository content
+* The _/apps_, _/libs_, and _/oak:index_ are provided by the Feature Model based on the Feature definition built by Cloud Manager
+* It resolves performance problems associated with using the Document NodeStore by keeping the most read paths (due to Resource Resolution) in a [local Segment NodeStore](https://jackrabbit.apache.org/oak/docs/nodestore/document/secondary-store.html)
+* Finally, this makes the base AEM and custom code immutable as the _/apps_ and _/libs_ directories are mounted as read-only NodeStores. Even in CRXDE, you cannot modify anything under those paths
+  
+
+![AEM as a Cloud Service Read Only Mounts](/images/posts/2020-02/AEMaaCS-Read-Only.gif)
+
+  
+One interesting side effect of the Composite NodeStore and Feature Model is that you can no longer mix the immutable and mutable paths. Projects must strictly separate out updates for _/content_ and _/conf_ from _/apps_ and _/libs_ as shown in the [AEM Project Archetype](https://docs.adobe.com/content/help/en/experience-manager-core-components/using/developing/archetype/overview.html). 
+
+It is also worth mentioning, that at least our sandbox instance of AEM as a Cloud Service uses [Azure DataStore for Blob (large file) storage](https://jackrabbit.apache.org/oak/docs/plugins/blobstore.html#NodeStore%5Fand%5FBlobStore). There are a number of different Blob storage options supported by Jackrabbit Oak, so I am not sure if this is a standard for all AEM as a Cloud Service instances or if they also use Mongo or Amazon S3, but it is safe to assume they are using non-instance blob storage.
+
+  
+
+## Sling Content Distribution
+
+  
+The final piece to the puzzle is solving the problem of synchronizing replication state for new publisher instances. Adobe solves this with the new [Sling Content Distribution](https://sling.apache.org/documentation/bundles/content-distribution.html) library and specifically the [Journaled implementation](https://github.com/apache/sling-org-apache-sling-distribution-journal). This replaces AEM's legacy replication API.  
+  
+
+![Sling Content Distribution Journaled Deployment](https://github.com/apache/sling-org-apache-sling-distribution-journal/raw/master/docs/deployment-topology.png)
+
+  
+The [Sling Content Distribution Journaled documentation](https://github.com/apache/sling-org-apache-sling-distribution-journal/blob/master/docs/documentation.md) has quite a bit of detail on exactly how this is implemented, one would assume in AEM as a Cloud Service. In essence, the implementation keeps a Journal of the replicated content stored in a [shared Publisher instance called the Golden Master and backed by the blob store](https://docs.adobe.com/content/help/en/experience-manager-cloud-service/core-concepts/architecture.html#key-evolutions). The publishers subscribe to receive publication events and then processing each publication event. 
+
+A key concept here is that publisher instances are now just recipients of Content Distribution and are now regularly recycled and are not systems of record. 
+
+The new publishers will subscribe and would receive all of the journaled entries to restore a state consistent with the existing publisher instances. There is quite a bit more happening behind the scenes, so if you'd like to understand this in depth, definitely [read the documentation on Apache Sling](https://github.com/apache/sling-org-apache-sling-distribution-journal/blob/master/docs/documentation.md) and [Adobe's Key Evolution documentation](https://docs.adobe.com/content/help/en/experience-manager-cloud-service/core-concepts/architecture.html#key-evolutions).  
+  
+## What All This Means
+
+  
+Adobe Engineering has clearly put in some excellent work to solve the challenging problems in scaling AEM. For implementors though, AEM as a Cloud Service does present challenges in having significant differences between the local development and AEM as a Cloud Service deployment model.
+
+I'll just keep repeating my hope is that Adobe will release a version of their AEM SDK Quickstart as a Docker Compose / Kubernetes setup so developers can run a “lite” version of AEM as a Cloud Service on their local computer to really end to end test their applications.
+
+  

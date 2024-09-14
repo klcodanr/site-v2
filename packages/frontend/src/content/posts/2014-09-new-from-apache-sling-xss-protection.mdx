@@ -1,0 +1,48 @@
+---
+title: "New from Apache Sling: JSP XSS Protection"
+description: The Apache Sling Project introduces new XSS Protection tags into
+  the Sling JSP Taglib
+hideInNav: false
+tags:
+  - Apache Sling
+  - JSP
+  - Security
+pubDate: 2014-09-29
+display: post
+image: /images/posts/shared/sling.jpeg
+published: true
+---
+
+[Cross Site Scripting or XSS](https://www.owasp.org/index.php/Cross-site%5FScripting%5F%28XSS%29) represents a serious threat to site owners and users and can be very difficult to properly prevent, especially given the weak tooling available in the JSP specification. Many times, developers depend on the `<c:out />` tag from JSTL, however this tag does not provide robust XSS protection. On Friday, the Apache Sling Project released a new version of the Sling JSP Taglib, version 2.2.4 which contains new functionality help to developers thwart XSS attacks. 
+
+The new release contains one new [Expression Language (EL) function](http://docs.oracle.com/javaee/6/tutorial/doc/gjddd.html) and one new tag, both for encoding text to prevent XSS attacks. The new features use the [OWASP Enterprise Security API](https://www.owasp.org/index.php/Category:OWASP%5FEnterprise%5FSecurity%5FAPI) to ensure that the text is properly encoded in a number of different contexts. 
+
+The supported contexts are:
+
+* HTML
+* HTML Attribute
+* XML
+* XML Attribute
+* JS
+
+To use the new tag and EL function simply specify the text to encode and the encoding mode. Optionally, with the encode tag you can specify default text if the specified text is empty or null.
+
+For example, you could use the tag to encode the value of the request parameter _search_.
+
+```
+<sling:encode value="${param['search']}" mode="HTML" default="No search term specified." />
+```
+
+Or use the EL function set the encoded value to a variable:
+
+```
+<c:set var="search" value="${sling:encode(param['search'],'HTML')}" />
+```
+
+The new version of the Sling Taglib will be available with Sling 7 and you can download and install it now on existing installations. It is compatible at least down to CQ 5.4 and can be downloaded from the [Sling Project Downloads](http://sling.apache.org/downloads.cgi) page. As with the previous versions of the Sling Taglib, to use the new tags, simply download and install Sling JSP Taglib version 2.2.4 from the Sling project and update your Sling Taglib URI to the following if you have not already done so:
+
+```
+<%@taglib prefix="sling" uri="http://sling.apache.org/taglibs/sling" %>
+```
+
+For more information on the Sling JSP Taglib or the new escaping functionalty, consult the [Sling Documentation Site](http://sling.apache.org/documentation/bundles/sling-scripting-jsp-taglib.html).

@@ -1,0 +1,83 @@
+---
+title: "New Sling CMS Release: Improved Thumbnail Support & Bug Fixes"
+description: A new version of Sling CMS, version 1.1.0 was just released.
+  Highlights include improved thumbnail support as well as resolved bugs.
+hideInNav: false
+tags:
+  - Apache Sling
+  - Apache Sling CMS
+pubDate: 2021-11-12
+display: post
+image: /images/posts/2021-11/release-hero.jpg
+published: true
+---
+
+The latest version of [Sling CMS](https://github.com/apache/sling-org-apache-sling-app-cms), [version 1.1.0](https://github.com/apache/sling-org-apache-sling-app-cms/releases/tag/org.apache.sling.cms-1.1.0), just dropped with some exciting new features as well as some important bug fixes. 
+
+  
+## Transformation Support
+
+  
+ What I'm excited about is the new thumbnail handling which brings tons of new options for generating and manipulating thumbnails. Whereas the thumbnail support in the previous versions of Sling CMS were primarily focused around resizing images, the new thumbnail support includes being able to manipulate the thumbnails in the following manner:
+
+* Resizing
+* Cropping
+* Colorizing
+* Flipping
+* Greyscale
+* Rotating
+* Transparency
+Given an image like the below:  
+  
+
+![Sample Image](/images/posts/2021-11/sample-image.jpg)
+
+  
+I can create a transformation set to create a sepia hero image:  
+
+![Sepia Hero Image](/images/posts/2021-11/sample-image.jpg)
+
+  
+Using a configuration like this:
+
+![Sepia Hero Configuration](/images/posts/2021-11/Sepia-Hero-Transformation-Config.png)
+
+  
+Or go crazy and make the image, square, rotated and pink:
+
+![Wacky Image](/images/posts/2021-11/sample-image.jpg)
+
+  
+Using a configuration like this:
+
+![Configuration for the Pink Image](/images/posts/2021-11/Pink-Rotated-Transformation-Config.png)
+
+  
+
+Really the only limitation is your creativity!
+
+  
+## Personal Transformations
+
+  
+ One of the other limitations with the previous implementation was that the only thumbnail configurations that were supported were associated to the site via Sling Context Aware Configurations.   
+
+With the latest release of Sling CMS, you now have the option to create thumbnail configurations which are specific to a user and apply them to images.   
+
+This process takes three steps:
+
+1. **Create the transformation -** This can be done either by selecting My Transformations from the profile dialog or My Transformations from the Renditions screen on a File.
+2. **Add a Rendition -** Open the renditions dialog for an Asset, select Add Rendition and select your Transformation
+3. **Select the Rendition -** In the image component, select the new rendition
+  
+## Bug Fixes  
+
+  
+In addition to these improvements, the release includes five bug fixes:
+
+* [SLING-10653 Cannot save Importer Endpoints](https://issues.apache.org/jira/browse/SLING-10653)
+* [SLING-10863 CMS - RSS & Sitemap Publish Query Incorrect](https://issues.apache.org/jira/browse/SLING-10863)
+* [SLING-10909 CMS - Modal Form Height Inconsistency](https://issues.apache.org/jira/browse/SLING-10909)
+* [SLING-10646 Text component is not compatible with quotation marks](https://issues.apache.org/jira/browse/SLING-10646)
+* [SLING-10731 Page cannot be edited after the history has been restored](https://issues.apache.org/jira/browse/SLING-10731)
+  

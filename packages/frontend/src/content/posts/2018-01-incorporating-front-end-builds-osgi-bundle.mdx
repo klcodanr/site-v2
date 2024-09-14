@@ -1,0 +1,131 @@
+---
+title: How to Incorporate Front End Builds into OSGi Bundles
+description: Shows how to integrate Front End built tools into an Apache Maven
+  based OSGi Bundle build process
+hideInNav: false
+tags:
+  - Apache Maven
+  - OSGi
+  - Apache Sling
+  - Gulp
+  - Apache Felix
+pubDate: 2018-01-15
+display: post
+image: /images/posts/2018-01-15-incorporating-front-end-builds-osgi-bundle/packaging.jpg
+published: true
+---
+
+The [Sling Content Loader](https://sling.apache.org/documentation/bundles/content-loading-jcr-contentloader.html) allows for creating OSGi bundles which contain content loaded into the Sling Repository. This works well for static content but doesn't work so well for dynamic content. This includes when using modern Front End development tools to compile and minify Sass / JS, especially when integrating with the [Maven](https://maven.apache.org/) build process. Among the challenges are:
+
+* Invoking the Front End Build as a part of the Maven Build
+* Excluding node\_modules from License Checks
+* Including Generated Content in the Bundle
+
+## Invoking the Front End Build in the Maven Build
+
+Luckily, this is a solved problem. The [frontend-maven-plugin](https://github.com/eirslett/frontend-maven-plugin) is made to coordinate the build of Front End build technologies, including Gulp, Bower, NPM and Grunt through a plugin in your Maven build. To add this plugin into a Maven build, add a snippet like this into the relevant pom.xml:
+
+```xml
+<properties>  
+  <frontend.target>target/frontend</frontend.target>  
+</properties>  
+[...]  
+<plugin>  
+  <groupId>com.github.eirslett</groupId>  
+  <artifactId>frontend-maven-plugin</artifactId>  
+  <version>1.4</version>  
+  <configuration>  
+    <installDirectory>${frontend.target}</installDirectory>  
+    <workingDirectory>${frontend.target}</workingDirectory>  
+  </configuration>  
+  <executions>  
+    <execution>  
+      <id>install node and npm</id>  
+      <goals>  
+        <goal>install-node-and-npm</goal>  
+      </goals>  
+      <configuration>  
+        <nodeVersion>v6.11.0</nodeVersion>  
+        <npmVersion>3.10.10</npmVersion>  
+      </configuration>  
+    </execution>  
+    <execution>  
+      <id>npm install</id>  
+      <goals>  
+        <goal>npm</goal>  
+      </goals>  
+      <configuration>  
+        <arguments>install</arguments>  
+      </configuration>  
+    </execution>  
+    <execution>  
+      <id>gulp build</id>  
+      <goals>  
+        <goal>gulp</goal>  
+      </goals>  
+    </execution>  
+  </executions>  
+</plugin>
+```
+
+This configuration will execute steps to install node and npm locally, install the npm dependencies and run the gulp build. Note the configuration of the installDirectory and workingDirectory, setting these configurations helps resolve the other issues we'll talk about in a minute.
+
+## Excluding node\_modules from License Checks
+
+Node / Node Package Manager based Front End tools download their dependencies into a folder called node\_modules. This folder is a sibling of the package.json, the manifest of the dependencies. The default paradigm for integrating these tools into a Maven project is to add the package.json into the root of the project. Unfortunately, this folder will be picked up during License scans for tools such as [Apache Rat](https://creadur.apache.org/rat/).
+
+One easy option to resolve this would be to add the node\_modules folder to your .gitignore and [Apache Rat excludes list](https://creadur.apache.org/rat/apache-rat-plugin/check-mojo.html).
+
+In addition to the licensing problem, I just am not overly comfortable with the idea of storing transitive dependencies into the project source structure. To resolve this, as shown in the previous configuration, set the installDirectory and workingDirectory configuration values to have the frontend-maven-plugin run in the target directory instead of the project root. This will remove the dependencies from the view of Apache Rat and put them in a temporary directory, but at the cost of having to potentially re-download the dependencies for each build. 
+
+Then, add the following maven-resources-plugin configuration to copy the files into the target used by the frontend-mavin-plugin:
+
+```xml
+<plugin>  
+  <artifactId>maven-resources-plugin</artifactId>  
+  <executions>  
+    <execution>  
+      <id>copy-resources</id>  
+      <phase>validate</phase>  
+      <goals>  
+        <goal>copy-resources</goal>  
+      </goals>  
+      <configuration>  
+        <outputDirectory>${basedir}/${frontend.target}</outputDirectory>  
+        <resources>   
+          <resource>  
+            <directory>src/main/frontend</directory>  
+          </resource>  
+        </resources>   
+      </configuration>   
+    </execution>  
+  </executions>  
+</plugin>
+```
+
+## Including Generated Content in the Bundle
+
+You've got this all integrated into your build, your Gulp configuration is writing the generated files into target/classes/content/\[subpath\], you should be good to go right? Unfortunately, due to the way the [maven-bundle-plugin](http://felix.apache.org/documentation/subprojects/apache-felix-maven-bundle-plugin-bnd.html) works, it will not include your generated files! The maven-bundle-plugin calculates instructions and the Bundle Manifest, based on your project, and then delegates the work of building the bundle to [BND](/bnd.bndtools.org). The important point is: "based on your project". Since these folders don't exist in src (nor do we want generated code to exist there), the maven-bundle-plugin is not aware they exist.
+
+To make BND include the generated Front End code in the build, add the Include-Resources directive into the instructions for your maven-bundle-plugin configuration as such:
+
+```xml
+<plugin>  
+  <groupId>org.apache.felix</groupId>  
+  <artifactId>maven-bundle-plugin</artifactId>  
+  <extensions>true</extensions>  
+  <configuration>  
+    <instructions>  
+      <Export-Package />  
+      <Sling-Initial-Content>content</Sling-Initial-Content>  
+      <Include-Resource>{maven-resources},${basedir}/${frontend.target}/dist,</Include-Resource>  
+    </instructions>  
+  </configuration>  
+</plugin>
+```
+
+This will ensure that all of the existing resources are copied and as well as the generated Front End code. To make things easier, I also updated the Gulp build to write out its generated Front End code into the dist directory, but this really can be any path that makes sense for your build.
+
+## An Example Use Case
+
+If you'd like to see this in action, check out the recent changes to [Apache Sling Launchpad Content](https://github.com/apache/sling-org-apache-sling-launchpad-content).

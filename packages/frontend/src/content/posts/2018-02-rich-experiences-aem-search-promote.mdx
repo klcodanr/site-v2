@@ -1,0 +1,97 @@
+---
+title: Creating Rich Web Experiences with AEM + Adobe Search&Promote
+description: "Adobe Search and Promote is a powerful SaaS search offering within
+  the Adobe Marketing Cloud. By integrating Adobe Experience Manager (AEM) and
+  Adobe Search Promote, you can create extremely powerful search-driven
+  experiences in AEM. "
+hideInNav: false
+tags:
+  - Adobe Experience Manager
+  - AEM 6
+  - Adobe Search&Promote
+  - Site Search
+pubDate: 2018-02-27
+display: post
+image: /images/posts/2018-02-27-rich-experiences-aem-search-promote/rich-experiences.jpg
+published: true
+---
+
+[Adobe Search&Promote](https://www.adobe.com/marketing-cloud/target/search-and-promote.html) is a powerful SaaS search offering within the [Adobe Marketing Cloud](https://www.adobe.com/marketing-cloud.html). By integrating AEM and Adobe Search&Promote, you can create extremely powerful search-driven experiences in AEM.
+
+You may ask, why do you need a 3rd party search service when AEM includes a Search component? This feature searches directly in the CMS using native Lucene searching to search the content in AEM's repository. It is useful for small sites or basic needs, but is limited to only the contents of the AEM repository and does not support facets so more robust experiences will need a third party search tool.
+
+## Integrating AEM and Search & Promote
+
+Adobe offers an integration between Adobe Experience Manager and Adobe Search&Promote using AEM's Cloud Configs. This integration is meant to allow authors to easily deploy and configure basic search experiences with the two tools.
+
+To create dynamic experiences, however, we'll want to extend this integration to provide a more robust API to interact with Adobe Search&Promote.
+
+To make this API flexible, robust, and easy to use, we should follow these principals:
+
+* Use Sling Models to Populate the Search Request
+* Only expose minimal parameters via the URL
+* Map URL / User-Friendly parameters to Adobe Search&Promote parameters
+* Return POJO results from search
+
+This API will allow us to reuse the same "plumbing" code for integrating the tools across multiple components.
+
+## Creating a Flexible Facet Structure
+
+Rather than creating multiple facet structures for each use of a search component, we created a flexible facet structure to reuse across multiple components. This facet structure has a two-level hierarchy, however, you could add more to suit your business requirements. The hierarchy levels are:
+
+* Page Type
+* Page Category
+
+The Page Type is a list value and is the highest level in the facet taxonomy. This allows us to segment the Search&Promote collection to display the relevant content for a particular search experience. The Page Category then act as facets for users to refine the experience using the search components.
+
+### Creating the Facets
+
+The first step to creating the Facets is to expose the data from AEM. There easiest way is to simply add Meta tags with the desired values.
+
+Next, configure the Metadata in Adobe Search&Promote at Settings > Metadata > Defintions
+
+![Creating the Metadata in Search&Promote](/images/posts/2018-02-27-rich-experiences-aem-search-promote/create-metadata.jpg)
+
+Add a facet for each Metadata item under Design > Navigation > Facets:
+
+![Adding a facet in Adobe Search&Promote](/images/posts/2018-02-27-rich-experiences-aem-search-promote/add-facet.jpg)
+
+Finally, add the Facets to both the transport and presentation templates:
+
+**Transportation Template**
+
+![Add the Facets into the Transport Template](/images/posts/2018-02-27-rich-experiences-aem-search-promote/transport-template.jpg) 
+
+**Display Template**
+
+**![Add the Facets into the Display Template](/images/posts/2018-02-27-rich-experiences-aem-search-promote/display-template.jpg)**
+
+One these steps are completed, re-crawl the AEM site to get Adobe Search&Promote to index the new data.
+
+### Using the Facets
+
+Once Adobe Search&Promote picks up the new facets, add or expose the Facet data via Meta tags on all of the AEM pages. For example, a page could have the following attributes:
+
+* Title: Spinal Adjustment
+* Page Type: Health Library|Program and Service
+* Page Category: Spine|Orthopedics
+
+This page would appear in the Health Library and Program and Service search components as well as in site search. 
+
+![A Dynamic Search Component with AEM and Adobe Search&Promote](/images/posts/2018-02-27-rich-experiences-aem-search-promote/search-component.jpg) 
+
+The Page Categories drive the category list on the left of the page. These filters allow users to refine the results by category or text search.
+
+## Caching Facet Results
+
+Leveraging Apache Sling's powerful request extensions allows you to generate dynamic, cachable URLs. For example, you could use the Sling Selectors to provide the Page Category and the Sling Suffix to drive the pagination.
+
+This allows user interactions not using text search to be cached, reducing the number of server calls, reducing the load on the AEM Publisher and speeding up common requests.
+
+Leveraging cachable URLs can have huge benefits when text search is not the primary method of interacting with your search based component but does not offer as much of a benefit for experiences which include mostly text searching.
+
+## How Can You Use AEM+Adobe Search&Promote?
+
+The possibilities enabled by a powerful site search engine like Adobe Search&Promote are underappreciated in many AEM and digital marketing projects. By leveraging the full power of AEM and Adobe Search&Promote, you can create dynamic experiences that can easily be optimized and tweaked by marketing.
+
+Get in touch with Perficient Digital's Adobe experts to understand how you can leverage AEM + Adobe Search&Promote on your digital marketing program.

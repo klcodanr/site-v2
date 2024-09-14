@@ -1,0 +1,101 @@
+---
+title: Deploying Sling CMS Apps with GitHub Actions
+description: With Github Actions and Sling CMS, you can not only host a small
+  Apache Sling CMS website for free, you can even have a reliable CI/CD process!
+hideInNav: false
+tags:
+  - Apache Sling
+  - GitHub
+  - Continuous Integration
+pubDate: 2020-04-20
+display: post
+image: /images/posts/2020-04/github-actions-banner.jpg
+published: true
+---
+
+  
+
+I use [Apache Sling CMS](https://github.com/apache/sling-org-apache-sling-app-cms) for [my personal site](/), so I can easily author my blog posts from [nearly anywhere](https://twitter.com/KlcoDanR/status/1245087689663275008). Unfortunately, since this is a personal site, I'm not exactly spending the dollars on building out a full Continuous Integration / Delivery process. 
+
+  
+## Enter GitHub Actions
+
+  
+GitHub provides [Actions](https://github.com/features/actions), a free for limited use solution for executing code on Git repository events. With GitHub Actions, I can set up a pipeline to automatically deploy my code on changes to the master branch.  
+  
+### Actions Pipeline Definition
+
+  
+The pipeline is defined as a YAML file, deploy.yaml, under the directory `.github.workflows` in my code repository.  
+  
+
+```yaml
+# Deploys code updates to my personal site on push to the master branch
+
+name: Deploy on Push
+on:
+  push:
+    branches:
+      - master
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up JDK 1.8
+      uses: actions/setup-java@v1
+      with:
+        java-version: 1.8
+        server-id: github
+        settings-path: ${{ github.workspace }}
+    - name: Build and Deploy
+      run: mvn install -B -s $GITHUB_WORKSPACE/settings.xml -PautoInstallBundle,ci
+      env:
+        SLING_HOST: ${{ secrets.DEPLOY_HOST }}
+        SLING_USERNAME: ${{ secrets.DEPLOY_USERNAME }}
+        SLING_PASSWORD: ${{ secrets.DEPLOY_PASSWORD }}
+        SLING_PROTOCOL: https
+        SLING_PORT: 443
+```
+
+  
+A few things to note about the pipeline definition:
+
+* The definition `on` object contains my invocation definition, in this case, pushes to master
+* In the Maven command, I've added a custom profile `ci`, this profile will copy the environment variables seen in the env object
+* The env parameter to Build and Deploy contains the parameters, including [secret parameters](https://help.github.com/en/actions/configuring-and-managing-workflows/creating-and-storing-encrypted-secrets) for deploying the code
+  
+### Keeping Secrets, Secret
+
+  
+In order to deploy my code, I have to provide the CMS authoring URL and the username / password for an Administrative user. Naturally, I don't want to put this information on the web. With GitHub Actions, I can create secrets within the project:   
+  
+
+![Configure GitHub Action Instances](/images/posts/2020-04/configure-secrets.png)
+
+  
+And then use the `ci` profile in the POM to copy those secrets as environment variables from the `env` parameter in the Github Actions pipeline into the Maven project properties.  
+  
+
+```xml
+<profile>
+    <id>ci</id>
+    <properties>
+        <sling.host>${env.SLING_HOST}</sling.host>
+        <sling.port>${env.SLING_PORT}</sling.port>
+        <sling.username>${env.SLING_USERNAME}</sling.username>
+        <sling.password>${env.SLING_PASSWORD}</sling.password>
+        <sling.protocol>${env.SLING_PROTOCOL}</sling.protocol>
+    </properties>
+</profile>
+```
+
+  
+Once this is all wired up, you can push in a small change to execute the pipeline and you should see the deployment succeed. Note that the secrets are hidden from the logs so even if a user can see the pipeline, they cannot see the secret values.  
+  
+
+![Execution Result from GitHub Actions](/images/posts/2020-04/GH-Actions-Exec.png)
+
+  
+With Github Actions, you can not only host [a small Apache Sling CMS website for free](https://blogs.perficient.com/2018/12/11/building-a-zero-cost-website-with-apache-sling-cms/), but you can even have a reliable CI/CD process!  
+  

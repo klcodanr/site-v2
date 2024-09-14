@@ -1,0 +1,76 @@
+---
+title: Handling File Upload in Adobe CQ
+description: Learn how to handle file uploads in Adobe CQ
+hideInNav: false
+tags:
+  - Adobe CQ
+  - Apache Sling
+  - Apache Sling Servlet
+pubDate: 2013-01-02
+display: post
+image: /images/posts/shared/CQ5.png
+published: true
+---
+
+You need to handle a file upload in Adobe CQ. So, you notice CQ already has [Apache Commons FileUpload](http://commons.apache.org/fileupload/) installed, so you decide to use it to handle the file upload.
+
+You write your servlet code and end up with something like this:
+
+```
+// Check that we have a file upload request
+final boolean isMultipart = ServletFileUpload.isMultipartContent(request);
+PrintWriter out = null;
+try {
+  out = response.getWriter();
+  if (isMultipart) {
+	// Create a new file upload handler
+	final ServletFileUpload upload = new ServletFileUpload();
+	// Parse the request
+	final FileItemIterator iter = upload.getItemIterator(request);
+	while (iter.hasNext()) {
+	  final FileItemStream item = iter.next();
+	  final String name = item.getFieldName();
+	  final InputStream stream = item.openStream();
+	  if (item.isFormField()) {
+		out.println("Form field " + name + " with value " + Streams.asString(stream) + " detected.");
+	  } else {
+		out.println("File field " + name + " with file name " + item.getName() + " detected.");
+	  }
+	}
+  }
+
+```
+
+After you build your code and deploy it to CQ, you try to upload a file to test and boom! You get the following error:
+
+```
+java.lang.IllegalStateException: Request Data has already been read
+
+```
+
+What happened? Your code is correct, and you aren’t already reading the request data, so why are you getting an error? Well, Sling reads the file content automatically, so the your code attempts to read in the request data twice.
+
+Instead of reading the contents through FileUpload, you can retrieve the file contents from the Sling API. Sling makes the uploaded files and all parameters available from the [SlingHttpServletRequest.getRequestParameterMap](http://sling.apache.org/apidocs/sling5/org/apache/sling/api/SlingHttpServletRequest.html#getRequestParameterMap%28%29) method, which returns a [RequestParamterMap](http://sling.apache.org/apidocs/sling5/org/apache/sling/api/request/RequestParameterMap.html). Simply iterate over the parameters to retrieve the file and any parameters passed into the request.
+
+```
+// Check that we have a file upload request
+final boolean isMultipart = ServletFileUpload.isMultipartContent(request);
+PrintWriter out = null;
+try {
+  out = response.getWriter();
+  if (isMultipart) {
+	final Map<String, RequestParameter[]> params = request.getRequestParameterMap();
+	for (final Map.Entry<String, RequestParameter[]> pairs : params.entrySet()) {
+	  final String k = pairs.getKey();
+	  final RequestParameter[] pArr = pairs.getValue();
+	  final RequestParameter param = pArr[0];
+	  final InputStream stream = param.getInputStream();
+	  if (param.isFormField()) {
+		out.println("Form field " + k + " with value " + Streams.asString(stream) + " detected.");
+	  } else {
+		out.println("File field " + k + " with file name " + param.getFileName() + " detected.");
+	  }
+	}
+  }
+
+```

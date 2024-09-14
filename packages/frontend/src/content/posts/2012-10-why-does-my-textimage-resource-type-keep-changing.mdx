@@ -1,0 +1,54 @@
+---
+title: Why does my TextImage Resource Type Keep Changing!?
+description: Learn about what could be changing the Resource Type on your custom
+  TextImage component
+hideInNav: false
+tags:
+  - Adobe CQ
+  - Gotcha
+  - How To
+  - CQ5.5
+pubDate: 2012-10-10
+display: post
+image: ""
+published: true
+---
+
+On my current project, we ran into a very weird issue where the dialog kept changing when user’s dragged images into the TextImage component we overrode from the [foundation TextImage component](http://dev.day.com/docs/en/cq/current/wcm/default%5Fcomponents.html#Text%20Image). Specifically, this only seemed to happen when user’s dragged images into the component inline. 
+
+After doing some investigation, I found that the sling:resourceType on the nodes was changing when the image was dragged into the component. The culprit is the CQ Edit Configuration in the foundation TextImage component.
+
+In CQ 5.5, the TextImage component includes the ability to drag images into the component without opening the dialog. To enable this functionality, Adobe set the parameters to send to the server when an image is dropped into a TextImage component in the CQ Edit Configuration. One of these parameters sets the sling:resourceType to ‘foundation/components/textimage’. This will cause the component instance resource type to revert to the out of the box textimage component instead of your custom component when an image is dragged into the component inline.
+
+To fix this issue, simply add the CQ Edit Configuration into your component and set the sling:resourceType to the resource type for your custom component. If you export the file with VLT, the result will look like this:
+
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<jcr:root xmlns:sling="http://sling.apache.org/jcr/sling/1.0" xmlns:cq="http://www.day.com/jcr/cq/1.0" xmlns:jcr="http://www.jcp.org/jcr/1.0" xmlns:nt="http://www.jcp.org/jcr/nt/1.0"
+	jcr:primaryType="cq:EditConfig">
+	<cq:dropTargets jcr:primaryType="nt:unstructured">
+		<image
+			jcr:primaryType="cq:DropTargetConfig"
+			accept="[image/.*]"
+			groups="[media]"
+			propertyName="./image/fileReference">
+			<parameters
+				jcr:primaryType="nt:unstructured"
+				sling:resourceType="MYAPP/components/textimage">
+				<image
+					jcr:primaryType="nt:unstructured"
+					sling:resourceType="foundation/components/image"
+					imageCrop=""
+					imageMap=""
+					imageRotate=""/>
+			</parameters>
+		</image>
+	</cq:dropTargets>
+	<cq:inplaceEditing
+		jcr:primaryType="cq:InplaceEditingConfig"
+		active="{Boolean}true"
+		configPath="../../dialog/items/tab1/items/text"
+		editorType="text"/>
+</jcr:root>
+
+```

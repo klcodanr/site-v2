@@ -1,0 +1,115 @@
+---
+title: "Mastering AEM Dispatcher Part 7: Securing the Dispatcher"
+description: The AEM Dispatcher is not just a caching engine and load balancer,
+  is the first line of defense for your AEM application. That's why it's so
+  important to ensure your Dispatcher is configured to be secure.
+hideInNav: false
+tags:
+  - Mastering the AEM Dispatcher
+  - Adobe Experience Manager
+  - Security
+  - Dispatcher
+  - Apache Sling Servlet
+pubDate: 2019-01-10
+display: post
+image: /images/posts/2018-12/Dispatcher-Hero.jpg
+published: true
+---
+
+We’re locking down the AEM Dispatcher as we continue in the series, [Mastering the AEM Dispatcher](https://blogs.perficient.com/adobe/tag/mastering-the-aem-dispatcher/). In this post, we’ll discuss gotchas with Sling Servlets and the AEM Dispatcher and a tool to scan your Dispatcher for common security issues.
+
+The AEM Dispatcher is not just a caching engine and load balancer, is the first line of defense for your AEM application. That's why it's so important to ensure your Dispatcher is configured to be secure.
+
+Unfortunately, many Dispatcher installations are not configured to block some critical services and endpoints, leaving applications vulnerable.
+
+To help you secure your AEM installation, I have documented and developed a tool to check 77 services and endpoints you _should_ be blocking at the Dispatcher:
+
+  
+## [Try the AEM Dispatcher Scanner](https://adobecommunity.org/members/dispatcher-security-scanner.html)
+
+  
+So why is this necessary? The Dispatcher configuration allows users to filter requests and deny access either on a whitelist or blacklist strategy.
+
+Adobe's recommendation is to use a whitelist strategy where only certain requests are allowed and all others are denied. In most AEM installations, this means denying all paths and only allowing requests under /etc/designs (6.2 or older) or /etc.clientlibs (6.3+) or the content language roots (ex /en/us or /es/mx). Adobe then recommends additional rules for denying certain selectors which can be used for accessing large content trees such as infinity.json.
+
+Blacklists are somewhat harder to secure as you allow all traffic by default and only deny specific paths such as /apps, /bin and /system which should not be accessed.
+
+  
+## Validating Dispatcher Security
+
+  
+Adobe's KnowledgeBase contains a [Dispatcher Security Checklist](https://helpx.adobe.com/experience-manager/dispatcher/using/security-checklist.html) and a [list of URLs to check](https://helpx.adobe.com/experience-manager/dispatcher/using/dispatcher-configuration.html#main-pars%5Ftitle%5F19), however unfortunately, there are a few out of date instructions and missing checks in these articles.
+
+  
+## Out of Date
+
+  
+Adobe Experience Manager has changed a lot since CQ5, unfortunately the Dispatcher URL check list is not one of the things which has caught up.
+
+The following URLs aren't really relevant anymore in AEM6:
+
+* /content/geometrixx.sitemap.txt - Geometrixx is no longer included in AEM 6
+* /admin - This path is the old location of the CQSE Servlet Engine in CQ5 which no longer exists in AEM 6.
+  
+## Missing URLs
+
+  
+Unfortunately, there are a number of new URL patterns which should be blocked in AEM6, but are not mentioned in the list of URLs to check, these include:
+
+* .search.json This servlet searches the AEM repository, potentially exposing private information to malicious actors as well as being a potential vector for DDOS attacks.
+* .childrenlist.json This servlet allows users to traverse the content structure of an AEM site, potentially exposing private content.
+* /api.json The Granite API Endpoint Resource Provider Factory provides a JSON API for the entire /content tree. This can enable a malicious actor to access non-public content.
+* /services/tagfilter The TagFilter servlet exports a complete list of all of the tags in the system. This may expose some private information and could be a potential vector for DDOS attacks as it is relative expensive to execute.
+  
+## The Importance of Consistency
+
+  
+Part of the reason there are so many URLs which need to be added for AEM6 is that certain teams in Adobe (I'm looking at you AEM Communities and Scene7) did not follow the URL patterns followed by the rest of the team.
+
+While there is nothing you can do about poor internal architectural practices at Adobe, by following a few simple rules, you can ensure your application doesn't expose any additional security holes.
+
+  
+### Rule 1: Use /bin for Author Servlets
+
+Whenever possible, using the path /bin for Servlets specifically for authoring makes setup and security easy, Servlets are already whitelisted under this path and since there are a number of other OOTB system Servlets under this path, it should already be blocked.
+
+### Rule 2: Disable when not needed
+
+If your Servlet is not needed on a particular instance type, disable it. This can be accomplished by creating an OSGi configuration with an enabled flag and only provide the configuration for certain run modes.
+
+### Rule 3: Be restrictive
+
+Make your Servlet as restrictive as possible. Rather than just binding it to a node type, bind it to a resource type. Make sure it is being executed from the expected context by validating the path. 
+
+### Rule 4: Whitelist rather than blacklist selectors and suffixes
+
+Instead of allowing all selectors / suffixes on the publish servers, keep a list of valid values and patterns and only allow those patterns / values. This takes consistency and planning but leaves _significantly_ fewer opportunities for and attacker to compromise your application.  
+  
+## Getting Started Securing your AEM Dispatcher
+
+  
+The first and easiest step to getting started to securing your AEM Dispatcher is use the [Dispatcher Security Scanner](https://adobecommunity.org/members/dispatcher-security-scanner.html) to check for common vulnerabilities.
+
+Next, you should use the Adobe checklist to ensure that your Dispatcher is set up and configured correctly.  
+
+Finally, to ensure that your application has not introduced any additional vulnerabilities, you can use the Resource Resolver OSGi console to view all of the servlets registered for your application. This is how I found several undocumented servlets included in the Dispatcher Security Scanner. 
+
+To do this open the Resource Resolver OSGi console at [http://localhost:4502/system/console/jcrresolver](http://localhost:4502/system/console/jcrresolver) and scroll down to Resource Providers.
+
+  
+
+![The Resource Resolver OSGi Console](/images/posts/2019-01/resource-resolver-console.png)
+
+  
+
+In the Resource Resolver OSGi console, you'll see a list of all of the registered servlets. It takes some interpretation to understand what all of these servlet patterns mean. To understand the patterns, you need to understand how sling servlets are registered. Servlets can either be registered with an absolute path or by a combination of resource type, selectors and extensions.
+
+When you see a pattern like this: _/bin/cpm/nodes/source.servlet_ the servlet is registered at the path _/bin/cpm/nodes/source_.
+
+On the other hand, if you see a pattern like this: _/apps/myapp/components/general/component1/model.json.servlet_ this servlet will respond to all requests to resources with the Resource Type "myapp/components/general/component1", the selector "model" and the extension "json". 
+
+You can then use cURL or whatever mechanism works best for you to attempt to access these URLs on a development instance of your application to validate that they are blocked at the Dispatcher. You'll need to think critically about how the service are used, as at times it may make sense for a Servlet it to be exposed, but that same Servlet, if enabled on a site root page could cause serious problems.
+
+By following this process, you can help ensure that your AEM Dispatcher is properly configured to keep your application secure. Working with the Dispatcher can be complex, so if you need any help, leave a comment!
+
+  

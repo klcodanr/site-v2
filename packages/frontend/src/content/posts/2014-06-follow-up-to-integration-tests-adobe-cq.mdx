@@ -1,0 +1,107 @@
+---
+title: Follow Up to Integration Tests in Adobe CQ
+description: Improvements and recommendations from my previous post about
+  Integration Testing in Adobe CQ.
+hideInNav: false
+tags:
+  - Adobe CQ
+  - Best Practices
+  - Integration Testing
+  - jUnit
+  - Adobe Experience Manager
+pubDate: 2014-06-25
+display: post
+image: /images/posts/shared/CQ5.png
+published: true
+---
+
+In my [previous post](/posts/2013-11-integration-tests-adobe-cq), I had introduced the idea of integrating testing AEM (CQ5) projects using Apache Sling Testing Framework. After using the integration testing framework for a while and learning more about the framework, I have come up with some improvements to my original post.
+
+### 1\. Support Testing Existing AEM/CQ5 Instance
+
+This makes your tests a lot quicker and easier, instead of starting up a new CQ instance just to run your integration tests, you can hook into the CQ instance you are already using for development. To do this, update your `systemPropertyVariables` parameter to have the following variables:
+
+```
+${crx.port}
+http://${crx.host}:${crx.port}
+-p ${crx.port} -nobrowser -nofork
+-XX:MaxPermSize=512m -Xmx1g
+${cq.dir}
+^(cq|aem).*jar$
+false
+240
+1.0
+/libs/granite/core/content/login.html:QUICKSTART_HOMEPAGE
+30
+20
+
+```
+
+The big change to note is the addition of the `crx.port` parameter. This parameter is the one my project uses for the port for the CQ instance into which it installs the project code if you use a different variable name, update accordingly. The other change you will need to restructure your integration tests to be executed after you install all of your code. In my case, I moved the integration tests into a separate project, which is the last project to execute in the main reactor. This way, the content package containing all of the project code is installed before the integration tests run.
+
+### 2\. Nix the CQClient
+
+So the CQClient isn't really required. It's simply that I should have been removing the existing testing content and apps before attempting to install the new testing code and apps. Unfortunately, this exposes an [actual bug](https://issues.apache.org/jira/browse/SLING-3561) where the mkdirs function doesn't work properly if any portion of the parent path you're trying to create already exists. Hopefully, there will be a [new release of the Apache Sling Testing Tools](https://issues.apache.org/jira/browse/SLING/fixforversion/12324063/) to resolve this issue.
+
+### 3\. Create an Abstract Test
+
+I found that I kept re-writing the same series of actions over and over, so I created an abstract class to handle this. The abstract class will:
+
+1. Deletes any existing test content
+2. Create the required folders
+3. Upload the test script
+4. Create the test content
+5. Ensure the content exists
+6. Make sure requesting the content returns 200
+
+You can download the [AbstractIntegrationTest class from this gist](https://gist.github.com/klcodanr/eb1afd99e1d7f077a363). Once you have the abstract class loaded you can just make more tests, which look something like:
+
+```
+package com.sixdimensions.wcm.cq.it;
+
+import com.sixdimensions.wcm.cq.it.AbstractIntegrationTest;
+import org.apache.sling.testing.tools.http.RequestExecutor;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import static org.junit.Assert.*;
+
+import java.io.IOException;
+import java.io.InputStream;
+import org.apache.commons.io.IOUtils;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class SampleIT extends AbstractIntegrationTest {
+
+    private static final Logger log = LoggerFactory.getLogger(SampleIT.class);
+
+    private final String TEST_ID = "sample";
+
+    /**
+     * Execute before the actual test, this will be used to setup the test data
+     *
+     * @throws Exception
+     */
+    @Before
+    public void init() throws Exception {
+        log.info("initializing sample IT");
+
+        appsBase = "/apps/test/" + TEST_ID;
+        contentBase = "/content/test/" + TEST_ID;
+
+    }
+
+    @Test
+    public final void load() throws IOException {
+        log.info("initializing the CQ side of things");
+        RequestExecutor initTestRequest = initTest(TEST_ID);
+        
+        // test the response
+    }
+}
+
+```
+
+Hopefully these tips help you leverage the Sling Remote Testing Tools to efficiently test your AEM/CQ5 project!

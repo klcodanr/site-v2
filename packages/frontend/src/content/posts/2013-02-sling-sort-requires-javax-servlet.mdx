@@ -1,0 +1,37 @@
+---
+title: Sling (sort of) Requires Javax Servlet
+description: Find out how to resolve a missing javax.servlet dependency when
+  using the Apache Sling API.
+hideInNav: false
+tags:
+  - Servlet
+  - Apache Sling
+  - Gotcha
+  - Apache Maven
+pubDate: 2013-02-13
+display: post
+image: /images/posts/shared/sling.jpeg
+published: true
+---
+
+Recently I was refactoring some Maven POM’s to reduce the number of dependencies and manage the dependency version from the reactor POM. After I removed the duplicate dependencies I ran the build and almost immediately ran into this error:
+
+```
+[ERROR] BUILD FAILURE  
+[INFO] ------------------------------------------------------------------------  
+[INFO] Compilation failure  
+{...Class}.java:[178,50] cannot access javax.servlet.http.HttpServletRequest class file for javax.servlet.http.HttpServletRequest not found
+		RequestPathInfo requestInfo = httpRequest.getRequestPathInfo() ;
+
+```
+
+Since the error was related to Java Servlets, I assumed it was an issue with the servlet project. After spending time going down the rabbit hole, I noticed the error was actually coming out of another project, and being triggered by a [Sling Pipeline Rewriter](http://sling.apache.org/site/output-rewriting-pipelines-orgapacheslingrewriter.html "Apache Sling Rewriting Pipeline").
+
+So why would code which isn’t a servlet code be throwing an error for missing a javax.servlet class? Well, the error is triggered by:
+
+```
+RequestPathInfo requestInfo = context.getRequest().getRequestPathInfo();
+
+```
+
+Well, it turns out that the Sling API declares the Java Servlet API as a provided dependency, meaning it’s included in the compilation of the Sling API, but not transitive. The simple solution is that if you interact with any of the Sling Servlet code, aka the [SlingHttpServletRequest](http://sling.apache.org/apidocs/sling6/org/apache/sling/api/SlingHttpServletRequest.html "SlingHttpServletRequest JavaDocs") or the [SlingHttpServletResponse](http://sling.apache.org/apidocs/sling6/org/apache/sling/api/SlingHttpServletResponse.html "SlingHttpServletResponse JavaDocs"), you need to add the [javax.servlet.servlet-api](http://search.maven.org/#artifactdetails|javax.servlet|servlet-api|2.4|jar "Java Servlet API") as a dependency in your project.

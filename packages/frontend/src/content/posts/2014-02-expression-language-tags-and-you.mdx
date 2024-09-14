@@ -1,0 +1,138 @@
+---
+title: Expression Language, Tags and You
+description: Talks about levering Tags and Expression Language to improve your
+  CQ Development techniques
+hideInNav: false
+tags:
+  - Adobe CQ
+  - Adobe Experience Manager
+  - Best Practices
+  - JSTL
+  - Expression Language
+pubDate: 2014-02-25
+display: post
+image: ""
+published: true
+---
+
+One of the things I’ve seen on many projects which makes code a lot more difficult to read and understand is scriptlet (aka Java inside JSPs). Especially now, there really isn’t a good reason you need to ever use scriptlet inside your JSPs, but especially given the prevalence within CQ’s codebase it’s a common practice.
+
+## Helpful tools
+
+Recently, myself and others have been contributing code to make it easier to develop JSPs in CQ without using scriptlet. All of these tools will need to be installed as bundles as part of your project. Some of these tools are:
+
+* **[Sling JSP Taglib 2.2.0](http://sling.apache.org/documentation/bundles/sling-scripting-jsp-taglib.html)** These tags allow you to perform basic operations against Resources in Sling without any scriptlet.
+* **[Sling Models 1.0.0](http://sling.apache.org/documentation/bundles/models.html)** Created by [Justin Edelson](http://www.linkedin.com/in/justinedelson). Allows you to annotate Java Classes and Interfaces to have them automatically inject properties, services, etc from CQ.
+* **[Component Bindings Provider 0.1.3](http://sixdimensions.github.io/Component-Bindings-Provider/)** Create classes which can be bound to a resource type and automatically be called whenever scripts for that resource type are called.
+* **[CQ Extended Tag Library 0.1.2](http://sixdimensions.github.io/CQ-Extended-Tag-Library/)** Tags for using the CQ APIs in JSPs without requiring scriptlet.
+
+## How do I avoid scriptlet?
+
+So how do you actually avoid scriptlet? Well, let’s take a look at some code.
+
+Here’s how you can use scriptlet to retrieve a link and title:
+
+```
+<%
+String loginTitle = "Login";
+String loginPath = "";
+if(currentNode!=null) {
+    loginTitle = (currentNode.hasProperty("logintitle"))? currentNode.getProperty("logintitle").getString():"";
+    loginPath = (currentNode.hasProperty("loginpath"))? currentNode.getProperty("loginpath").getString():"";
+}
+%>
+<li data-client="loginbtn" data-url="<%= loginPath %>"><a href="javascript:void(0);"><span class="icon-user"></span><%=loginTitle%></a></li>
+
+```
+
+Here’s the same code without scriptlet:
+
+```
+<li data-client="loginbtn" data-url="${properties.loginpath}"><a href="javascript:void(0);">
+    <span class="icon-user"></span><c:out value="${properties.logintitle}">Login</c:out>
+</li>
+
+```
+
+Cleaner and easier to read. So what does it actually mean?
+
+`${...}` denotes an Expression Language expression, the contents are parsed using JavaBean standards, so for `${properties.loginpath}` will look for the pageContext variable `properties` and try to retrieve the map variable `loginpath`. I’d also note that if properties was a regular object instead of a map, the EL parser would attempt to invoke the method getLoginpath or isLoginpath based on JavaBean naming conventions.
+
+One nice thing to note about the [c:out tag](http://docs.oracle.com/javaee/5/jstl/1.1/docs/tlddocs/c/out.html)is that it will automatically escape HTML and the text inside the tag will be used as a default if the supplied variable is null or empty.
+
+How about retrieving the children a child node/resource? Using scriptlet, the code would look like:
+
+```
+if (currentNode!=null && currentNode.hasNode("links")) {
+    NodeIterator linksNode = currentNode.getNode("links").getNodes();
+    int count = 0;
+    while (linksNode.hasNext()) {
+        Node linkNode = (Node)linksNode.next();
+        String name = linkNode.hasProperty("name") ? linkNode.getProperty("name").getString() : "";
+        String link = linkNode.hasProperty("link") ? linkNode.getProperty("link").getString() : "";
+        Boolean isChecked = linkNode.hasProperty("newtabcheckbox") ? Boolean.valueOf(linkNode.getProperty("newtabcheckbox").getString()) : false;    
+        if(isChecked){
+            %><li><a href="<%=link %>" target="_blank" rel="noopener" ><%=name %></a></li><% 
+        }else{
+            %><li><a href="<%=link %>" ><%=name %></a></li><% 
+        }
+    }
+}
+
+```
+
+When working without scriptlet, this could look like:
+
+```
+<sling:getResource base="${resource}" path="links" var="links" />
+<c:forEach var="link" items="${sling:listChildren(links)}">
+    <sling:adaptTo var="linkProps" adaptable="${link}" adaptTo="org.apache.sling.api.resource.ValueMap" />
+    <li><a href="${linkProps.link}" <c:if test="${linkProps.newtabcheckbox == 'true'}">target="_blank" rel="noopener"</c:if>><c:out value="${linkProps.name}" /></a></li>
+</c:forEach>
+
+```
+
+So here we use the Sling JSP Taglib’s [getResource tag](http://sling.apache.org/documentation/bundles/sling-scripting-jsp-taglib.html#getresource%5F1)to get a resource, then the [listChildren function](http://sling.apache.org/documentation/bundles/sling-scripting-jsp-taglib.html#listchildren)to list all of the child resources which we loop through with the [c:forEach tag](http://docs.oracle.com/javaee/5/jstl/1.1/docs/tlddocs/c/forEach.html). For each link, we use the Sling adaptTo tag to adapt the resource into a ValueMap and then write out the properties as we saw above. As you can see as well JSTL includes basic logic tags such as [c:if](http://docs.oracle.com/javaee/5/jstl/1.1/docs/tlddocs/c/if.html)for controlling basic logic.
+
+## Replacing Scriptlet Logic
+
+One of the questions you probably have with this model is: how would you do calculations? For simple calculations, Expression Language can be used to replace your scriptlet, for example if you want to calculate tax on a particular item, you could do something like this:
+
+```
+<fmt:formatNumber value="${price * 1.06}" type="currency" />
+
+```
+
+The above code will multiply the page context variable price and the tax rate of 1.06 (which would probably be retrieved from another variable in real life) and write it to the page formatted as a currency amount for the current locale.
+
+I’d also note, that the Sling TagLib even includes support for executing queries all without writing a class or a line of scriptlet, to retrieve child cq:Page nodes of the current page:
+
+```
+<sling:findResources query="SELECT * FROM [cq:Page] AS s WHERE ISDESCENDANTNODE([${currentPage.path}])" language="JCR-SQL2" var="childPages" />
+<c:forEach var="childPageResource" items="${childPages}">
+    <sling:adaptTo adaptable="${childPageResource}" adaptTo="com.day.cq.wcm.api.Page" var="childPage" />
+    <a href="${childPage.path}.html">${childPage.title}</a>
+</c:forEach>
+
+```
+
+This is even easier using the CQ Extended Tag Library:
+
+```
+<c:forEach var="childPage" items="${ext:listPages(currentPage,true)}">
+    <a href="${childPage.path">${ext:getTitle(currentPage,'page')}</a>
+</c:forEach>
+
+```
+
+This snippet will retrieve the child pages and will even exclude pages which are hidden or invalid and will get the title of the page using the jcr:title and node name as fallbacks.
+
+## Separating Out Business Logic
+
+If your logic is more complicated or requires accessing services, you should use either Sling Models or the Component Bindings Provider API to run the logic and make the results available in your script.
+
+The Component Bindings Provider API is intended specifically for this purpose. To expose variables to your script with the Component Bindings Providers, you register a Service into the OSGi Container with the resource type of the components you want to bind which implements the ComponentBindingsProvider interface. This Service will be picked up and invoked before every script invocation.
+
+Sling Models can also be used to expose advanced features. Here you annotate a class or interface using the Sing Models annotations and adapt the provided resource or request into your class / interface. This will automatically inject the annotated variables and using the JavaBeans method naming convention you can call all of the getters available on the class.
+
+Hopefully, this gives you a basic intro on Expression Language and Tags and helps you write cleaner more maintainable code.

@@ -1,0 +1,60 @@
+---
+title: Simple Container Component Start and End Bars
+description: See how easy it is to change the design path on a CQ Component
+hideInNav: false
+tags:
+  - Adobe CQ
+  - Components
+  - Best Practices
+pubDate: 2013-06-21
+display: post
+image: /images/posts/2013-06-21-simple-container-component-start-end-bars/no-start-end-bars.png
+published: true
+---
+
+When creating a container component for Adobe CQ, you often run into an issue where the resulting page is difficult to author as there are too many [parsys](http://wem.help.adobe.com/enterprise/en%5FUS/10-0/wem/wcm/default%5Fcomponents.html#Paragraph%20System%20%28parsys%29) adjacent to each other. As bad as this situation is for the component developer, imagine how confusing it must be to authors who don’t have a detailed understanding of how the component works. As you can see from the illustration below of a tab component, when you have multiple parsys in a single component it can get very confusing as to what each parsys does. 
+
+![A component with no start or end bars](/images/posts/2013-06-21-simple-container-component-start-end-bars/no-start-end-bars.png) _A container component without start or end bars_
+
+My first thought in handling this was to dynamically update the empty text for the parsys based on the component name, however this proved to be difficult if not impossible without overwriting the entire parsys component. Instead, I decided to take a look at the [iparsys](http://wem.help.adobe.com/enterprise/en%5FUS/10-0/wem/wcm/default%5Fcomponents.html#Inheritance%20Paragraph%20System%20%28iparsys%29 "Documentation on Adobe CQ's Inheritance Parsys Component"), which displays a bar below it’s parsys. The answer turned out to be simple. I just needed to add two nearly empty sub-components to render the start and end bars (as needed).
+
+The components should be created as child components of your container component and only need to have the node configuration, a [CQ Edit Configuration](http://dev.day.com/docs/en/cq/current/developing/components/edit%5Fconfig.html "The Adobe CQ Edit Configuration Documentation") and a empty JSP. The component configuration, shown below simply sets the name of the component and declares the type.
+
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<jcr:root xmlns:cq="http://www.day.com/jcr/cq/1.0" xmlns:jcr="http://www.jcp.org/jcr/1.0"
+   jcr:primaryType="cq:Component"
+   jcr:title="End Tab"
+   componentGroup=".hidden"/>
+
+```
+
+The Edit Configuration is similarly simple. It just enables the edit bar and adds a single title item into the edit bar.
+
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<jcr:root xmlns:cq="http://www.day.com/jcr/cq/1.0" xmlns:jcr="http://www.jcp.org/jcr/1.0"
+    cq:actions="[text:End Tab]"
+    cq:layout="editbar"
+    jcr:primaryType="cq:EditConfig"/>
+
+```
+
+As the JSP is just blank I doubt I need to show it. The start component is similar, with only the names updated. 
+
+Once you have created your components you simply surround the parsys’s in your container component with these components.
+
+```
+<cq:include path="tab-1-start" resourceType="myapp/components/general/tabs/start" />
+<cq:include path="tab-1" resourceType="foundation/components/parsys" />
+<cq:include path="tab-1-end" resourceType="myapp/components/general/tabs/end" />
+
+```
+
+Once this is complete and installed into CQ, you should now see the start and end bars surrounding your container component’s parsys, clearly delimiting where your component starts and ends.
+
+![The same component with start and end bars](/images/posts/2013-06-21-simple-container-component-start-end-bars/with-start-end-bars.png)
+
+_The same component with start and end bars_
+
+As you can see it is much easier to tell what parsys’s belong to the compoent and which ones belong to containing components. Taking the simple step of adding start and end components makes it much easier for authors and other maintainers to edit container components.

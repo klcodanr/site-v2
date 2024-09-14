@@ -1,0 +1,139 @@
+---
+title: Seven Infrastructure Basics You Need for AEM
+hideInNav: false
+tags: []
+display: post
+image: /images/posts/2021-03/foundation.jpg
+published: false
+---
+
+  
+I've led, participated in and overseen over 30 implementations of AEM and I can safely say the single largest wasted cost across nearly all of them has been teams waiting for basics to be figured out. Whether your company wants adopt AEM using [Adobe Managed Services](https://www.adobe.com/marketing/experience-manager/managed-services.html) for hosting or [AEM Cloud Service](https://www.adobe.com/marketing/experience-manager/cloud-service.html), here are a few of the basics you will want to have ready to save time and headaches.  
+
+* Virtual Private Network / Remote Access
+* Source Control
+* Single Sign On
+* Build / Continuous Integration
+* Service Framework
+* Integration Environment
+* Domain & Associated Certificates
+* Content Delivery Network
+  
+
+![Virtual Private Network](/images/posts/2021-03/vpn.jpg)
+
+  
+
+## #1 Virtual Private Network (VPN) / Remote Access
+
+  
+Unless your entire team is in house or everything is on the public web, you will need some way for contractors and consultants to get access to your systems. Make sure the process is ironed out and get access requests in early to avoid paying people to twiddle their thumbs.
+
+This may seem basic to the point of being rudimentary, but a large had sprint 0 updates to the effect of team X can't get to system Y or Bob's VPN request is stuck in approval or the offshore team can't get to the GIT repo. There's no point in paying people to send emails asking for access, so get this figured out ahead of time, especially before the development team rolls on.
+
+  
+
+![GIT Screenshot](/images/posts/2021-03/git.jpg)
+
+  
+
+## #2 Source Control, Specifically GIT
+
+  
+AEM runs in the cloud, but it's still software and you will need to manage code. You may be tempted to "make it easier" by not setting up your own SCM system, but the alternatives all have downsides:
+
+* Adobe Cloud Manager [comes with a basic GIT repository](https://experienceleague.adobe.com/docs/experience-manager-cloud-manager/using/managing-code/setup-cloud-manager-git-integration.html?lang=en#git-integration-overview) for deployments, but it's not anywhere near full featured and will not scale for development teams
+* Most service vendors / agencies will offer their own GIT repositories, but do you really want someone else to have control of your code?
+Whether you leverage an on premise solution or cloud hosted GIT repository, there are a large number of inexpensive, simple solutions for hosting your code. Make sure your team can be productive from day 1 and have a GIT repository ready for them.  
+  
+
+![Lots of Keys](/images/posts/2021-03/keys.jpg)
+
+  
+
+## #3 Single Sign On
+
+  
+All Adobe Managed Services / Cloud Service customers can leverage [Adobe's Identity Management Service (IMS)](https://experienceleague.adobe.com/docs/experience-manager-learn/foundation/authentication/adobe-ims-authentication-technical-video-understand.html?lang=en) for authentication, but ideally you will want to use IMS with [Federated Identity](https://helpx.adobe.com/enterprise/admin-guide.html/enterprise/using/identity.ug.html) to allow users to log in via your organization's enterprise directory. While you can implement this later, save development and user team cycles by ensuring IT resources are ready and planning on integrating your enterprise directory with Adobe.  
+  
+
+![Cranes](/images/posts/2021-03/build.jpg)
+
+  
+
+## #4 Build / Continuous Integration
+
+  
+Adobe Cloud Manager can [deploy code](https://experienceleague.adobe.com/docs/experience-manager-cloud-manager/using/overview/ci-cd-pipeline.html?lang=en#pipeline-overview) so why would you need a separate build tool? Having a third party build tool enables you organization to:  
+
+* Validate Pull Requests
+* Test code before it's deployed to Cloud Manager
+* Build only the changed portions of the application
+* Run concurrent builds
+* Integrate additional tests or checks such as:  
+   * Code quality checks  
+   * Dependency licensing checks  
+   * Performance tests  
+   * Penetration tests  
+   * Accessibility tests
+
+Compared to a home-grown build tool, Cloud Manager is very slow, and especially when paying consulting or development teams time is money so as much as possible, you want to limit the use of Cloud Manager builds and feel confident that they will succeed.
+
+If you have a very small team or very limited customizations, Cloud Manager alone _may_ work for you, but no matter the size using your own build tool will yield savings in the medium / long term.  
+  
+
+![Integration](/images/posts/2021-03/integration.jpg)
+
+  
+
+## #5 Integration Environment
+
+  
+It may seem strange to recommend setting up a server outside of a cloud solution, to achieve development velocity with AEM, it's best to have an integration environment by ensuring your development team can build and deploy code rapidly to iteratively test before going through Cloud Manager.
+
+Ideally, the integration environment will be transient and templatized to support easy rebuilding and teardown. Some options would include Docker containers, Vagrant or AWS AMI's.  
+  
+
+![Name badge](/images/posts/2021-03/dns.jpg)
+
+  
+
+## #6 Domain & Associated Certificates
+
+  
+Obviously, you will eventually need a top level domain and the SSL certs to deploy a website, but by having a domain strategy ready up front and getting the right teams to provision the SSL certs, you can save time and confusion on your site launch. In may IT organizations, domain and certificate management is quite cumbersome, so waiting until the the end of the project brings risks of delays or scrambles.
+
+In addition, from an ease of support and maintainability perspective, it's a good idea to provision pre-production domain names to make it easy for support and development teams to navigate to a site. For example, if I were to setup an AEM stack for Acme Corp, I would provision the following domains:
+
+* dev-author.acmecorp.com
+* dev-publish.acmecorp.com
+* dev.acmecorp.com
+* stage-author.acmecorp.com
+* stage-publish.acmecorp.com
+* stage.acmecorp.com
+* prod-author.acmecorp.com
+* prod-publish.acmecorp.com
+* [www.acmecorp.com](http://www.acmecorp.com)
+
+Load balancer level restrictions should be put in place to ensure that the pre-production and production author and publisher URLs are not accessible outside of Acme Corp's network. This does pre-suppose having a VPN (see #1).
+
+As you can imagine, having a wildstar or SAN certificate makes this massively easier than issuing different certificates per domain so make sure to provision a wildstar or SAN certificate before you are ready to provision environments.  
+
+Note that the publishers get a separate URL from the dispatchers to allow developers and QA teams to diagnose caching issues without having to use direct IP access.
+
+  
+
+![World String](/images/posts/2021-03/cdn.jpg)
+
+  
+
+## #7 - Content Delivery Network
+
+  
+I recommend every AEM site use a Content Delivery Network (CDN) to ensure performance and scalability. There are numerous resources on the internet about the [benefits](https://www.cloudflare.com/learning/cdn/what-is-a-cdn/) [of using](https://gtmetrix.com/why-use-a-cdn.html) [a CDN](https://aws.amazon.com/blogs/networking-and-content-delivery/improve-your-website-performance-with-amazon-cloudfront/) if you want to learn more.  
+
+One of the benefits to Adobe Managed Services and AEM as a Cloud Service is that you can leverage Adobe's subscription to AWS CloudFront or Azure CDN. Of course, you can also bring another CDN such as Akamai or CloudFlare without much trouble. 
+
+There _are_ cases where your organization may not need a CDN, for example regionally-based services like a hospital system, but even then, you should consider the other benefits of a CDN such as asset optimization or threat protection.  
+  
+Assuming that like most organizations, you see the value of having a CDN, leveraging the CDN earlier in the process is having the CDN picked up front and making sure to provision and configure the CDN at the beginning of the project and using it consistently on the lower environments will help you identify and resolve any issues with the CDN integration well before your production launch.

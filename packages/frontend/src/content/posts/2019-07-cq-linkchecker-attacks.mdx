@@ -1,0 +1,100 @@
+---
+title: Attack of the AEM Link Checker!!
+description: Nearly every user of Adobe Experience Manager underestimates the
+  AEM Link Checker. Most people think of the AEM Link Checker as that annoying
+  feature that incorrectly strips links in AEM, but the AEM Link Checker and do
+  far more.
+hideInNav: false
+tags:
+  - Adobe Experience Manager
+  - Performance
+pubDate: 2019-07-22
+display: post
+image: /images/posts/2019-07/attack-of-the-linkchecker.jpg
+published: true
+---
+
+  
+
+Nearly every user of Adobe Experience Manager underestimates the [AEM Link Checker](https://helpx.adobe.com/experience-manager/6-3/sites/administering/using/external-link-checker.html). Most people think of the AEM Link Checker as that annoying feature that incorrectly strips links in AEM, but the AEM Link Checker and do far more.
+
+Not only will the AEM Link Checker removes links and incorrectly flags links as broken but it can also bring an AEM instance to it's knees.
+
+Which isn't to say that the idea of having a tool to check links is a bad idea. A good crawler like [Screaming Frog](https://www.screamingfrog.co.uk/seo-spider/) is a vital tool in every digital marketer's toolbox, but why is it run on every request?   
+  
+### AEM Link Checker in the Wild
+
+  
+Recently, we had this happen with an AEM instance. The instance had externalized links in the navigation so that the navigation could be used on multiple sites. As additional pages were brought into AEM, the load the AEM Link Checker inflicted upon the instance increased geometrically, eventually leading to severe performance problems. 
+
+Initially, we assumed that the increasing performance performance problems were due to an errant query or Java Filter, however a particular a heap dump told a very different story.  
+  
+
+```log
+java.lang.Thread.State: RUNNABLE
+at java.util.AbstractCollection.containsAll(AbstractCollection.java:317)
+at java.util.AbstractSet.equals(AbstractSet.java:95)
+at com.day.cq.rewriter.linkchecker.LinkInfo.isSame(LinkInfo.java:228)
+at com.day.cq.rewriter.linkchecker.impl.LinkInfoStorageImpl.putLinkInfo(LinkInfoStorageImpl.java:375)
+at com.day.cq.rewriter.linkchecker.impl.LinkCheckerImpl.getLink(LinkCheckerImpl.java:275)
+at com.day.cq.rewriter.linkchecker.impl.LinkCheckerTransformer.startElement(LinkCheckerTransformer.java:289)
+at org.apache.cocoon.xml.sax.AbstractSAXPipe.startElement(AbstractSAXPipe.java:97)
+at com.day.cq.mcm.core.newsletter.NewsletterTransformerFactory$NewsletterTransformer.startElement(NewsletterTransformerFactory.java:132)
+at com.day.cq.rewriter.htmlparser.DocumentHandlerToSAXAdapter.onStartElement(DocumentHandlerToSAXAdapter.java:105)
+at com.day.cq.rewriter.htmlparser.HtmlParser.processTag(HtmlParser.java:640)
+at com.day.cq.rewriter.htmlparser.HtmlParser.update(HtmlParser.java:343)
+at com.day.cq.rewriter.htmlparser.HtmlParser.write(HtmlParser.java:196)
+at java.io.Writer.write(Writer.java:192)
+- locked <0x00000006aab74560> (a com.day.cq.rewriter.htmlparser.HtmlParser)
+at java.io.PrintWriter.write(PrintWriter.java:456)
+- locked <0x00000006aab74560> (a com.day.cq.rewriter.htmlparser.HtmlParser)
+at org.apache.sling.scripting.core.impl.helper.OnDemandWriter.write(OnDemandWriter.java:75)
+- locked <0x00000006aab9c3c0> (a org.apache.sling.scripting.core.impl.helper.OnDemandWriter)
+at java.io.PrintWriter.write(PrintWriter.java:456)
+- locked <0x00000006aab9c3c0> (a org.apache.sling.scripting.core.impl.helper.OnDemandWriter)
+at org.apache.sling.scripting.core.impl.helper.OnDemandWriter.write(OnDemandWriter.java:75)
+- locked <0x00000006aab9c428> (a org.apache.sling.scripting.core.impl.helper.OnDemandWriter)
+at java.io.PrintWriter.write(PrintWriter.java:456)
+- locked <0x00000006aab9c428> (a org.apache.sling.scripting.core.impl.helper.OnDemandWriter)
+at java.io.PrintWriter.write(PrintWriter.java:456)
+- locked <0x00000006aab9c478> (a java.io.PrintWriter)
+at java.io.PrintWriter.write(PrintWriter.java:473)
+at org.apache.sling.scripting.sightly.apps.example
+```
+
+  
+To confirm, I reviewed the logs and then grepped the error log to confirm what i thought I was seeing:  
+  
+
+```bash
+grep -wc 'External links for host .* has reached the maximum number of' error.log
+```
+
+  
+Shockingly, this returned over 1,300,000 instances of the log message over the last 24 hours. In order to determine what domains were causing the issues, I than ran another command to just find the unique messages:  
+  
+
+```bash
+grep 'External links for host .* has reached the maximum number of' error.log | sort --unique
+```
+
+  
+From there, I can get run the original grep command with specific domains to determine what domains are _most_ responsible.   
+  
+## Saving AEM from the Link Checker
+
+  
+Ideally, the AEM Link Checker should not be enabled in production instances to ensure that it does not impact performance. If this is not an option, for example due to the potential for other side effects, you can configure the "Link Check Override Patterns" in the "Day CQ Link Checker Service" as described in [this Adobe HelpX Article](https://helpx.adobe.com/experience-manager/kb/how-to-configure-linkchecker-tomark-alllinks-asvalid.html). 
+
+For example to disable checking of the domain www.example.com, you could use a regular expression like:  
+  
+
+```
+^https?:\\/\\/www\\.example\\.com
+```
+
+  
+After configuring the AEM Link Checker to ignore the indicated domains, the AEM instance immediately returned to a stable state. 
+
+Hopefully, you've already disabled the AEM Link Checker in your production instances, but if not, I hope this article helps you identify when the AEM Link Checker causes performance problems and resolve the problem.  
+  

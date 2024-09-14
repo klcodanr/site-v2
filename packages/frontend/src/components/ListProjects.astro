@@ -1,0 +1,85 @@
+---
+import { getCollection } from "astro:content";
+import Card from "./Card.astro";
+import CardBody from "./CardBody.astro";
+import FormattedDate from "./FormattedDate.astro";
+import Grid from "./Grid.astro";
+import Button from "./Button.astro";
+
+const { format } = Astro.props;
+
+const projects = await getCollection("projects");
+---
+
+<div class="projects">
+  {
+    format === "card" && (
+      <Grid>
+        {projects.map((project) => {
+          return (
+            <Card>
+              <div class="img-container">
+                <img src={project.data.image} alt={project.data.title} />
+              </div>
+              <CardBody>
+                <h3>{project.data.title}</h3>
+                <p>{project.data.description}</p>
+                <div>
+                  <Button link={`/projects/${project.slug}`}>Read more</Button>
+                </div>
+              </CardBody>
+            </Card>
+          );
+        })}
+      </Grid>
+    )
+  }
+
+  {
+    format !== "card" && (
+      <>
+        {projects.map((project) => {
+          return (
+            <section class="project client">
+              <header>
+                <h3>
+                  <a
+                    href={`/projects/${project.slug}`}
+                    title={project.data.title}
+                  >
+                    {project.data.title}
+                  </a>
+                  <span class="pull-right">
+                    <FormattedDate
+                      date={project.data.startDate}
+                      excludeDay={true}
+                    />{" "}
+                    -{" "}
+                    <FormattedDate
+                      date={project.data.endDate}
+                      excludeDay={true}
+                    />
+                  </span>
+                </h3>
+              </header>
+              <p>
+                <em>{project.data.projectRole}</em>
+              </p>
+              <ul class="tasks">
+                {project.data.tasks.map((task: unknown) => (
+                  <li>{task}</li>
+                ))}
+              </ul>
+              Tools Used:
+              <ul class="list-inline">
+                {project.data.tools.map((tool: unknown) => (
+                  <li>{tool}</li>
+                ))}
+              </ul>
+            </section>
+          );
+        })}
+      </>
+    )
+  }
+</div>

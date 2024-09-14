@@ -1,0 +1,53 @@
+---
+title: "New with AEM as a Cloud Service: Adobe IMS Login by Default"
+description: AEM as a Cloud Service finally consolidates the login experience
+  between AEM and the rest of the Adobe Experience Cloud. Learn more about the
+  new default authentication for AEM as a Cloud Service, Adobe IMS
+hideInNav: false
+tags:
+  - AEM as a Cloud Service
+  - Adobe Experience Manager
+pubDate: 2020-03-02
+display: post
+image: /images/posts/2020-02/group-banner.jpg
+published: true
+---
+
+  
+AEM as a Cloud Service finally consolidates the login experience between AEM and the rest of the Adobe Experience Cloud. AEM as a Cloud Service comes pre-configured with Adobe Identity Management Service (IMS) for authentication. Previously, with AEM, customers would have to configure an Identity Provider (IDP) such as Active Directory or IMS.
+
+For users experienced with the Adobe Experience Cloud, this finally aligns the sign-in between AEM and the rest of the tools, but it does change the authentication paradigm for users mostly familiar with AEM.  
+  
+## What's Different for AEM Admins?
+
+  
+As an administrator, instead of first logging into the instance with local authentication, then configuring the IDP, AEM as a Cloud Service instances come pre-configured with IMS authentication. To grant access, head to [adminconsole.adobe.com](https://adminconsole.adobe.com) and add the user's into the relevant groups.
+
+[](https://docs.adobe.com/content/help/en/experience-manager-cloud-service/security/ims-support.html#managing-products-and-user-access-in-admin-console)
+
+[As the Adobe documentation elaborates](https://docs.adobe.com/content/help/en/experience-manager-cloud-service/security/ims-support.html#managing-products-and-user-access-in-admin-console), to be granted access users must belong to one of two groups ASM User-xxx or AEM Administrators-xxx. Note that you must be granted permissions to the instance, permissions to administer the associated Cloud Manager will not suffice.
+
+From there, AEM as a Cloud Service authentication is relatively similar to a standard Single Sign On (SSO) integration in that you login with the SSO and then are redirected to AEM.  
+  
+## Bring your own SSO
+
+  
+It certainly helps that IMS consolidated the sign-in with AEM and the rest of the Adobe Experience Cloud, but what if your organization wants to use their own SSO? Adobe IMS supports three account types:  
+* Adobe ID - identity owned by the individual
+* Enterprise ID - identity owned by the organization, managed by Adobe
+* Federated ID - identity owned by the organization and managed by the organization's SSO
+
+Enterprise ID is the default, so to use the organization's SSO, you must configure [Federated ID](https://helpx.adobe.com/enterprise/using/set-up-identity.html#Setupadirectory).  
+  
+## Managing Groups with IMS and AEM as a Cloud Service
+
+  
+Beyond the base Administrators and Users groups, IMS syncs all of the group memberships the user is assigned to into AEM. These groups are not assigned any permissions, but since they are AEM groups, they can be assigned permissions. 
+
+This allows administrators to create users and assign membership in a central source and then enable permissions at the group level. Organizations with multiple Adobe products can especially benefit by creating role-based groups and then assigning access to multiple products including AEM as a Cloud Service via IMS.  
+  
+## New things Coming in AEM as a Cloud Service
+
+  
+While [AEM as a Cloud Service is similar to AEM 6.5](https://blogs.perficientdigital.com/2020/01/30/comparing-aem-as-a-cloud-service-and-aem-6-5/), there are key features, particulars and capabilities with AEM as a Cloud Service. The changes in authentication are just one part of the larger change in the Adobe Experience Manager ecosystem with the introduction of AEM as a Cloud Service.   
+  

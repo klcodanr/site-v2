@@ -1,0 +1,81 @@
+name: SST Build
+on: pull_request
+
+permissions: write-all
+
+# Concurrency group name ensures concurrent workflow runs wait for any in-progress job to finish
+concurrency:
+  group: merge-${{ github.ref }}
+
+jobs:
+  BuildApp:
+    runs-on: ubuntu-latest
+    env:
+      SMTP_CONFIG: ${{ secrets.SMTP_CONFIG }}
+    steps:
+      - name: Git clone the repository
+        uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::677276093280:role/GitHubDeploy
+          role-duration-seconds: 3600
+          aws-region: us-east-2
+      - name: Install Dependencies
+        run: npm ci
+      - name: Lint
+        run: npm run lint --ws
+      - name: Build
+        run: 
+          ./node_modules/.bin/sst build --stage PR-${PR_NUMBER}
+        env:
+          PR_NUMBER: ${{ github.event.number }}
+      - name: Install Playwright Browsers
+        working-directory: ./packages/frontend
+        run: npx playwright install --with-deps
+      - name: Run Playwright tests
+        working-directory: ./packages/frontend
+        run: npm run test
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: ./packages/frontend/playwright-report/
+          retention-days: 30
+      - name: Deploy app
+        run: |
+          ./node_modules/.bin/sst deploy --stage PR-${PR_NUMBER}
+        env:
+          PR_NUMBER: ${{ github.event.number }}
+      - name: Add Deploy URL Comment
+        id: deploy-url
+        uses: actions/github-script@v7
+        with:
+          result-encoding: string
+          script: |
+            const fs = require('fs')
+            const body = fs.readFileSync('./.sst/outputs.json', 'utf-8');
+            const outputs = JSON.parse(body);
+            const siteUrl = outputs[`PR-${process.env.PR_NUMBER}-thecaringplace-info-Site`].SITEURL;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `🚀 Build Successful!\n\nPreview URL: ${siteUrl}`
+            })
+            return siteUrl;
+        env:
+          PR_NUMBER: ${{ github.event.number }}
+      # TODO re-enable once the accessibility issues are fixed
+      # - name: Run Pa11y CI
+      #   run:  
+      #     npx pa11y-ci --sitemap ${{steps.deploy-url.outputs.result}}/sitemap-index.xml --sitemap-find https://thecaringplace.info  --sitemap-replace ${{steps.deploy-url.outputs.result}} --config .pa11yci
+      - name: Page Speed Insights
+        uses: jakepartusch/psi-action@v1.3
+        with:
+          url: ${{steps.deploy-url.outputs.result}}
+          threshold: 95
+          strategy: mobile

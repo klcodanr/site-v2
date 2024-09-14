@@ -1,0 +1,73 @@
+---
+title: "No Servlets Required: Exporting Data with Sling Models"
+description: Are you still writing Servlets to render JSON in AEM? Use the Sling
+  Models Exporter instead!
+hideInNav: false
+tags:
+  - Sling Models
+  - Servlet
+  - Apache Sling
+  - Adobe Experience Manager
+pubDate: 2018-07-26
+display: post
+image: /images/posts/2018-07/export-header.jpg
+published: true
+---
+
+In version 1.3.0 of Sling Models the Apache Sling team introduced Sling Model Exporter, a new capability to directly export models as a Java Servlet. This version of Sling Models is available in AEM 6.3+. I finally have a chance to use the new Sling Model Exporter and I found it reduced the amount of boilerplate code I had to write by at least half.
+
+Previously, to expose data in a Sling Model to JSON you had to use a tool like [Gson](https://github.com/google/gson) to serialize the object to JSON and write a Servlet to expose this as an endpoint.
+
+With the new version of Sling Models, you can directly expose a model as a Servlet by specifying a resource type and the selector to use in your model annotations. When the Model is loaded into Apache Sling, it automatically registers a Servlet corresponding to the model, allowing you to with nearly zero additional code, create a Servlet to access a JSON representation of the model. That's super cool!
+
+### Using Sling Model Exporter
+
+To leverage this new feature, simply add the `@Exporter` annotation and the resourceType attribute to your existing `@Model` annotation.
+
+```java
+@Model(adaptables = { SlingHttpServletRequest.class }, resourceType = {
+		"myapp/components/general/mycomponent" })
+@Exporter(name = "jackson", extensions = "json")
+public class MyComponentData {
+
+	@ValueMapValue
+	private String[] paths;
+
+        public String[] getPaths(){
+            return paths;
+        }
+
+}
+```
+
+Once your Sling Model is installed the Servlet will be created. You can pull up the Sling Models status window (http://localhost:4502/system/console/status-slingmodels) in the Apache Felix OSGi Console to double check that the Servlet has been registered correctly. Then simply request a resource with the configured resource type and selector (if set, the default is "model") and you will retrieve a JSON representation of the model:
+
+```javascript
+$.getJSON(resourcePath+'model.json',function(data){
+  console.log(data);
+});
+
+>>>
+
+{
+  paths: [
+    "/content/site/page",
+    "/content/site/page2"
+  ]
+}
+```
+
+One of the great things, is the Sling Models Exporter uses the [Jackson](https://github.com/FasterXML/jackson-annotations/wiki/Jackson-Annotations) serialization library for serializing data, so you can add annotations to configure how your Model is serialize to JSON. Using the [Mapping Feature](http://static.javadoc.io/com.fasterxml.jackson.core/jackson-databind/2.8.5/com/fasterxml/jackson/databind/MapperFeature.html), you can configure how the data is mapped from the Model object or using the [Serialization Feature](http://static.javadoc.io/com.fasterxml.jackson.core/jackson-databind/2.8.5/com/fasterxml/jackson/databind/SerializationFeature.html), you can configure how the values are serialized to the JSON.  
+
+```java
+@Exporter(name = "jackson", extensions = "json", options = {
+        @ExporterOption(name = "MapperFeature.SORT_PROPERTIES_ALPHABETICALLY", value = "true"),
+        @ExporterOption(name = "SerializationFeature.WRITE_DATES_AS_TIMESTAMPS", value="false")
+})
+```
+
+### Using the Right Tool
+
+Sling Models Exporter is a great option for exposing data from the AEM repository in GET requests. However, we're not quite free of the need to create Java Servlets in AEM. To support POST requests or GET requests which are not returning data extracted from the AEM repository, a standard Java Servlet is a better choice.  
+
+I hope you also see the value in the Sling Models Exporter. I certainly hope I never have to write another Servlet to dump a Sling Model to JSON in AEM.

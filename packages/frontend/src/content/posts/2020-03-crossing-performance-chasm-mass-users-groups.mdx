@@ -1,0 +1,110 @@
+---
+title: Crossing the Performance Chasm with Mass Users / Groups in AEM
+description: Group membership in AEM struggles with large numbers of user, group
+  associations. Learn how to use Jackrabbit Oak's Dynamic Group Membership to
+  support hundreds of thousands of users in AEM.
+hideInNav: false
+tags:
+  - Adobe Experience Manager
+  - Apache Jackrabbit Oak
+pubDate: 2020-03-17
+display: post
+image: /images/posts/2020-03/Group-Membership-Banner.jpg
+published: true
+---
+
+  
+
+In my previous article, [Improving Bulk User Creation in AEM 200x](https://blogs.perficient.com/2019/10/30/improving-bulk-user-creation-200x/), I discussed how we improved a process of importing thousands of groups and users into Adobe Experience Manager. This drastic speedup enabled our project to pass the development tests and we looked good going into production. 
+
+Unfortunately, as soon as we got access to the production user set, we ran into another performance trap. Our non-production data set had approximately 2,000 groups, while production had more than 4,000\. Even worse, there was a factor fewer user `<->` group associations in non-production. The production data had approximately ~85,000,000 user `<->` group associations, while non-production only had \~8,000,000.
+
+While our user creation job would complete in approximately 30 minutes, the job to synchronize group members took over a week to complete.
+
+Observing the job execution, the job always followed the same pattern, the job would make hundreds of changes / second for approximately the first 30 minutes, completing up to half of the updates, but then performance would drop, leading to only a handful of updates per second for the remaining execution time, which took days. 
+
+  
+
+![Graph of Updates over Time](/images/posts/2020-03/Updated-Over-Time.png)
+
+  
+
+Our first attempt was to optimize the existing code, however pretty soon we found that micro-optimizations weren't going to get us past the blocking problem, it took too long to add the members to the group, so we got creative on looking for different solutions.
+
+  
+## Solution Attempt #1 - Multi-Threading
+
+  
+Our first fix attempt was to create multiple threads, each to handle the membership for a single group, thinking that the problem was that there were particular groups causing the performance problems and if we could get around those groups, we could resolve the issue. 
+
+On our local environments, against the non-production data, this seemed like a fix, however it was shredded when running against the production data set and indeed ran worse than our initial single-threaded solution.
+
+Interestingly, we found that this actually causes significant I/O blocking due to excessive reads, unfortunately our limited monitoring was not able to determine _what_ was being read so much. 
+
+  
+## Solution Attempt #2 - importXML
+
+  
+Knowing that we were facing an I/O problem, we looked into options to reduce the amount of I/O. After investigation of the Jackrabbit Oak code, we found [Group.addMembers](https://jackrabbit.apache.org/api/2.8/org/apache/jackrabbit/api/security/user/Group.html) was traversing the full group membership on each add to detect if the Authorizable was already a member of the group.
+
+To alleviate this, we investigated using [Workspace.importXML](https://docs.adobe.com/docs/en/spec/jsr170/javadocs/jcr-2.0/javax/jcr/Workspace.html#importXML%28java.lang.String,%20java.io.InputStream,%20int%29) to instead import a fully-formed Sysview XML representation of the group and the group's membership. 
+
+Once again, this showed tremendous promise during local tests:
+
+  
+
+![Graph of importXML Perforamance](/images/posts/2020-03/Import-XML.png)
+
+  
+
+And once again, when faced with production data, importXML was reduced to a crawl. While faster, it still took days to complete, well outside our three hour window.
+
+  
+## Eureka! Dynamic Group Membership!
+
+  
+While this is going on, we'd been steadily escalating through Adobe, eventually getting time with Adobe Engineering in Basel. One the call, Adobe Engineering dropped a bomb, this is a known issue with AEM. 
+
+The issue is with the number of user `<->` group connections. Specifically, with how Jackrabbit Oak internally uses indexes to store the group membership and is not something we could optimize. After some back and forth, the Adobe Engineering team suggested [Dynamic Group Membership](https://jackrabbit.apache.org/oak/docs/security/authentication/external/defaultusersync.html#dynamic%5Fmembership) as an alternative solution.
+
+Dynamic Group Membership works entirely differently than the default Jackrabbit Oak Group Membership. In Dynamic Group Membership, the user's groups are stored in a property `rep:externalPrincipalNames` and resolved at runtime. 
+
+This approach eliminates the need to add the users to the groups, thus resulting in a massive performance increase. 
+
+The best thing is this option is easy to configure, set the _Identity Sync Type_ in the Adobe Granite SAML 2.0 Authentication Handler OSGi configuration to _oak external idp sync_ for SAML-based authentication. For LDAP-based authentication, check the _User Dynamic Membership_ checkbox in the _Apache Jackrabbit Oak Default Sync Handler_ for your LDAP configuration.
+
+Once you have configured Dynamic Group Membership, existing relevant users will need to be re-synced (e.g. deleted and re-added) as the default Jackrabbit Oak Group Membership will take precedence. 
+
+  
+
+![Configuring the Granite SAML Authentication Handler](/images/posts/2020-03/SAML-Configuration.png)
+
+  
+
+## What if the Group Membership isn't in the IDP?
+
+  
+The default implementation of Dynamic Group Membership, as implemented in the [Granite SAML Authentication Handler](https://docs.adobe.com/content/help/en/experience-manager-65/administering/security/saml-2-0-authenticationhandler.html), assumes that the the SAML Assertion contains all of the relevant information, including the group membership. 
+
+Unfortunately, in our case the group membership is not stored in Active Directory as the Active Directory is used corporation-wide, whereas these groups were specific to our application. This presented a problem as the `rep:externalPrincipalNames` attribute is protected at the JCR level and can only be accessed by whitelisted services.  
+  
+## Enter the Principal Provider
+
+  
+Under the hood, Dynamic Group Membership registers a [PrincipalProvider](https://jackrabbit.apache.org/oak/docs/security/principal.html) service to expose the user's group membership based on the user's rep:externalPrincipalNames attribute. The Principal Provider interface is part of [Jackrabbit Oak's Principal Management API](https://jackrabbit.apache.org/oak/docs/security/principal.html). Principal Provider implementations are called to expose Principals (users and groups) and their group membership.
+
+To support having the group membership external to the SAML Assertion without having to overlay significant portions of the Granite SAML Authentication Hander, we simply had to implement our own Principal Provider instance. To avoid impact during deployments, we implemented this as a separate bundle from the main project code and had the bundle set it's Start Level to 15.
+
+  
+
+![Diagram of the User Group Synchronization Solution](/images/posts/2020-03/User-Group-Synchronization.png)
+
+  
+
+## What does this mean for me?
+
+  
+For AEM customers who need to support large numbers of users / groups (100,000+ users, 2,000+ groups) switching to Dynamic Group Membership will significantly reduce the time required to synchronize the users and groups versus default Jackrabbit Oak group membership. 
+
+Using the PrincipalProvider / Principal Management API, you can even support providing group membership beyond what is available from the IDP.   
+  

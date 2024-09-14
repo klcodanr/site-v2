@@ -1,0 +1,48 @@
+---
+title: "New in Apache Sling: getChildren"
+description: "Introducing a new method in the Sling Resource class: getChildren"
+hideInNav: false
+tags:
+  - Adobe CQ
+  - Apache Sling
+  - Open Source
+pubDate: 2012-11-19
+display: post
+image: /images/posts/shared/sling.jpeg
+published: true
+---
+
+Recently I had the pleasure of contributing to the Apache Sling project. Among other things, I contributed a suggested improvement to have Sling Resources return an Iterable of the child resources. Recently, the Apache Sling [released an update](http://sling.apache.org/site/news.html) to the Sling API, including an implementation of this improvement. With the new API change, developers will be able to leverage the enhanced for-each loops available in Java 6\. 
+
+This will allow developers to write code like:
+
+```
+for(Resource child : resource.getChildren(){
+	[... do something ...]
+}
+
+```
+
+Which is more consise and readable than the old style using an Iterator:
+
+```
+Iterator<Resource> children = resource.listChildren();
+while(children.hasNext()){
+	Resource child = children.next();
+	[... do something ...]
+}
+
+```
+
+Additionally, since the new method name is JavaBean compliant, you can now use JSTL and Expression Language to access the child resources.
+
+```
+<c:forEach var="child" items="${resource.children}">
+	<!-- Do Something -->
+</c:forEach>
+
+```
+
+Unfortunately, since this is a bleeding edge change, it’s going to take awhile to trickle down into the implementers of Apache Sling, such as Adobe CQ. Hopefully, one of the upcoming releases of Adobe CQ, maybe even the upcoming CQ 5.6, will implement Apache Sling API 2.3.0, which contains this improvement.
+
+_Update:_ Adobe CQ 5.6 Contains this API change.

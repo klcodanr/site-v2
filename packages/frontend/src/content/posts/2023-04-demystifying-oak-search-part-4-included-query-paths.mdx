@@ -1,0 +1,52 @@
+---
+title: "Demystifying Oak Search Part 4: Included / Query Paths"
+description: Misconfiguring the includedPaths and queryPaths on your custom Oak
+  indexes could cause results to be missing from search. Find out why and how to
+  fix it.
+hideInNav: false
+tags:
+  - Apache Jackrabbit Oak
+  - Oak Search & Indexing
+pubDate: 2023-04-24
+display: post
+image: /images/posts/2023-04/jay-gomez-98Lw0q5LvJA-unsplash.jpg
+published: true
+---
+
+  
+
+One of the common mistakes I've seen in customizing Oak Lucene Indexes is with the [included/query paths feature](https://jackrabbit.apache.org/oak/docs/query/lucene.html#include-exclude). To understand why this is a common area for mistakes and what impact this has, you have to understand what the _includedPaths_ and _queryPaths_ configurations do.
+
+When executing an Oak query, you can supply constraints in the form of node types, property values or paths. As [discussed previously](/posts/2022/06/demystifying-oak-search-query-traversal.html), to write a fast query, you must narrowly constrain the set of nodes your your query may apply to. Therefore, it’s best to always use a path constraint so only a portion of the JCR needs to be included. This is especially important of you need to run a query against a generic node type such as _nt:base_ or _nt:hierarchyNode_ as constraining to a specific path can eliminate thousands of nodes that would otherwise need to be evaluated.  
+  
+## How Path Restrictions Work in Oak Indexes
+
+  
+If you set the property _evaluatePathRestrictions=true_ on your index, your index will use the path restriction to filter out nodes without having to traverse the nodes.
+
+There are two main properties to configure which paths are relevant to the index. The trick is that the Query Engine only cares about one when picking the index to use.
+
+* includedPaths - used to configure what nodes will be included in the index **at indexing time.** This property is _**not**_ used by the query engine when picking the index
+* queryPaths - this property is used **at query time** by the Query Engine to determine if the path constraints for the query include the paths for the index.  
+For example, if I ran a query like: _SELECT \* FROM \[dam:Asset\] WHERE ISDESCENDANTPATH(\[/content/dam/testfolder\]) OPTION(LIMIT 10)_ the query engine would pick an index with _queryPaths=/content/dam_ but not _queryPaths=/content/dam/prodfolder_
+
+If you mismatch these values, the Query Engine will match your index for paths not contained in the index. Because the Query Engine uses the estimated count of nodes matching the query from the index evaluation to determine which index to use, this can mean that your index may even override OOTB index. This is because an index with a restrictive _includedPaths_ (e.g. /content/dam/custom) and a permissive _queryPaths_ (e.g. /content) will look like if filters out more non-matching results simply because it doesn't contain them.  
+  
+## What all this Means
+
+  
+What all this means is that:
+
+1. Whenever possible you should support path restrictions in your query by setting _evaluatePathRestrictions=true_
+2. You should set the _includedPaths_ property to the most restrictive path(s) to limit the size of the index by not indexing paths you don't need to query
+3. You should set the _queryPaths_ to the same list of paths as the _includedPaths_ to ensure that your index will not match for paths not contained in the index
+
+I would be remiss to not mention that there are rare use cases where you may want to set these values differently. If you have content that you _do not_ want to ever appear in search, or you want to exclude content from a query with a broader path restriction, you can mismatch the _includedPaths_ and _queryPaths_ to support this. You can even include a base path and exclude additional paths with the _excludedPaths_ property.
+
+These are all edge cases and generally you'd be better of either updating the query or your content model rather than using the index to control this.
+
+Hopefully you enjoyed this blog post. To continue to dive into Oak Search and Indexing, you can read more on my series Demystifying Oak Search:  
+  
+* [Demystifying Oak Search Part 1: Exploring Indexes with Luke](/posts/2022/03/demystifying-oak-search-exploring-indexes-with-luke.html)
+* [Demystifying Oak Search Part 2: Traversal](/posts/2022/06/demystifying-oak-search-query-traversal.html)[](/posts/2022/03/demystifying-oak-search-exploring-indexes-with-luke.html)
+* [](/posts/2022/03/demystifying-oak-search-exploring-indexes-with-luke.html)[Demystifying Oak Search Part 3: Five Indexing Gotchas](/posts/2022/07/demystifying-oak-search-part-3-five-indexing-gotchas.html)

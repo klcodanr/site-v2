@@ -1,0 +1,43 @@
+---
+title: "Good to Know: InheritanceValueMap"
+description: Learn about the InheritanceValueMap which allows developers to
+  inherit properties from parent resources.
+hideInNav: false
+tags:
+  - Adobe CQ
+pubDate: 2012-07-23
+display: post
+image: ""
+published: true
+---
+
+The [InheritanceValueMap](http://dev.day.com/docs/en/cq/current/javadoc/com/day/cq/commons/inherit/InheritanceValueMap.html) is a new interface introduced in CQ 5.4\. This interface is meant to make it much easier for developers to access properties inherited from parent pages. 
+
+To do this, the interface provides two methods, [getInherited(String,Class)](http://dev.day.com/docs/en/cq/current/javadoc/com/day/cq/commons/inherit/InheritanceValueMap.html#getInherited%28java.lang.String,%20java.lang.Class%29) and [getInherited(String, Object)](http://dev.day.com/docs/en/cq/current/javadoc/com/day/cq/commons/inherit/InheritanceValueMap.html#getInherited%28java.lang.String,%20T%29), each of these methods will check for a value on the current resource and then check up the page hierarchy for another page with a value on the same content attribute. It will only attempt to retrieve values at the same page content path
+
+Unlike the [PersistableValueMap](http://sling.apache.org/apidocs/sling6/org/apache/sling/api/resource/PersistableValueMap.html), resources and nodes cannot be directly adapted into [InheritanceValueMap](http://dev.day.com/docs/en/cq/current/javadoc/com/day/cq/commons/inherit/InheritanceValueMap.html)s. To create an instance of the [InheritanceValueMap](http://dev.day.com/docs/en/cq/current/javadoc/com/day/cq/commons/inherit/InheritanceValueMap.html), create an instance of the class [HierarchyNodeInheritanceValueMap](http://dev.day.com/docs/en/cq/current/javadoc/com/day/cq/commons/inherit/HierarchyNodeInheritanceValueMap.html) and pass in the current resource, for example:
+
+```
+InheritanceValueMap iProperties = new HierarchyNodeInheritanceValueMap(resource);String value = iProperties.getInherited("myProp",String.class);
+
+```
+
+Based on the hierarchy:
+
+```
+/mypage
+    > mypage2
+        > mypage3
+
+```
+
+If an InheritanceValueMap is used to retrieve the property `jcr:content/footer/image/@width`, the following properties would be checked, in order from bottom to top:
+
+```
+/mypage/jcr:content/footer/image/@width
+    > mypage2/jcr:content/footer/image/@width
+        > mypage3/jcr:content/footer/image/@width
+
+```
+
+Using the [InheritanceValueMap](http://dev.day.com/docs/en/cq/current/javadoc/com/day/cq/commons/inherit/InheritanceValueMap.html), it is much easier for developers to access inherited values and build components which use inherited properties.

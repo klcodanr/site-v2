@@ -1,0 +1,41 @@
+---
+title: "CQ Haiku: JCR vs. Sling"
+description: Elaborating on one of my pet peeves, adapting a Resource to a Node.
+hideInNav: false
+tags:
+  - JCR
+  - Apache Sling
+  - Adobe Experience Manager
+  - CQ Haiku
+pubDate: 2015-04-08
+display: post
+image: /images/posts/shared/CQ5.png
+published: true
+---
+
+> Adapt to Node like  
+> Assembly inside Java  
+> Use Sling API
+
+Quite often I see code, especially from less experience developers, with something like this:
+
+```
+Node node = resource.adaptTo(Node.class);
+String property = null;
+try{
+    property = node.getProperty("myProperty").getString();
+} catch (RepositoryException re){
+    log.error("Exception accessing myProperty", re);
+}
+```
+
+Or even scarier, there may be just a global exception handler for the particular method. Either way, this code is a lot more fragile than it needs to be. If the property `myProperty` does not exist this can throw a `PathNotFoundException` or if there's any other problem it will throw a `RepositoryException`. You also have to handle multiple null checks and ensuring the property value is the correct type.
+
+The Sling API on the other hand, handles most relevant exceptions by doing things like allowing default values or returning null if no value exists for a particular property. Because of this it is also significantly more concise:
+
+```
+ValueMap properties = resource.adaptTo(ValueMap.class);
+String property = properties.get("myProperty", String.class);
+```
+
+In summary, unless you **need** the features available in the JCR API, sticking with the Sling API will make your code more consise and less fragile.

@@ -1,0 +1,55 @@
+---
+title: The 5 Hardest AEM Concepts for New Developers
+description: Learn about the most concepts most developers have problems
+  understanding when starting to develop on the AEM platform
+hideInNav: false
+tags:
+  - Adobe CQ
+  - Development
+  - Best Practices
+  - Adobe Experience Manager
+pubDate: 2013-11-11
+display: post
+image: /images/posts/shared/aem.png
+published: true
+---
+
+Even experienced developers struggle when trying to transition to the Adobe Experience Manager (AEM) platform (formerly Day CQ5). Once you fully [grok](http://en.wikipedia.org/wiki/Grok) AEM, it can be a joy to develop against; the APIs are generally straightforward and it makes presenting content easier than any other platform I have encountered. So why do so many developers have trouble ramping up on AEM?
+
+AEM turns traditional WCMS products on their head. No other CMS really works in a similar manner and developers usually struggle with getting over their pre-conceived notions of how a CMS should work.
+
+Here are some of the most common concepts in AEM which trip up many new developers.
+
+### 1 You are building static HTML
+
+…or at least you should be. Unlike most CMS systems, AEM comes with its own caching system, the [Dispatcher](http://dev.day.com/docs/en/cq/current/deploying/dispatcher.html). The dispatcher is an Apache Httpd module which proxies and caches static HTML and assets served by CQ Publishers. This significantly increases the number of requests which can be served and decreases the load on the publisher.
+
+The major impact of this is components must be created to be cachable manner and should not require server side logic to be executed with every request. If that is not the case, a single component can require the entire page to not be cached and the entire page be rebuilt for every request. Of course, most projects will require components which require server-side logic and developers will need to use tools such as AJAX and SSI to create sites which have server side logic but still enable caching.
+
+### 2 OSGi & Bundles will Save Your Project
+
+Often when projects start working on AEM, they start with developing JSPs exclusively. This is partially driven by the examples available for AEM as well as the training provided. Putting logic in JSPs can work for small, simple projects, but it usually results in the overall complexity of the site spiraling out of control and a quick decline in code quality as the project size grows.
+
+Fortunately, AEM provides a robust, flexible service framework in [OSGi](http://felix.apache.org). By using OSGi, developers can separate the business logic from the presentation logic, provide modularity and reduce the code complexity.
+
+Creating OSGi Bundles for a project’s service code does require some additional work, however it will save time in the long run. If you have not built an OSGi Bundle already for your project, please watch our webinar on [AEM Maven Build and Deployments](http://labs.sixdimensions.com/resources/webinars/cq5-development-setup-maven-build-and-deployment) .
+
+### 3 There are multiple ways of doing Everything in AEM
+
+AEM is an amalgamation of a number of different open source projects, naturally it also exposes a number of different APIs and concepts for developing applications. Just from an API standpoint, AEM has the [JCR](http://www.day.com/maven/javax.jcr/javadocs/jcr-2.0/index.html), [Sling](http://sling.apache.org/apidocs/sling6/) and [CQ](http://dev.day.com/docs/en/cq/current/javadoc/overview-summary.html) APIs and the various APIs offer different development and architectural methodologies, often with overlapping functionality.
+
+For example, say you need to invoke code when content changes, you could use a [JCR Observation Listener](http://www.day.com/specs/jcr/2.0/12%5FObservation.html), [Sling Eventing](http://sling.apache.org/documentation/the-sling-engine/eventing-and-jobs.html) or [CQ Workflow Launchers](http://blogs.adobe.com/contentmanagement/2012/02/26/launcher-basics-in-the-workflow-console/). The same situation applies for creating and reading content, responding to requests, creating automated tasks and many other common development activities in AEM.
+
+The important thing for newer AEM developers, is to keep in mind there are options and to make sure the approach they have chosen is the best, not just the first one they found.
+
+### 4 AEM is not just a CMS it’s a Web Application Framework
+
+Many older CMS tools such as EMC Web Publisher, Alfresco, Fatwire or TeamSite rely on baking flat content which is then published to a web server. This serves to fundamentally de-couple the Content Management platform from the application serving the website. AEM works completely differently, AEM provides both the Content Management platform as well as the application server and both of which use the same underlying application and architecture.
+
+For pure-CMS types, this is a pretty shocking adjustment. It requires a more integrated skillset with both back end and front end skills to effectively adjust to developing on the AEM platform, since the CMS is so intertwined with the web application. Additionally, this presents a number of performance concerns and architectural questions which are normally not handled by CMS developers. It requires adjusting from a mindset of generating and pushing content to a black box into a mindset of generating and serving content and handling all of the complexity of the web.
+
+### 5 AEM is NoSQL
+
+Most developers come into AEM from a database-driven background, see tools like [JCR-SQL2](http://www.day.com/specs/jcr/2.0/6%5FQuery.html) and think, “oh, this works like a Relational Database”. This is, unfortunately, completely wrong. AEM is based on the Java Content Repository model, which is much closer to a NoSQL database than a Relational Database. It has very different performance characteristics than a Relational Database, but also offers a much richer and more flexible data model.
+
+The blinders which come with the Relational Database mindset often either leads to developers attempting to map table-based data structures into AEM or adding excessive node type constraints. Mapping table-based data directly is problematic, as AEM does not handle large number of child nodes gracefully and you lose the value in understanding the relationships and hierarchy of your content. Excessive node type constraints limit developers freedom and generally provide little value beyond runtime exceptions.

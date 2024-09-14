@@ -1,0 +1,67 @@
+---
+title: Home
+description: "The homepage on the web for Dan Klco, an experienced Adobe Digital
+  Marketing Technical Lead, Solution Architect, Consultant and Advisor.\r\n"
+hideInNav: false
+tags:
+  - Architecture
+  - Digital Marketing
+  - Adobe
+  - Apache Sling
+layout: ../layouts/Home.astro
+---
+
+import Columns from '../components/Columns.astro';
+import Column from '../components/Column.astro';
+import Button from '../components/Button.astro';
+import ListPosts from '../components/ListPosts.astro';
+
+# Welcome to My Site!
+
+## About Me
+
+I am Dan Klco, an experienced Adobe Digital Marketing Technical Lead, Solution Architect, Consultant and Advisor.
+
+<Columns>
+
+<Column>
+
+### Tools / Projects
+
+Check out the tools and other projects I've been working on.
+
+<Button link="/projects">Get Started</Button>
+
+</Column>
+
+<Column>
+
+### My Work
+
+A sample of my work across different clients, solutions and technologies.
+
+<Button link="/my-work">Explore My Work</Button>
+
+</Column>
+
+<Column>
+
+### Contact Me
+
+Get in touch with me online, by email or via social media.
+
+<Button link="/contact">Get in Touch</Button>
+
+</Column>
+
+</Columns>
+
+
+## My Musings
+
+My recent blog posts, webinars and whitepapers. Mostly about technology and digital marketing.
+
+<ListPosts limit={12} includePagination={false} format="card" />
+
+<Button link="/posts/page/1">More Posts</Button>
+

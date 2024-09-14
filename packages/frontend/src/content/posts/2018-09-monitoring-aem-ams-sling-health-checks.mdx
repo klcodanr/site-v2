@@ -1,0 +1,86 @@
+---
+title: Monitoring AEM in Adobe Managed Services with Sling Health Checks
+description: Implementing proactive monitoring of AEM web applications using
+  Sling Health Checks and Nagios when hosting through Adobe Managed Services.
+hideInNav: false
+tags:
+  - Adobe Experience Manager
+  - Apache Sling
+  - DevOps
+  - Monitoring
+pubDate: 2018-09-29
+display: post
+image: /images/posts/2018-09/monitoring-banner.jpg
+published: true
+---
+
+  
+In my recent post, [Anatomy of the Ideal Background Job](https://blogs.perficientdigital.com/2018/08/14/anatomy-of-the-ideal-background-job/), I asserted the ideal job should be monitorable. 
+
+Sling Health Checks provide a basis for monitoring a job and AEM's Health Reports console provides an intuitive, visual representation of the status of the Sling Health Checks for administrators.  
+
+  
+
+![AEM Health Check Console](/images/posts/2018-09/health-check-console.jpg)
+
+  
+Proactive monitoring, on the other hand, requires a machine-readable status. 
+
+Ideally, wean alert go off in a NOC whenever a job fails or reports an unusual status. That way, we can be immediately alerted to the issue instead of having to wait until it is noticed by a customer or support engineer. 
+
+Using the Sling Health Checks along with a [Nagios](http://www.nagios.net/) script, you can institute proactive monitoring of your AEM jobs and application by your Adobe Managed Services Customer Success Engineering team. 
+
+The first step is to enable an endpoint to monitor the Sling Health Checks by configuring the [Sling Health Check Servlet](https://sling.apache.org/documentation/bundles/sling-health-check-tool.html#health-check-servlet).  
+
+Next, create the Sling Health Checks, as I previously covered in the [Anatomy of the Ideal Background Job](https://blogs.perficientdigital.com/2018/08/14/anatomy-of-the-ideal-background-job/#Monitorable). Sling Health Checks can be used for other parts of your application as well, not just background jobs, so you may want to implement monitoring on services or servlets to ensure your website is functioning correctly. 
+
+Once you have your Sling Health Check defined, create a script for Nagios to execute to monitor the Health Check. This script should return a status of 0 if the Health Check is in an OK state and non-0 if not. 
+
+Here's an example script created by my most recent project's excellent Customer Support Engineer Jasmeet Dhiman:
+
+  
+
+```bash
+#!/bin/bash
+#
+#check_doctor
+#"Doctor Import"
+#"Health Library Import"
+#"Locations Import"
+#
+#This script if Doctor Import service is working as expected.
+#
+# Author: Jasmeet Dhiman
+
+set -o pipefail
+export HOME=/home/nagios
+
+STATUS=$(curl -s -u admin:"$(/bin/pass CQ_Admin)" 'http://localhost:4502/system/health?tags=client,author&combineTagsWithOr=false&httpStatus=WARN:418&httpStatus=ERROR:500&format=json' | jq -r '.results[0].status')
+NAME=$(curl -s -u admin:"$(/bin/pass CQ_Admin)" 'http://localhost:4502/system/health?tags=client,author&combineTagsWithOr=false&httpStatus=WARN:418&httpStatus=ERROR:500&format=json' | jq -r '.results[0].name')
+
+echo $STATUS | grep OK > /dev/null 2>&1
+if [ $? == 0 ]
+then
+  ERROR=0
+else
+  echo $STATUS | grep WARN > /dev/null 2>&1
+  if [ $? == 0 ]
+  then
+    ERROR=1
+  else
+    ERROR=2
+  fi
+fi
+EXITMESSAGE="The current status of ${NAME} is ${STATUS}"
+echo $EXITMESSAGE
+exit $ERROR
+
+```
+
+This script reads the results of the Sling Health Checks to find the status of a single job and then reports the status of that job.  
+
+Now that you have the script and Health Check, you can update your Run Book and work with the Adobe Managed Services team to get it all deployed and configured. In the Run Book, you will need to provide the contact procedures and information if any of the Health Checks enter an error state.   
+
+Once you have the Health Check monitoring in place with AMS Nagios, Adobe Managed Services will get alerts any time the Health Check goes into an Error or Warning state.   
+
+  

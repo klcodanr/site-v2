@@ -1,0 +1,29 @@
+name: Cleanup PR Deployments
+on:
+  pull_request:
+    types: [closed]
+
+permissions: write-all
+
+jobs:
+  CleanupPRDeployments:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Git clone the repository
+        uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::677276093280:role/GitHubDeploy
+          role-duration-seconds: 3600
+          aws-region: us-east-2
+      - name: Install Dependencies
+        run: npm ci
+      - name: Cleanup PR Deployment
+        run: |
+          ./node_modules/.bin/sst remove --stage PR-${PR_NUMBER}
+        env:
+          PR_NUMBER: ${{ github.event.number }}

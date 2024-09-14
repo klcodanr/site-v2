@@ -1,0 +1,23 @@
+---
+
+---
+
+<section class="columns">
+  <slot />
+</section>
+
+<style>
+  .columns {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    flex-direction: column;
+    gap: 1em;
+  }
+
+  @media (min-width: 768px) {
+    .columns {
+      flex-direction: row;
+    }
+  }
+</style>

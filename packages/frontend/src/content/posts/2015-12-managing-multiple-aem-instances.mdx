@@ -1,0 +1,80 @@
+---
+title: Managing Multiple AEM Instances
+description: How I manage multiple AEM instances on my development computer.
+hideInNav: false
+tags:
+  - Adobe Experience Manager
+  - Bash
+  - Best Practices
+pubDate: 2015-12-08
+display: post
+image: /images/posts/2015-12-08-managing-multiple-aem-instances/juggling.jpg
+published: true
+---
+
+One of the challenges I've had over the last few years is how to easily manage multiple AEM instances concurrently. Over the last few years, I've often had to have several different AEM instances running during the course of the day, whether it be different versions, client codebases or for just for standing up a quick test.
+
+To make starting, stopping and resetting AEM instances on my computer quick and easy, I created a small script and a structure to support easily managing multiple AEM instances on the same computer. 
+
+### Folder Structure
+
+First, from a structure perspective, create the following folders:
+
+/[user-home]
+    /dev
+        /aem
+            /instance1
+            /instance2
+        ...
+
+This structure is pretty simple, but it does help a lot to be consistant and makes it pretty quick to navigate folders via terminal or finder; cd `~/dev/aem/6.1` is pretty darn easy to type, easy to remember and makes sense from a taxonomy perspective. This structure also allows me to add other applications in parallel, such as MongoDB, Tomcat or anything else with which I may need to integrate as sibling folders to the aem folder.
+
+### AEM Manager Script
+
+Next, I [created a shell script](https://github.com/PerficientDigital/AEM-Manager/blob/master/aem-mgr.sh) to manage the individual AEM instances under this structure. The script allows you to start, stop and clear the repositories of instances. When starting, the script clears the AEM logs before starting, can start the instance in debug mode, start multiple publisher instances, can run without the GUI and allows you to configure the JVM settings for the AEM instances.
+
+This script also allows you to clear the repository, removing everything under the crx-quickstart folder to quickly restore the repository to the starting state. This can be especially useful if you are trying to save space or need to install two incompatible codebases.
+
+### Examples
+
+The commands for the script are relatively straightforward:
+
+**Starting an AEM Instance**
+
+```
+aem-mgr start -i 6.1.0
+```
+
+**Starting an AEM Author and Publishers**
+
+```
+aem-mgr start -i 6.1.0 -p
+```
+
+It's probably worth mentioning that what this will do is start the author instance found in the folder \~/dev/aem/6.1.0 and all of the instances in folders which look like \~/dev/aem/6.1.0-publish-\[N\].
+
+**Stopping an AEM Instance**
+
+```
+aem-mgr stop -i 6.1.0
+```
+
+**Clearing an AEM Instance**
+
+```
+aem-mgr clear -i 6.1.0
+```
+
+A quick note, if you want to run multiple instances in parallel, you will need to pass in the -nd flag to disable debugging on the non-primary instances. The script handles this automatically for publish instances by incrementing all of the port numbers.
+
+### Defaults
+
+By default, the script will look for AEM instances under the \~/dev/aem folder I described above. Each instance is assumed to be in a sub-folder with a JAR inside with a name matching `^.*aem.*\\.jar$` or `^.*cq.*\\.jar$`.
+
+Each instance with debug enabled will start by default with the Java debug port set to 30303 and the JMX port to 9999\. Additionally, by default the JVM is granted a maximum of 1GB heap and 256MB of Permanent Generation. These values can be configured in the "Default Settings" section of the script.
+
+### Installation
+
+To install the script either [download it directly from GitHub](https://raw.githubusercontent.com/PerficientDigital/AEM-Manager/master/aem-mgr.sh) or clone the git repository and add it into your computer's PATH variable. It has been tested in Linux and Mac and I would suspect it would work on windows with GNUTools or Cygwin installed.
+
+Hopefully you find the script and structure useful!

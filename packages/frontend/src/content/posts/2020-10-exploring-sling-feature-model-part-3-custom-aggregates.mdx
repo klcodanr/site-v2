@@ -1,0 +1,241 @@
+---
+title: "Exploring the Sling Feature Model: Part 3 - Custom Aggregates"
+description: Describes the process for creating custom aggregates with Apache
+  Sling CMS and the Sling Feature Model for running in Docker containers
+hideInNav: false
+tags:
+  - Docker
+  - Apache Sling
+  - Apache Sling CMS
+  - Feature Model
+pubDate: 2020-10-28
+display: post
+image: /images/posts/2020-10/blocks.jpg
+published: true
+---
+
+  
+In the [first post](https://blogs.perficient.com/2020/07/27/exploring-the-sling-feature-model-part-1/) of the [Exploring the Sling Feature Model](https://blogs.perficient.com/tag/exploring-the-sling-feature-model/) series, I discussed the process of converting the Sling CMS app from the Sling Provisioning Model to the Sling Feature Model. So how does this apply to your custom applications?   
+
+To illustrate, let's convert my personal site, [danklco.com](https://www.danklco.com), which is currently managed via Sling CMS, to the Feature Model.
+
+It's worth noting that I could keep running my site the way it is, by using a pre-built Sling CMS Runnable Jar, but that my goal is to run my site in Kubernetes for simplicity of upgrades, deployment and management.   
+  
+## Step 1: Refactor Project Structure
+
+  
+Currently, my personal website code is a [single OSGi Bundle](https://github.com/klcodanr/danklco.com-site/tree/master) which [I deploy with Github Actions](https://blogs.perficient.com/2020/04/20/deploying-sling-cms-apps-with-github-actions/). To support the Sling Feature Model, I'm going to convert the project into a multi-module project and add a new sub-project for my feature. 
+
+The new project structure will look like:
+
+```
+/mysite  
+ /bundle  
+ /feature  
+ /images  
+```
+  
+## Step 2: Generate Features
+
+  
+The custom feature is pretty simple, defining my custom code bundles and configurations. A number of parameters are supplied so they can be changed and I'm not putting secrets in code:  
+  
+
+```json
+{
+    "bundles": [
+        {
+            "id": "com.danklco:com.danklco.slingcms.plugins.disqus:1.1-SNAPSHOT",
+            "start-order": "20"
+        },
+        {
+            "id": "com.danklco:com.danklco.slingcms.plugins.twitter:1.0",
+            "start-order": "20"
+        },
+        {
+            "id": "com.danklco:com.danklco.site.cna.bundle:1.0.0-SNAPSHOT",
+            "start-order": "20"
+        }
+    ],
+    "configurations": {
+        "org.apache.sling.cms.core.analytics.impl.GeoLocatorImpl": {
+            "scheduler.expression": "0 0 0 ? * WED",
+            "licenseKey": "${MAXMIND_LICENSE_KEY}"
+        },
+        "org.apache.sling.cms.reference.impl.SearchServiceImpl": {
+            "searchServiceUsername": "dklco-com-search-user"
+        },
+        "org.apache.sling.commons.crypto.internal.FilePasswordProvider~default": {
+            "names": [
+                "default"
+            ],
+            "path": "/opt/slingcms/passwd"
+        },
+        "org.apache.sling.commons.crypto.jasypt.internal.JasyptRandomIvGeneratorRegistrar~default": {
+            "algorithm": "SHA1PRNG"
+        },
+        "org.apache.sling.commons.crypto.jasypt.internal.JasyptRandomSaltGeneratorRegistrar~default": {
+            "algorithm": "SHA1PRNG"
+        },
+        "org.apache.sling.commons.crypto.jasypt.internal.JasyptStandardPBEStringCryptoService~default": {
+            "algorithm": "PBEWITHHMACSHA512ANDAES_256",
+            "saltGenerator.target": "",
+            "securityProviderName": "",
+            "ivGenerator.target": "",
+            "securityProvider.target": "",
+            "keyObtentionIterations": 1000,
+            "names": [
+                "default"
+            ],
+            "stringOutputType": "base64"
+        },
+        "org.apache.sling.commons.messaging.mail.internal.SimpleMailService~default": {
+            "connectionListeners.target": "",
+            "transportListeners.target": "",
+            "username": "${SMTP_USERNAME}",
+            "mail.smtps.from": "${SMTP_USERNAME}",
+            "messageIdProvider.target": "",
+            "mail.smtps.host": "${SMTP_HOST}",
+            "names": [
+                "default"
+            ],
+            "password": "${SMTP_ENC_PASSWORD}",
+            "mail.smtps.port": 465,
+            "cryptoService.target": "",
+            "threadpool.name": "default"
+        },
+        "org.apache.sling.commons.messaging.mail.internal.SimpleMessageIdProvider~default": {
+            "host": "danklco.com",
+            "names": [
+                "default"
+            ]
+        }
+    }
+}
+```
+
+  
+To create a usable model, I'll need to combine the Sling CMS model and my custom model, which can be accomplished with the Sling Feature model. To support the [Composite Node Store](https://blogs.perficient.com/2020/08/03/exploring-the-sling-feature-model-part-2-composite-nodestore/), I'll want to generate two separate aggregates, one for seeding and one for running the instance.
+
+Since the Sling Feature Model JSON will resolve dependencies at runtime from Apache Maven, we'll also want to generate Feature Archives or FAR files which bundles the models with their dependencies.  
+  
+
+```xml
+<plugin>
+    <groupId>org.apache.sling</groupId>
+    <artifactId>slingfeature-maven-plugin</artifactId>
+    <version>1.3.0</version>
+    <extensions>true</extensions>
+    <configuration>
+        <framework>
+            <groupId>org.apache.felix</groupId>
+            <artifactId>org.apache.felix.framework</artifactId>
+            <version>6.0.3</version>
+        </framework>
+        <aggregates>
+            <aggregate>
+                <classifier>danklco-com-seed</classifier>
+                <filesInclude>**/*.json</filesInclude>
+                <includeArtifact>
+                    <groupId>org.apache.sling</groupId>
+                    <artifactId>org.apache.sling.cms.feature</artifactId>
+                    <version>0.16.3-SNAPSHOT</version>
+                    <classifier>slingcms-composite-seed</classifier>
+                    <type>slingosgifeature</type>
+                </includeArtifact>
+                <includeArtifact>
+                    <groupId>org.apache.sling</groupId>
+                    <artifactId>org.apache.sling.cms.feature</artifactId>
+                    <version>0.16.3-SNAPSHOT</version>
+                    <classifier>standalone</classifier>
+                    <type>slingosgifeature</type>
+                </includeArtifact>
+                <title>DanKlco.com</title>
+            </aggregate>
+            <aggregate>
+                <classifier>danklco-com-runtime</classifier>
+                <filesInclude>**/*.json</filesInclude>
+                <includeArtifact>
+                    <groupId>org.apache.sling</groupId>
+                    <artifactId>org.apache.sling.cms.feature</artifactId>
+                    <version>0.16.3-SNAPSHOT</version>
+                    <classifier>slingcms-composite-runtime</classifier>
+                    <type>slingosgifeature</type>
+                </includeArtifact>
+                <includeArtifact>
+                    <groupId>org.apache.sling</groupId>
+                    <artifactId>org.apache.sling.cms.feature</artifactId>
+                    <version>0.16.3-SNAPSHOT</version>
+                    <classifier>standalone</classifier>
+                    <type>slingosgifeature</type>
+                </includeArtifact>
+                <title>DanKlco.com</title>
+            </aggregate>
+        </aggregates>
+        <scans>
+            <scan>
+                <includeClassifier>danklco-com-seed</includeClassifier>
+            </scan>
+            <scan>
+                <includeClassifier>danklco-com-runtime</includeClassifier>
+            </scan>
+        </scans>
+        <archives>
+            <archive>
+                <classifier>danklco-com-seed-far</classifier>
+                <includeClassifier>danklco-com-seed</includeClassifier>
+            </archive>
+            <archive>
+                <classifier>danklco-com-runtime-far</classifier>
+                <includeClassifier>danklco-com-runtime</includeClassifier>
+            </archive>
+        </archives>
+    </configuration>
+    <executions>
+        <execution>
+            <id>aggregate-features</id>
+            <phase>prepare-package</phase>
+            <goals>
+                <goal>aggregate-features</goal>
+                <goal>analyse-features</goal>
+                <goal>attach-features</goal>
+                <goal>attach-featurearchives</goal>
+            </goals>
+            <configuration>
+                <replacePropertyVariables>MAXMIND_LICENSE_KEY,SMTP_HOST,SMTP_USERNAME,SMTP_ENC_PASSWORD</replacePropertyVariables>
+            </configuration>
+        </execution>
+    </executions>
+</plugin>
+```
+
+  
+
+## Step 3: Build Docker Images
+
+  
+Since the goal is to run this in Kubernetes, we'll create Docker images for running Sling CMS and Apache web server. Since I'm running a lean server, I'll want to run this as a standalone instance using the Composite Repository so the datastore persists between instances. 
+
+To populate variables into the images and coordinate the full build, we'll use Apache Maven to process the Docker files and input files as Maven artifacts and kick off the docker build. Unlike the Sling CMS build, we're not leveraging Apache Maven to download the artifacts within the Docker build, we'll pre-fetch them during the maven build and supply them to the Docker build.  
+  
+### Side Note - Variables
+
+  
+One challenge to note when attempting to reproduce an actual instance, there are a quite a few variables required for the application to actually work. For my local testing I have a bash script to provide all of the required properties to Maven, but since they include secrets like passwords I've not put it in source control.  
+  
+## See it in Action!
+
+  
+Seeing something work is work a thousand words, so check out this GIF of the build process in action:  
+  
+
+![Building Cloud Native Apps with Apache Sling CMS](/images/posts/2020-10/DanKlco-com-CNA.gif)
+
+  
+and check out the code on GitHub: [https://github.com/klcodanr/danklco.com-site/tree/cloud-native-sling ](https://github.com/klcodanr/danklco.com-site/tree/cloud-native-sling)  
+
+## What's Next?
+
+  
+ All of this is leading up to having a fully running Cloud Native Apache Sling CMS instance in Kubernetes, but before that my next post is going to talk about using Sling Content Distribution and Sling Discovery to support publishing content between Author and Renderer Apache Sling CMS instances. Check back soon!  
+  

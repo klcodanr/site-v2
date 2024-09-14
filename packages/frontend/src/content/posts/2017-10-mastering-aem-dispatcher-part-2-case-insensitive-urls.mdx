@@ -1,0 +1,74 @@
+---
+title: "Mastering the AEM Dispatcher Part 2: Case Insensitive URLs"
+description: Unlike case Insensitive web servers, such as IIS, the AEM
+  Dispatcher on Apache httpd is case sensitive. Learn about how to support case
+  Insensitive URLs in the AEM Dispatcher on Apache.
+hideInNav: false
+tags:
+  - AEM 6
+  - Adobe Experience Manager
+  - Dispatcher
+  - Apache
+  - Mastering the AEM Dispatcher
+pubDate: 2017-10-17
+display: post
+image: /images/posts/2017-10-17-mastering-aem-dispatcher-part-2-case-insensitive-urls/uppercase-letters.jpg
+published: true
+---
+
+In this second post in my series, [Mastering the AEM Dispatcher](/tag/Mastering%20the%20AEM%20Dispatcher/). In this post, we'll discuss how to support case-insensitive URLs in the AEM Dispatcher running on Apache httpd.
+
+For customers coming from websites hosted on case-insensitive web servers, such as [Microsoft IIS](https://www.iis.net/), moving to Apache can be a challenge. In a case-insensitive web server, the URL http://www.site.com/my-page.html is functionally equivalent of http://www.site.com/My-Page.html. In Apache httpd, which is case-sensitive, these are two different URLs and requesting a page at My-Page.html when the page is named my-page.html will result in a 404 error.
+
+Further complicating things, you have two cases you'll need to handle when moving from a case-insensitive web server to AEM Dispatcher on Apache httpd. You will need to support both case-insensitive URLs as well as case-insensitive redirects, so visitors to your old pages are redirected to the new AEM page.
+
+## Supporting Case Insensitive Requests
+
+Luckily, Apache has a module made just for this use case. The appropriately named module, [mod\_speling](https://httpd.apache.org/docs/2.4/mod/mod%5Fspeling.html), supports three use cases:
+
+* Redirecting users to similarly named pages when they misspell the URL
+* Redirecting users to pages with a different case than the URL the requested
+* Displaying a list of similar URLs if they misspell a URL and there are multiple similar options
+
+In our case, we just want to support the second case, redirecting the user to the page in the correct case. 
+
+mod\_speling is not enabled in Apache httpd by default, so we'll need to enable it. First, we'll enable the module in /etc/httpd/conf.modules.d/00-base.conf by adding the following line:
+
+LoadModule speling_module modules/mod_speling.so
+
+Depending on whether you want mod\_speling enabled in just a single VHost or on all VHosts in Apache you can either configure the module in the particular VHost conf file or in /etc/httpd/conf/httpd.conf.
+
+Since we want mod\_speling enabled with case insensitivity we'll configure it as such:
+
+CheckSpelling on  
+CheckCaseOnly on
+
+Finally, since mod\_speling will serve up alternatives if it finds more than one close match, will need to provide a 300 error page or we'll get the module's (ugly) page. To support 300 errors, we just set the ErrorDocument directive:
+
+ErrorDocument 300 /errors/404.html
+
+## Case Insensitive Redirects
+
+When you migrate from a legacy system, you'll usually get a list of legacy vanity URLs and legacy URLs which need redirects. Apache httpd's redirect maps make this an easy process, but like everything else in Apache, they are case sensitive.
+
+So how do we work around this? There is a built-in redirect map in Apache which lowercases whatever it receives. We can use this to first downcase the URL, then check for it in the redirect map.
+
+```bash
+RewriteMap map.legacy txt:/etc/httpd/conf.d/map-legacy.txt  
+RewriteMap lc int:tolower  
+RewriteCond ${map.legacy:${lc:$1}} !=""  
+RewriteRule ^(.*)$ ${map.legacy:${lc:$1}|/} [L,R=301]
+```
+
+You will also need to downcase the redirect source URLs so they will match, for example:
+
+```bash
+/vanity1 https://www.site.com/afolder/apage.html  
+/vanity2 https://apps.asite.com/An-App/In-IIS.aspx
+```
+
+## Next Up: Simplifying Configuration in the AEM Dispatcher
+
+Keep an eye out for our next post in the [Mastering the AEM Dispatcher](/tag/Mastering%20the%20AEM%20Dispatcher/) series. We'll discuss setting up configuration files and using environment variables to make it easy to port configurations between websites and environments.
+
+**Note:** This blog post is written based on a standard setup on a RedHat derivative (e.g. RedHat or CentOS) with the Apache Dispatcher Module. If you are using IIS or a Debian based OS (e.g. Debian or Ubuntu) the configurations, locations, and files may vary.

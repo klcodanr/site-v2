@@ -1,0 +1,21 @@
+---
+title: \[SLING-2611] MockResource Properties
+description: Learn about the new properties available on the Apache Sling
+  Commons Testing's Mock Resource
+hideInNav: false
+tags:
+  - Apache Sling
+  - Patch
+  - Open Source
+pubDate: 2012-10-01
+display: post
+image: /images/posts/shared/sling.jpeg
+published: true
+---
+
+I recently [submitted a patch](https://issues.apache.org/jira/browse/SLING-2611) to the Apache Sling project. This patch includes new functionality for Commons Testing’s MockResource class. The patch adds two methods:
+
+* addProperty - add a single key, value set
+* getProperties - returns the map of properties which can be modified
+
+These methods allow developers to set arbitrary properties on a MockResource and then when the MockResource is adapted to a ValueMap, the ValueMap will contain these properties.

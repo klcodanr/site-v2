@@ -1,0 +1,64 @@
+---
+title: 5 Tips to Maximize Adobe Experience Cloud Performance
+description: These 5 tips will help maximize the performance of your Adobe
+  Experience Cloud website.
+hideInNav: false
+tags:
+  - Adobe Experience Cloud
+  - Adobe Experience Manager
+  - Adobe Analytics
+  - Adobe Target
+  - Adobe Launch
+pubDate: 2017-11-30
+display: post
+image: /images/posts/2017-11-30-5-tips-maximize-adobe-experience-cloud-performance/speed.jpg
+published: true
+---
+
+The research is clear: [consumers want fast websites!](http://insights.wired.com/profiles/blogs/47-of-consumers-expect-a-web-page-to-load-in-2-seconds-or-less#axzz4zjwhlNhY) No matter how personalized or beautiful an experience you provide, consumers will not wait around if it is too slow. Luckily, the Adobe Experience Cloud enables you to create both a stellar and high-performance website. Here are five key tips on maximizing the performance of your website:
+
+![Adobe Launch](/images/posts/2017-11-30-5-tips-maximize-adobe-experience-cloud-performance/launch.jpg)
+
+## Activation - Use Adobe Launch
+
+[Adobe Launch](http://www.adobe.com/enterprise/cloud-platform/launch.html) is the latest in tag management technology from Adobe. Besides providing a much more flexible and extensible user experience, Adobe Launch offers significant performance benefits over Adobe's legacy [Dynamic Tag Manager](https://marketing.adobe.com/resources/help/en%5FUS/dtm/) and Google Tag Manager.
+
+Just by using Adobe launch, you can improve the speed of your tag management by up to 40%. Adobe Launch is currently being rolled out to customers of Adobe, to enable Adobe Launch you can submit the [Launch Release Form](https://adobe.allegiancetech.com/cgi-bin/qwebcorporate.dll?WVFJ3K).
+
+![HTML5 CSS JS](/images/posts/shared/HTML5_CSS_JavaScript.png)
+
+## AEM Sites - Optimize Client Code
+
+AEM Sites offers a number of tools to allow you to optimize the client side code this can include automatically minifying, combining and compressing client-side code using [ClientLibs](https://helpx.adobe.com/experience-manager/6-3/sites/developing/using/clientlibs.html). With AEM Sites there really is no reason to have the client download more than one CSS and one JavaScript file to render your site.
+
+Additionally, using [ACS AEM Commons](https://adobe-consulting-services.github.io/acs-aem-commons/features/versioned-clientlibs/index.html), you can have your client scripts automatically invalidate with every build so that you do not have to worry about clients being served old scripts or styles.
+
+![Adobe Target](/images/posts/2017-11-30-5-tips-maximize-adobe-experience-cloud-performance/target.jpg)
+
+## Adobe Target - Use AT.js
+
+AT.js is the [new JavaScript library for Adobe Target](/Support-LogMeInRescue 2.app) and replaces the legacy Mbox. AT.js offers significant performance improvements over the old library. Whereas Mbox would cause a screen flicker and blocked the page from finishing rendering until loaded, AT.js uses the latest in JavaScript technology to maximize performance.
+
+AT.js also provides support for single-page applications, such as those built in angular or react so you can provide a personalized experience even deep within a SPA.
+
+![Adobe Target](/images/posts/2017-11-30-5-tips-maximize-adobe-experience-cloud-performance/renditions.jpg)
+
+## AEM Assets - Optimize Images with Renditions
+
+One of the most significant contributors to the size of your pages is images. AEM Assets allows you to [generate Renditions](https://helpx.adobe.com/experience-manager/6-3/assets/using/extending-assets.html) or pre-sized and optimized images for use in smaller treatments or breakpoints. These images especially help performance on mobile devices as the smaller screens we significant time and potentially data and downloading oversized images.
+
+You can use the Adaptive image component or the [HTML5 picture element or srcset](https://www.smashingmagazine.com/2014/05/responsive-images-done-right-guide-picture-srcset/) attribute get the most appropriate rendition for your treatment and viewport.
+
+![Adobe Target](/images/posts/2017-11-30-5-tips-maximize-adobe-experience-cloud-performance/dispatcher.jpg)
+
+## AEM Dispatcher - Cache Content
+
+The AEM Dispatcher is a mechanism for caching content served by AEM. It allows you to cache any static content and with clever use of Ajax, [server-side includes (SSI)](https://blogs.perficient.com/adobe/2017/10/30/mastering-the-aem-dispatcher-part-4-sharing-content-with-ssi/), and [clever URLs](https://sling.apache.org/documentation/bundles/sling-query/selectors.html) you can achieve a very dynamic website that it's still heavily cached.
+
+Additionally, sure when configuring your CDN or dispatcher enabled web server to configure client-side caching. That way users on the site don't have to read download images, JavaScript, CSS or other assets is that are overly likely to change every time they visit your site.
+
+## In Summary
+
+Performance is critical to your website and the Adobe experience cloud and the right vendor make all the difference and having a high-performance website. We at Perficient/Digital strive to maximize your investment in the Adobe Experience Cloud and push to the limits of not only what your website can do, but how fast it can be.
+
+Hopefully, these 5 tips get you started on optimizing your Adobe Experience Cloud solution. Please leave a comment if you have any questions or any tips of your own to share.

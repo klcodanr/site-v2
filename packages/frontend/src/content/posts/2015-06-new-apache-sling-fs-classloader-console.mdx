@@ -1,0 +1,39 @@
+---
+title: "New in Apache Sling: FSClassLoader Console"
+description: In AEM 6.1, the default repository based ClassLoader was replaced
+  with the new FSClassLoader (File System ClassLoader). This post talks about
+  how this affects developers as well as introducing a new OSGi console to help
+  developers debug issues in JSP development.
+hideInNav: false
+tags:
+  - Apache Sling
+  - AEM 6.1
+pubDate: 2015-06-23
+display: post
+image: /images/posts/2015-06-22-new-apache-sling-fs-classloader-console/class-list.png
+published: true
+---
+
+In AEM 6.1, the default repository based ClassLoader was replaced with the new FSClassLoader (File System ClassLoader). This ClassLoader offers higher performance and throughput, however it removes a valuable tool for developers to debug errors in JSP scripts. In previous versions of AEM, developers could navigate to /var/classes and drill down through the heirarchy to find the Java file generated from the JSP scripts. In AEM 6.1, as the class and java files are now stored in the filesystem, this is no longer possible.
+
+> Surprised ! Since AEM 6.1 no more compiled JSP files in /var/classes [https://t.co/JYJr7yPiZP](https://t.co/JYJr7yPiZP) [#AEM6](https://twitter.com/hashtag/AEM6?src=hash)
+> 
+> — Przemo Pakulski (@pacoolsky) [June 3, 2015](https://twitter.com/pacoolsky/status/606063545873219584)
+
+Currently, to find the appropriate files, you will need to locate the bundle ID for the FSClassLoader bundle, then the java files will be located at:
+
+`[AEM_INSTALL_DIR]/crx-quickstart/launchpad/felix/bundle[BUNDLE_ID]/data/classes`
+
+Obviously, this is significantly more difficult than the previous method. After pondering this for a bit, I created a new OSGi Console plugin. This plugin is available as a download in the bundle Commons FileSystem ClassLoader version 1.0.2 from the Apache Sling website:
+
+[http://sling.apache.org/downloads.cgi](http://sling.apache.org/downloads.cgi)
+
+The new plugin lists all of the Java files currently generated from the JSPs:
+
+![/images/posts/2015-06-22-new-apache-sling-fs-classloader-console/class-list.png](/images/posts/2015-06-22-new-apache-sling-fs-classloader-console/class-list.png)
+
+And allows you to view a specific Java file (as well as downloading the .class and .deps files):
+
+![/images/posts/2015-06-22-new-apache-sling-fs-classloader-console/view-class.png](/images/posts/2015-06-22-new-apache-sling-fs-classloader-console/view-class.png)
+
+Hopefully this new OSGi console will be helpful for anyone developing JSPs in AEM 6.1!

@@ -1,0 +1,43 @@
+---
+title: "New from Perficient: ACS AEM Commons Audit Log Search"
+description: Introducing a new feature I contributed to the ACS AEM Commons,
+  Audit Log Search
+hideInNav: false
+tags:
+  - ACS AEM Commons
+  - Adobe Experience Manager
+  - Audit Log
+  - Tools
+  - Open Source
+pubDate: 2017-04-24
+display: post
+image: /images/posts/2017-04-25-acs-aem-commons-audit-log-search/audit-log-search.png
+published: true
+---
+
+ On a recent project, we had some issues around go-live where production content was being overwritten, deleted or changed. We needed to figure out what was causing these issues quickly, as this was affecting author productivity and could potentially cause content issues if the wrong content went live.
+
+ At the time, we used queries in CRXDELite to search the AEM Audit Log for events to diagnose the issue, however I felt like there had to be some better way. Surprisingly, AEM does not include a way to search the Audit Log in a GUI.
+
+### Donating to ACS AEM Commons
+
+ Since this was clearly a need, I created an Audit Log search console and donated it to the [ACS AEM Commons project](http://adobe-consulting-services.github.io/acs-aem-commons/), an Open Source collection of tools and utilities for the AEM platform maintained by Adobe.
+
+ The Audit Log Search console was accepted and is now available in ACS AEM Commons version 3.7.0 and newer for AEM 6.2 and version 2.10.0 and newer for AEM 6.0.
+
+### Using Audit Log Search
+
+To use the Audit Log Search:
+
+1. Download AEM ACS Commons version 3.7.0 or later if you are using AEM 6.2+ or version 2.10.0 if you are using AEM 6.0 or 6.1
+2. Navigate to [/etc/acs-commons/audit-log-search.html](http://localhost:4502/etc/acs-commons/audit-log-search.html) on your environment
+3. Enter your search parameters
+4. Click the `Search Audit Log` button
+
+This will perform the search and return the results in a table below.
+
+![Audit Log Search Console](/images/posts/2017-04-25-acs-aem-commons-audit-log-search/audit-log-search.png) 
+
+ You can read more on the [ACS AEM Commons](https://adobe-consulting-services.github.io/acs-aem-commons/features/audit-log-search/index.html) website. Hopefully this helps you more easily track down whom changed what and when in your AEM instance.
+
+ If you have any issues, [open a ticket on the ACS AEM Commons Github](https://github.com/adobe-Consulting-Services/acs-aem-commons/issues) and mention [me (@klcodanr)](https://github.com/klcodanr).

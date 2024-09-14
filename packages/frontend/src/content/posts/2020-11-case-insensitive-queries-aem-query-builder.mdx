@@ -1,0 +1,98 @@
+---
+title: Case Insensitive Queries with the AEM Query Builder
+description: Performing case-insensitive search with AEM Query Builder using a
+  custom predicate
+hideInNav: false
+tags:
+  - Adobe Experience Manager
+pubDate: 2020-11-11
+display: post
+image: /images/posts/2020-11/typography.jpg
+published: true
+---
+
+  
+Recently, I needed to perform a query using the AEM Query Builder which was case insensitive. While I normally prefer using [JCR SQL2 queries](/posts/2014/10/9-jcr-sql-2-queries-every-aem-dev-should-know.html), in this case Query Builder was a better fit as I wanted consuming applications to be able to manipulate the query and doing so as a map is significantly easier than doing so as a string.
+
+I was surprised to find that there was no native Query Builder Predicate for doing case insensitive queries so I ended up writing my own. 
+
+The predicate works by lower casing the value and then using the XPath fn:lower-case method to compare to the field value in lower case.  
+  
+
+```java
+/*
+This is free and unencumbered software released into the public domain.
+
+Anyone is free to copy, modify, publish, use, compile, sell, or
+distribute this software, either in source code form or as a compiled
+binary, for any purpose, commercial or non-commercial, and by any
+means.
+
+In jurisdictions that recognize copyright laws, the author or authors
+of this software dedicate any and all copyright interest in the
+software to the public domain. We make this dedication for the benefit
+of the public at large and to the detriment of our heirs and
+successors. We intend this dedication to be an overt act of
+relinquishment in perpetuity of all present and future rights to this
+software under copyright law.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+
+For more information, please refer to <http://unlicense.org/>
+*/
+package com.perficient.adobe.predicates;
+
+import java.util.Locale;
+import java.util.Optional;
+
+import com.day.cq.search.Predicate;
+import com.day.cq.search.eval.AbstractPredicateEvaluator;
+import com.day.cq.search.eval.EvaluationContext;
+
+import org.osgi.service.component.annotations.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+@Component(factory = "com.day.cq.search.eval.PredicateEvaluator/equalsIgnoreCase")
+public class CaseInsensitiveEquals extends AbstractPredicateEvaluator {
+
+    private static final Logger log = LoggerFactory.getLogger(CaseInsensitiveEquals.class);
+
+    static final String PREDICATE_PROPERTY = "property";
+    static final String PREDICATE_VALUE = "value";
+    static final String PREDICATE_LOCALE = "locale";
+
+    @Override
+    public String getXPathExpression(Predicate predicate, EvaluationContext context) {
+        log.debug("Evaluating predicate: {}", predicate);
+        String property = predicate.get(PREDICATE_PROPERTY);
+        Locale locale = Optional.ofNullable(predicate.get(PREDICATE_LOCALE)).map(lt -> Locale.forLanguageTag(lt))
+                .orElse(Locale.getDefault());
+        String value = predicate.get(PREDICATE_VALUE).toLowerCase(locale).replace("'", "''");
+        String query = String.format("fn:lower-case(@%s)='%s'", property, value);
+        log.debug("Generated query: {}", query);
+        return query;
+    }
+}
+```
+
+  
+Once the custom predicate is available in your application, it can be used in any Query Builder query as such:  
+  
+
+```
+path=/content/test
+equalsIgnoreCase.property=test
+equalsIgnoreCase.value=test
+equalsIgnoreCase.locale=en_US
+```
+
+  
+The locale parameter is not required, but would generally be recommended unless the input will always be in the system default locale.  
+  

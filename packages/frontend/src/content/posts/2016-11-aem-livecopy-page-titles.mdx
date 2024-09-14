@@ -1,0 +1,43 @@
+---
+title: Updating Page Titles with AEM LiveCopy
+description: Learn how to configure AEM's LiveCopy Updates and how to enable
+  LiveCopy updates for the jcr:title Property
+hideInNav: false
+tags:
+  - Adobe Experience Manager
+  - LiveCopy
+  - Internationalization
+  - Translation
+pubDate: 2016-11-30
+display: post
+image: /images/posts/2016-11-30-aem-livecopy-page-titles/monitor_scan.jpg
+published: true
+---
+
+In my [previous post](http://blogs.perficient.com/adobe/2016/02/23/web-maintenance-a-chore-aem-live-copy-to-the-rescue/) about [AEM LiveCopy](https://docs.adobe.com/docs/en/aem/6-2/administer/sites/msm.html), I showed how this powerful tool could be used to manage multiple variant-based sites such as dealer or branch sites. Recently, I found another trick which can help make LiveCopy even more powerful and easy to use. 
+
+### Why Isn't My Title Updating??
+
+By default, AEM excludes certain properties from the live copy update and initial rollout. During a recent implementation, I encountered an issue where the client wanted to be able to roll out `jcr:title` updates from one master language copy to the regional websites. Unfortunately, by default, AEM excludes all `jcr:` properties, including `jcr:title` from LiveCopy updates.
+
+ Luckily, an OSGi configuration controls which properties are to be excluded, which allows you to easily update this setting on your AEM instance.
+
+### Updating jcr:title with AEM LiveCopy
+
+The solution to this problem was to create an OSGi configuration with the name `com.day.cq.wcm.msm.impl.actions.ContentUpdateActionFactory.config` in our [application's configuration folder](https://docs.adobe.com/docs/en/cq/5-6-1/deploying/configuring%5Fosgi.html#OSGi Configuration in the Repository). This configuration is based on the default configuration, but instructs AEM to NOT ignore the `jcr:title` and `cq:tags` properties by added them into a regular expression used by AEM to determine which properties should be excluded in the `cq.wcm.msm.action.excludedprops` property:
+
+```
+# Custom configuration to enable the live copying of jcr:title and cq:tags
+cq.wcm.msm.action.excludednodetypes=["cq:LiveSyncConfig","cq:BlueprintSyncConfig","cq:LiveSyncAction","cq:CatalogSyncConfig","cq:CatalogSyncAction","cq:meta"]
+cq.wcm.msm.action.excludedparagraphitems=["cq:propertyInheritanceCancelled"]
+cq.wcm.msm.action.ignoredMixin=[".*"]
+cq.wcm.msm.action.excludedprops=["jcr:(?!(title)$).*","sling:(?!(resourceType|resourceSuperType)$).*","cq:(?!(designPath|template|lastTranslationUpdate|targetEngine|tags)$).*","publishCampaignId"]
+```
+
+The `cq.wcm.msm.action.excludedprops` property is a list of regular expressions, with each being checked against the property name to determine whether or not the property should be updated. In this case, the regular expression `jcr:(?!(title)$).*` uses lookbacks to exclude every `jcr:` property besides `jcr:title`.
+
+### Excluding Custom Properties
+
+ If you need to exclude custom properties from LiveCopy updates, you can also use this same feature. By setting a regular expression which excludes your property in `cq.wcm.msm.action.excludedprops`, allows you to easily exclude a custom property in LiveCopy rollout updates.
+
+ Hopefully this gives you some insight into the internal workings of AEM LiveCopy. Please leave a comment below if you have any questions or need any help with AEM LiveCopy!

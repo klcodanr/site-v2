@@ -1,0 +1,38 @@
+---
+title: Creating Flexible CQ5 Pages
+description: The advantages and strategy for creating flexible Adobe CQ5 Page Templates
+hideInNav: false
+tags:
+  - Adobe CQ
+  - Templates
+  - Web Content Managment
+  - Best Practices
+pubDate: 2013-02-04
+display: post
+image: /images/posts/shared/CQ5.png
+published: true
+---
+
+One of [Adobe’s CQ5 Best Practices](http://dev.day.com/docs/en/cq/current/developing/developing%5Fguidelines%5Fbestpractices.html#Guidelines%20for%20Using%20Templates%20and%20Components) is to limit the number of Templates, I would suggest it is a best practice to limit the number of page components and create as many templates as necessary.
+
+Templates in Adobe CQ5 function differently than they do in many other CMS systems. CQ Templates are placeholders for sample content and references to the component to render the sample content. Often, projects create a 1:1 mapping between CQ Templates and the page components used to render the resulting page, but this does not need to be the case.
+
+### Flexible Page Components
+
+A more flexible way to create templates is to create multiple templates per page component, specifying the default components to be placed on the page. This gives authors a sample to start with, without tying them to a particular structure. At the same time, through the Design configuration, you can limit what components can be added to the page, helping to ensure the correct components are used.
+
+Flexible page components allow authors to change the look and feel of a page without having to replace the page. They also reduce the workload for developers to maintain a site, by allowing authors to control the look and feel of a page instead of requiring developer involvement.
+
+### What is best for my site?
+
+Flexible page component are best used when the site content is not structured, when there are not rigid branding requirements and when authors are relatively proficient in using CQ5\. A majority of sites can probably use flexible page components for part of the site content, and many can use flexible page components for most of the site.
+
+Structured page components are best for content which is structured. This can be anything from blog posts to a product catalog, as long as the content follows a strict structure, using structured page components will enable content analysis, searching and reuse by enforcing consistency.
+
+### Creating Flexible Pages
+
+To create flexible pages, first create a single page component, this component should extend the base page component at foundation/components/page. The main feature the page should have is a parsys where the template defined components will be inserted.
+
+Once the page component is created, create one or more templates. In each template, put placeholders for the content which will be inserted into new pages created with the template. A good way to do this is to create a blank page, add the desired components for the template, then export the content of that page using the VLT tool. Copy the jcr:content node into your template and update the template metadata and you’re finished.
+
+I hope this article has been useful, you have a better appreciation of the flexibility of CQ5’s templating and component system. On your next project you consider how you can use templates and page components to make the most of your CQ5 system.

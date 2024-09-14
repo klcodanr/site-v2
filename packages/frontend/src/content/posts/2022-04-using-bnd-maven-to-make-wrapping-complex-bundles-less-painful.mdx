@@ -1,0 +1,190 @@
+---
+title: Using Bnd + Maven to Make Wrapping Complex Bundles Less Painful
+description: How to use the Maven dependency plugin and bnd to dump all of the
+  packages used by the dependencies of a Maven project to make it easier to wrap
+  a library as an OSGi bundle
+hideInNav: false
+tags:
+  - OSGi
+  - Apache Maven
+pubDate: 2022-04-19
+display: post
+image: /images/posts/04/pain.jpg
+published: true
+---
+
+  
+
+Taking standardized tests, getting wisdom teeth out, wrapping libraries as OSGi bundles at times we all must endure dinner pain. Whilst I can't help with the anxiety of cramming for tests or the pain of getting wisdom teeth pulled, I can give you a leg up on wrapping your library as an OSGi bundle.
+
+First though, what is an OSGi bundle and what do I mean by wrapping my library?
+
+  
+
+## Wrapping Libraries in Bundles
+
+  
+Classloaders in OSGi work differently than classloaders in "vanilla" Java. Each bundle (essentially a Java Jar with a more complicated manifest) has it's own classloader, allowing the bundle to operate with just it's required dependencies and allowing multiple versions of the same package to be present in the OSGi container at one time. 
+
+To enable the container to generate these classloaders and understand the connection between the (potentially hundreds) of bundles in the container, each bundle contains a manifest including the packages that bundle imports and exports.   
+
+Wrapping a library as a bundle is the process of producing a bundle JAR with the correct manifest for a library that was not created to work with OSGi. bndtools has an excellent overview of the process for [wrapping an external library](https://bnd.bndtools.org/chapters/390-wrapping.html).
+
+This explanation works well for simple, single-tier dependencies, but what if the library you're trying to wrap has it's own non-OSGi-ified dependency tree?   
+
+## A (less than) Hypothetical Scenario
+
+  
+Let's just say that you were trying to incorporate a library created for a completely different class of Java application into OSGi such as Spring that was already widely adopted and tested. I've had to do this several times in my career.   
+
+ Ideally, some or most of the dependencies for the library will already be available in the OSGi container or made available by another project like [Apache ServiceMix](https://servicemix.apache.org/), however especially if the library was never considered in the context of OSGi, you may have dependencies not already available as bundles. You'll then find yourself in the "fun" situation of shoehorning in a library never meant to run in OSGi with dependencies which are not available in OSGi as the only alternative is to re-write the library. 
+
+ You could of course track down every transient dependency and wrap that dependency, but you may not need that particular functionality elsewhere yet, and exposing that dependency as an OSGi bundle then means other bundles in the OSGi container can now import it thus potentially locking you into the current version.
+
+As an alternative, you can instead include the dependencies in your wrapped bundle along with the original library you're wrapping, something like this Maven snippet:  
+
+```xml
+<plugin>
+    <groupId>biz.aQute.bnd</groupId>
+    <artifactId>bnd-maven-plugin</artifactId>
+    <extensions>true</extensions>
+    <version>6.2.0</version>
+    <configuration>
+        <bnd>
+            <![CDATA[
+            -includeresource: myco-commons-[0-9\\.]*.jar;lib:=true, \\
+                javax.ws.rs-api-[0-9\\.]*.jar;lib:=true, \\
+                jersey-(client|common)-[0-9\\.]*.jar;lib:=true
+            Import-Package: *
+        ]]>
+        </bnd>
+        <debug>true</debug>
+    </configuration>
+    <executions>
+        <execution>
+            <id>jar</id>
+            <goals>
+                <goal>jar</goal>
+            </goals>
+        </execution>
+    </executions>
+</plugin>
+```
+
+  
+
+But how do you know what dependencies you need and what imports you can ignore? Especially when you have a multiple layer deep dependency tree? 
+
+You can, of course, keep installing the bundle and checking to see what packages fail to import, but this is both tedious and time-consuming. Instead, using Apache Maven and the [bnd command line tool](https://bnd.bndtools.org/chapters/120-install.html), you can dump all of the package imports for your project's dependencies to text files for offline analysis:
+
+  
+
+```bash
+# First download all of the dependencies to a folder
+mkdir ./bundle-dependencies
+mvn dependency:copy-dependencies -DoutputDirectory=./bundle-dependencies
+
+# Then use BND to print the usage info
+for j in ./bundle-dependencies/*.jar; do bnd print -u $j > $j.txt; done
+
+# Finally, cleanup the JAR files
+rm -f ./bundle-dependencies/*.jar
+```
+
+  
+
+This will produce text files with every package used by every package in a particular library. For example this is the file generated for jersey-client 2.35:
+
+  
+
+```
+
+[USES]
+
+org.glassfish.jersey.client             javax.inject
+                                        javax.net.ssl
+                                        javax.ws.rs
+                                        javax.ws.rs.client
+                                        javax.ws.rs.core
+                                        javax.ws.rs.ext
+                                        org.glassfish.jersey
+                                        org.glassfish.jersey.client.inject
+                                        org.glassfish.jersey.client.internal
+                                        org.glassfish.jersey.client.internal.inject
+                                        org.glassfish.jersey.client.internal.routing
+                                        org.glassfish.jersey.client.spi
+                                        org.glassfish.jersey.internal
+                                        org.glassfish.jersey.internal.guava
+                                        org.glassfish.jersey.internal.inject
+                                        org.glassfish.jersey.internal.spi
+                                        org.glassfish.jersey.internal.util
+                                        org.glassfish.jersey.internal.util.collection
+                                        org.glassfish.jersey.message
+                                        org.glassfish.jersey.message.internal
+                                        org.glassfish.jersey.model.internal
+                                        org.glassfish.jersey.process.internal
+                                        org.glassfish.jersey.spi
+                                        org.glassfish.jersey.uri
+                                        org.glassfish.jersey.uri.internal
+org.glassfish.jersey.client.authentication javax.annotation
+                                        javax.ws.rs
+                                        javax.ws.rs.client
+                                        javax.ws.rs.core
+                                        org.glassfish.jersey.client
+                                        org.glassfish.jersey.client.internal
+                                        org.glassfish.jersey.message
+                                        org.glassfish.jersey.uri
+org.glassfish.jersey.client.filter      javax.inject
+                                        javax.ws.rs.client
+                                        javax.ws.rs.core
+                                        org.glassfish.jersey.client.internal
+                                        org.glassfish.jersey.internal.inject
+                                        org.glassfish.jersey.spi
+org.glassfish.jersey.client.http        javax.ws.rs.core
+                                        org.glassfish.jersey.client
+org.glassfish.jersey.client.inject      org.glassfish.jersey.model
+org.glassfish.jersey.client.internal    javax.net.ssl
+                                        javax.ws.rs
+                                        javax.ws.rs.client
+                                        javax.ws.rs.core
+                                        org.glassfish.jersey.client
+                                        org.glassfish.jersey.client.spi
+                                        org.glassfish.jersey.internal.l10n
+                                        org.glassfish.jersey.internal.util
+                                        org.glassfish.jersey.internal.util.collection
+                                        org.glassfish.jersey.message.internal
+org.glassfish.jersey.client.internal.inject javax.inject
+                                        javax.ws.rs
+                                        javax.ws.rs.ext
+                                        org.glassfish.jersey.client
+                                        org.glassfish.jersey.client.inject
+                                        org.glassfish.jersey.client.internal
+                                        org.glassfish.jersey.internal
+                                        org.glassfish.jersey.internal.inject
+                                        org.glassfish.jersey.internal.util
+                                        org.glassfish.jersey.internal.util.collection
+                                        org.glassfish.jersey.model
+org.glassfish.jersey.client.internal.jdkconnector org.glassfish.jersey.internal.l10n
+org.glassfish.jersey.client.internal.routing javax.ws.rs.core
+                                        javax.ws.rs.ext
+                                        org.glassfish.jersey.internal.routing
+                                        org.glassfish.jersey.internal.util
+                                        org.glassfish.jersey.message
+                                        org.glassfish.jersey.message.internal
+org.glassfish.jersey.client.spi         javax.net.ssl
+                                        javax.ws.rs
+                                        javax.ws.rs.client
+                                        javax.ws.rs.core
+                                        org.glassfish.jersey.client
+                                        org.glassfish.jersey.process
+                                        org.glassfish.jersey.spi
+```
+
+  
+
+The package on the left is the package within that library and the packages on the right are the packages referenced by that package. 
+
+While you will still probably need to do the install and test cycle, this will make it _significantly_ easier to understand where a dependency is referenced and if it can be excluded from the Import-Package statement.
+
+While hopefully you won't have to wrap a library like this as a bundle, I hope this post helps if you do!  
+  

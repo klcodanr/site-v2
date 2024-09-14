@@ -1,0 +1,52 @@
+---
+title: "Lucky #11: Sling 11 and Java 11 Support"
+description: The Apache Sling project just released the latest version of the
+  Apache Sling Starter, version 11. This artifact is an aggregator of the
+  modules making up Apache Sling and is used by many downstream applications as
+  a basis for the "stable" version of the Apache Sling codebase.
+hideInNav: false
+tags:
+  - Apache Sling
+  - Adobe Experience Manager
+  - Java
+pubDate: 2018-10-25
+display: post
+image: /images/posts/2018-10/java-11.jpg
+published: true
+---
+
+  
+ The Apache Sling project just released the latest version of the Apache Sling Starter, version 11\. This artifact is an aggregator of the modules making up Apache Sling and is used by many downstream applications as a basis for the "stable" version of the Apache Sling codebase.
+
+## Java 11 Support  
+
+One of the most interesting new features in the latest version of the Sling Starter is support for Java 11\. This is important as previous versions of Apache Sling and [Adobe's Experience Manager (AEM) only supported Java 8](https://helpx.adobe.com/experience-manager/6-4/sites/deploying/using/technical-requirements.html). 
+
+Java 8 version support is a ticking time bomb as Oracle has announced licensing and [pricing changes](https://www.oracle.com/technetwork/java/javaseproducts/overview/javasesubscriptionfaq-4891443.html) for the Oracle JDK [starting January 2019](https://www.theregister.co.uk/2018/06/22/oracle%5Fjava%5Fse%5Fsubscriptions/). Included in these changes is that the Oracle Java SE 8 will no longer be supported in accordance to Oracle's [new release schedule](https://www.oracle.com/technetwork/java/javase/eol-135779.html). Both Java 9 and 10 are not Long Term Support (LTS) releases and will only be supported for limited times, as compared to Java 11, the first LTS release which will be supported until the next LTS release or September 2023 for premier customers.  
+
+With the support for Java 11 in Apache Sling Starter 11, Adobe should be able to update AEM 6.5 to support Java 11 and I have heard from sources in Adobe R&D that Adobe customers on AEM 6.4 should be able to apply a Service Pack to support Java 11\.   
+
+Any AEM customer on a previous versions of Adobe Experience Manager should start planning an upgrade path to avoid additional licensing costs from Oracle or having to switch to an unsupported JDK configuration.
+
+## OSGi R7
+
+Another important library supporting Apache Sling and Adobe Experience Manager is the Open Service Gateway Initiative specification or OSGi. This specification recently underwent a major revision for OSGi R6, which was included in Sling Starter 10\. All projects on AEM 6.3+ and Apache Sling 10+ should be using the [OSGi R6 annotations](https://blogs.perficientdigital.com/2018/05/21/3-gotchas-in-migrating-from-felix-scr-to-osgi-r6-annotations/) for defining OSGi Services and Components. OSGi R7, available in Sling Starter 11, provides some tactical improvements with [support for injecting Declarative Service objects into constructors](https://blog.osgi.org/2018/03/osgi-r7-highlights-declarative-services.html) and extended support for Java 9.
+
+## Additional Features
+
+Additionally, Apache Sling Starter 11, also includes [several new features including](https://sling.apache.org/news/sling-11-released.html):
+
+* Update to Oak 1.8.8
+* Repoinit Enhancements
+* Changes to the /content structure
+* Authentication enhancements
+
+## Coming Soon: Apache Sling Starter 12
+
+Now that Apache Sling 11 is release, discussion has already started on Apache Sling Starer 12\. One of the most interesting discussions is around support for the Apache Sling Rewriter, which has provoked a large amount of controversy from supporters and detractors.
+
+To follow the discussion go here:
+
+[https://lists.apache.org/thread.html/bebc379223ece5af7afd5e2c2f6231b002f97970c66c34e99e5bd3c5@%3Cdev...](https://lists.apache.org/thread.html/bebc379223ece5af7afd5e2c2f6231b002f97970c66c34e99e5bd3c5@%3Cdev.sling.apache.org%3E)
+
+Or join in the discussion at [dev@sling.apache.org](mailto:dev-subscribe@sling.apache.org).   

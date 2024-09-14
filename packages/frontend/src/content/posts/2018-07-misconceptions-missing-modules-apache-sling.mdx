@@ -1,0 +1,53 @@
+---
+title: Misconceptions and the Missing Modules of Apache Sling
+description: How can you find the source or JavaDocs for an Apache Sling
+  dependency of AEM? The answer is trickier than you'd think, but I've got a new
+  tool to make it easier!
+hideInNav: false
+tags:
+  - Apache Sling
+  - Adobe Experience Manager
+  - Open Source
+pubDate: 2018-07-31
+display: post
+image: /images/posts/2018-07/explore-header.jpg
+published: true
+---
+
+One of the concepts I see confused quite a bit is the relationship between Apache Sling and AEM. In their quest to find the right version of a bundle, many developers think of Sling as a single dependency of AEM. To understand this why this concept is incorrect and why it arises, we first need to understand exactly what Apache Sling is. 
+
+  
+## What is Apache Sling
+
+  
+Apache Sling is an application framework for building web applications. Apache Sling uses OSGi as an inversion of control container to allow developers to dynamically add and modify the application during runtime. As such Sling provides an engine for running the OSGi container and a collection of modules which can be used to create Sling-derived applications. Each module, including the API, core functionality such as the resource resolver or servlet support, are versioned separately. Thus, you can compose Sling applications from any set of modules as long as they are compatible.
+
+In Apache Sling, the Launch Builder project builds the Sling Launchpad (now known as Sling Starter) which is the executable distribution of Sling. The Launchpad Builder is a maven project with a series of text files call the repoinit files which contain the distribution modules as well as instructions on how to build the Sling application.
+
+  
+## How AEM Relates to Apache Sling
+
+  
+AEM is versioned alongside Apache Sling. There's no dependency between the versions of AEM and Apache Sling, and AEM often will contain unreleased bug fix versions of dependencies, but there are some general similarities. The following Apache Sling and AEM releases are close, but not the same thing:
+
+  
+* Sling 6, AEM 5.4
+* Sling 7, AEM 6.1
+* Sling 8, AEM 6.2
+* Sling 9, AEM 6.3
+* Sling 10, AEM 6.4
+
+  
+## How to Find Modules in Apache Sling
+
+  
+Recently Apache Sling moved over to GitHub as its primary source code repository. This is been very beneficial to the development process, but it does make it harder to find the modules that make up Apache Sling as Sling has moved from a single SVN repository to having every module in a separate GIT repository. 
+
+  
+Recently I pushed some enhancements to the Sling Aggregator, which maintains a complete list of all of the Sling modules. These new changes generate [a page showing all of the modules](https://github.com/apache/sling-aggregator/blob/master/docs/modules.md) and linking to the appropriate JavaDocs, build status, testing status, releases and other related information. 
+
+  
+Using the dependency finder or bundle list in the OSGi console, in conjunction with the new Sling Aggregator module list developers can easily find the source code and JavaDocs for any module of Apache Sling as long as the know the [artifact ID](https://maven.apache.org/guides/mini/guide-naming-conventions.html).
+
+  
+I'm really happy with the new [Sling Aggregator modules list](https://github.com/apache/sling-aggregator/blob/master/docs/modules.md), if you have any ideas or suggestions on how to improve the tool please let me know and I'll be glad to make the change.

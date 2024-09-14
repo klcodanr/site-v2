@@ -1,0 +1,60 @@
+---
+title: Escaping the Dreaded VerifyError
+description: "How to fix the java.lang.VerifyError: Expecting a stackmap frame
+  at branch target error in AEM"
+hideInNav: false
+tags:
+  - VerifyError
+  - Adobe Experience Manager
+  - Apache Felix
+  - SCR Annotations
+pubDate: 2014-11-25
+display: post
+image: /images/posts/shared/maven.png
+published: true
+---
+
+Recently (read early this afternoon) I was doing my best to beat my head against the desk until something useful spilled out. The problem I was having was with a relatively old, but frequently updated codebase where recently certain random services would not start. The project had recently updated from Java 1.6 to Java 1.8 and at some point, the problem occurred but had not been noticed immediately as it only affected a small subset of the services. 
+
+When I checked in the OSGi console, it appeared the service was registered and all of the references were resolved and no errors were caught in the error.log. Even more oddly, other services which had the same `@Component` and `@Service` [SCR annotations](http://felix.apache.org/documentation/subprojects/apache-felix-maven-scr-plugin/scr-annotations.html) were not affected. 
+
+Finally, I checked the application specific logs and found an extremely puzzling message being logged by the OsgiInstallerImpl. It logged the message to the logger matching the bundle ID. The error was something like as follows:
+
+```
+25.11.2014 13:02:25.319 *WARN* [OsgiInstallerImpl] com.client.project.bundles.importers [com.client.project.importers.impl.ServiceUpdateScheduler(1866)] bindClientService cannot be found (java.lang.VerifyError: Expecting a stackmap frame at branch target 13
+Exception Details:
+Location:
+com/client/project/importers/impl/ServiceUpdateScheduler.unbindResourceResolverFactory(Lorg/apache/sling/api/resource/ResourceResolverFactory;)V @5: if_acmpne
+ Reason:
+ Expected stackmap frame at this location.
+ Bytecode:
+ 0000000: 2ab4 0023 2ba6 0008 2a01 b500 23b1 
+)
+java.lang.VerifyError: Expecting a stackmap frame at branch target 13
+Exception Details:
+Location:
+com/client/project/importers/impl/ServiceUpdateScheduler.unbindResourceResolverFactory(Lorg/apache/sling/api/resource/ResourceResolverFactory;)V @5: if_acmpne
+ Reason:
+ Expected stackmap frame at this location.
+ Bytecode:
+ 0000000: 2ab4 0023 2ba6 0008 2a01 b500 23b1
+at java.lang.Class.getDeclaredMethods0(Native Method)
+ at java.lang.Class.privateGetDeclaredMethods(Class.java:2531)
+ at java.lang.Class.getDeclaredMethod(Class.java:2002)
+ at org.apache.felix.scr.impl.helper.BaseMethod.getMethod(BaseMethod.java:325)
+ at org.apache.felix.scr.impl.helper.BindMethod.getMethod(BindMethod.java:37)
+```
+
+After doing some checking and verifying, I found that the error was definaltely coming from the `@Reference` annotations and seemed to only happen when certain services were referenced. I did some Googling and one by one rejected all of the answers I found:
+
+* [http://stackoverflow.com/questions/22259579/how-do-i-add-the-command-xx-usesplitverifier-to-an-osgi-bundle-built-in-crxde-l](http://stackoverflow.com/questions/22259579/how-do-i-add-the-command-xx-usesplitverifier-to-an-osgi-bundle-built-in-crxde-l) \- I didn't want to require specific parameters, this seemed like a hack
+* [http://stackoverflow.com/questions/15169228/expecting-a-stackmap-frame-error-encountered-during-starting-an-osgi-bundle](http://stackoverflow.com/questions/15169228/expecting-a-stackmap-frame-error-encountered-during-starting-an-osgi-bundle) \- The class files seemed to be compiled at the expected versions
+* Some answers also lead me to believe it was an issue with the way I was referencing the services, but that didn't make sense as there were Services shown in the OSGi console for the interface I had specified
+
+Finally, I saw some comment towards the end of this thread: [http://help-forums.adobe.com/content/adobeforums/en/experience-manager-forum/adobe-experience-manager.topic.html/forum\_\_o0nw-i\_created\_anosgibu.html](http://help-forums.adobe.com/content/adobeforums/en/experience-manager-forum/adobe-experience-manager.topic.html/forum%5F%5Fo0nw-i%5Fcreated%5Fanosgibu.html)
+
+So what if the problem was specific to Apache Felix? I did a little more digging and lo and behold, there was a bug open for the old version of the [maven-scr-plugin](http://felix.apache.org/documentation/subprojects/apache-felix-maven-scr-plugin.html) this project was using [https://issues.apache.org/jira/browse/FELIX-3568](https://issues.apache.org/jira/browse/FELIX-3568).
+
+I updated the project to maven-scr-plugin version 1.9.0 and org.apache.felix.scr.annotations to 1.7.0 and after recompiling and reinstalling the bundle and the services started successfully.
+
+Hopefully this helps you if you have the misfortune to run into this issue, if you have any questions please leave a comment below.

@@ -1,0 +1,128 @@
+---
+title: Building a Zero Cost Website with Apache Sling CMS
+description: "Over the last few months, I have created and Open Sourced an
+  intuitive, full-featured Content Management System based on the Apache Sling
+  framework as the Apache Sling CMS. "
+hideInNav: false
+tags:
+  - Apache Sling
+  - Web Content Management
+  - Open Source
+pubDate: 2018-12-11
+display: post
+image: /images/posts/2018-12/CMS-Header.jpg
+published: true
+---
+
+  
+
+For some time now I've been using an intuitive, full-featured Content Management System for managing my blog posts and other content on [danklco.com](https://www.danklco.com). This system supports rich text editing, using a component-driven page builder, all of the content management bells & whistles, a full java app server stack for developing integrations and is 100% free and open source. 
+
+Given my involvement as a PMC member, it should probably be no surprise this system is built with Apache Sling. Over the last few months, I have open-sourced the same system I use as the [Apache Sling CMS](https://github.com/apache/sling-org-apache-sling-app-cms). 
+
+  
+## What is the Apache Sling CMS?
+
+  
+The Apache Sling CMS is a reference implementation of the Apache Sling framework, designed as a general-purpose Content Management System. The Apache Sling CMS can handle any type of content, but it especially shines with web content. 
+
+The Apache Sling CMS leverages the latest features of the Sling framework to enable authors to create dynamic web experiences with a component-driven editor. The Apache Sling CMS is based on the JCR which provides a powerful base for storing and retrieving connect.
+
+  
+## Getting Started with the Apache Sling CMS
+
+  
+I wrote up a [quick start guide ](https://github.com/apache/sling-org-apache-sling-app-cms/blob/master/docs/quickstart.md)for getting started with the Apache Sling CMS, but there simplest way to get started is to just download the JAR from the [Apache Sling website](http://sling.apache.org/downloads.cgi), double click the JAR and open your browser to [http://localhost:8080](http://localhost:8080). In about 30 second the Apache Sling CMS should start and display a page like this:
+
+  
+
+![Sling CMS Home](/images/posts/2018-12/Sling-CMS-Home.png)
+
+  
+
+The core of the Apache Sling CMS is the manage section. From here you can manage site content, static content, configurations, taxonomy and user generated content.
+
+Below the manage section are number of tools to help advanced users manage the system, edit the low-level repository resources, import content and manage users.
+
+The Apache Sling CMS comes with a reference page from the Apache sling website. Opening the page editor, you can see the powerful in context editing as well as the ability to add in components which render content.
+
+  
+
+![Sling CMS Page Editor](/images/posts/2018-12/Page-Editor.png)
+
+  
+
+## Developing on the Apache Sling CMS
+
+  
+The easiest way to get started with developing your website using the Apache Sling CMS is to use the Apache Sling Bundle project archetype. To build a project with the archetype, execute the following command:
+
+  
+
+```bash
+mvn archetype:generate \\
+    -DarchetypeGroupId=org.apache.sling \\
+    -DarchetypeArtifactId=sling-bundle-archetype \\
+    -DarchetypeVersion=1.0.6
+```
+
+  
+
+The project archetype will create a single project to contain your Java, JSP and front-end code. This project will build as an OSGi bundle to install your custom code. To build your project and install it into your local the Apache Sling CMS instance, run the following command:
+
+  
+
+```bash
+mvn clean install -P autoInstallBundle
+```
+
+  
+
+For more information on developing with the Apache Sling CMS, [consult the developer documentation on GitHub](https://github.com/apache/sling-org-apache-sling-app-cms/blob/master/docs/developers.md).
+
+  
+## Deploying the Apache Sling CMS
+
+  
+The Apache Sling CMS can be deployed on any server platform which can run [Java JDK 8](https://openjdk.java.net/install/) or newer and has at least 600 megabytes of memory. Using a server with more memory does result in significant increases in performance and the number of supported concurrent users.
+
+To run the Apache Sling CMS on a free server, you can use the [Always Free Tier from Google Compute Cloud](https://cloud.google.com/free/docs/always-free-usage-limits). This includes a [f1-micro instance](https://cloud.google.com/compute/pricing#sharedcore), which has _just_ enough power to run the Apache Sling CMS.
+
+I have created a [Vagrant file](https://github.com/apache/sling-org-apache-sling-app-cms/blob/master/vagrant/Vagrantfile) which shows how to configure the server to run the Apache Sling CMS. This file is the best starting point for configuring your Apache Sling CMS server.
+
+  
+### Apache Overview
+
+  
+As the Apache Sling CMS is a Java application, you'll will leverage a JVM for running the application, in this case OpenJDK. Generally though, you will not want to directly expose the Apache Sling CMS over public web ports.
+
+The Apache Sling CMS runs on port 8080, we then use Apache httpd, leveraging Apache's mod\_proxy, to request the content from the Apache Sling CMS instance over the standard web ports. In addition we'll use mod\_cache to cache the content from Sling CMS so that subsequent request are significantly faster. Finally, we use mod\_expire to configure the caching of content so static assets are case for nearly indefinitely whereas dynamic HTML and JSON are cached for mere moments or not at all.
+
+  
+### Handling Low Memory
+
+  
+Since our free Google Cloud server has laughably limited specs, we must perform a hack to get the Apache Sling CMS to function well. We will create a memory disk cache, which augments the system's normal memory to prevent out of memory exceptions. If you actually pay for a server with enough memory, this won't be an issue.
+
+The following command (when run as root) creates the memory page file and makes it available to the operating system:
+
+  
+
+```bash
+fallocate -l 1G /opt/swapfile
+chmod 600 /opt/swapfile
+mkswap /opt/swapfile
+swapon /opt/swapfile
+```
+
+  
+
+Besides are memory hack, you should be able to follow along with the vagrant file to see how to configure Apache, Java, and the the Apache Sling CMS. For more details on deploying the the Apache Sling CMS, [consult the administrators guide on GitHub](https://github.com/apache/sling-org-apache-sling-app-cms/blob/master/docs/administration.md).
+
+  
+## Contributing to the Apache Sling CMS
+
+  
+The Apache Sling CMS is an open source module within the Apache Sling project. If you have any improvements or suggestions please create an issue in the [Apache JIRA](https://issues.apache.org/jira/projects/SLING/issues) or open a pull request against the [GitHub project](https://github.com/apache/sling-org-apache-sling-app-cms).
+
+  

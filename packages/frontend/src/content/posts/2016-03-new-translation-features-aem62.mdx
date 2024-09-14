@@ -1,0 +1,57 @@
+---
+title: 4 New Invaluable Translation Features in AEM 6.2
+description: With the coming release of AEM 6.2, Adobe has released a number of
+  very interesting updates to AEM's translation feature.
+hideInNav: false
+tags:
+  - AEM 6.2
+  - AEM 6
+  - Adobe
+  - Translation
+pubDate: 2016-03-31
+display: post
+image: /images/posts/2016-03-31-new-translation-features-aem62/i18n-Translation.png
+published: true
+---
+
+With the coming release of AEM 6.2, Adobe has released a number of very interesting updates to AEM's translation feature. These features improve the user experience for AEM's Translation functionality, making it easier to translate and manage localized content.
+
+I recently attended a webinar on the new translation features coming as a part of the AEM 6.2 beta program and am very excited for the following four features:
+
+## Search for Translation Content
+
+In the initial version of the Translation API, available in AEM 6.1, adding translated content was a very broad activity. Essentially, the process was adding an entire content tree to be translated then if you wanted to limit the content being translated removing it item by item.
+
+![Translation Search](/images/posts/2016-03-31-new-translation-features-aem62/Translation-Search.png)
+
+Now in AEM 6.2, you can leverage the powerful search features available in AEM to find content to be translated by last modification, page metadata or analytics information. This allows you to quickly refine down to the most important or most recently edited content and send it to translation.
+
+## Do Not Translate Configurations
+
+Sometimes you want to be able to exclude certain portions of a website from being translated. To handle this in AEM 6.2, Adobe added the ability to create Do Not Translate configurations. These can then be associated with content by overriding the Cloud Configurations for a portion of a website. When the translation feature encounters a Do Not Translate configuration it will exclude that page and subpages from the translation process.
+
+![Do Not Translate Configuration](/images/posts/2016-03-31-new-translation-features-aem62/Do-Not-Translate.png)
+
+![Do Not Translate Cloud Configuration](/images/posts/2016-03-31-new-translation-features-aem62/Do-Not-Translate-ClientConfig.png)
+
+This allows authors to easily exclude website content from translation without having to involve developers or modifying the translation rules.
+
+## Override Source Language Warning
+
+When I implemented the AEM - Lingotek translation integration, one of the biggest complaints we had was that the warning for when you were going to override the source language copy was not obvious enough. This dialog would appear if you say attempted to translate the English copy of a website to French. In AEM 6.1 this opened a fairly bland dialog, where as in AEM 6.2 this opens a clear warning and now allows you to create a LiveCopy directly from the warning dialog.
+
+![Override Source Language Warning](/images/posts/2016-03-31-new-translation-features-aem62/Target-Language-Warning.png)
+
+## i18n Translation
+
+One of the big misses in the original translation feature in AEM 6.1 was translating i18n dictionaries. Now in AEM 6.2, the translation feature will automatically queue i18n dictionaries into the translation job when you translate a page.
+
+![i18n Translation](/images/posts/2016-03-31-new-translation-features-aem62/i18n-Translation.png)
+
+## Bonus (Existing) Feature: Translation Rules
+
+If you were wondering how to manage component or attribute translation rules, AEM includes a Translation Rules configuration. This offers you very fine grained control over what is sent to translation, but unfortunately there is currently no UI for managing the rules. This is expected in either a 6.2 feature pack or 6.3.
+
+To update the Translation Rules, edit the file stored in AEM at /etc/workflow/models/translation/translation\_rules.xml
+
+![Translation Rules](/images/posts/2016-03-31-new-translation-features-aem62/Translation-Rules.png) 

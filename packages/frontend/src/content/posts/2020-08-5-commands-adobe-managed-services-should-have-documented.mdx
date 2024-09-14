@@ -1,0 +1,95 @@
+---
+title: The Missing Guide to Your Adobe Managed Services Servers
+description: Here is a quick starter to help you find your way around the
+  servers provisioned by Adobe Managed Services
+hideInNav: false
+tags:
+  - Adobe Managed Services
+  - Adobe Experience Manager
+  - DevOps
+pubDate: 2020-08-18
+display: post
+image: /images/posts/2020-08/Missing-Instructions.jpg
+published: true
+---
+
+  
+
+ Working with Adobe Managed Services (AMS) I've wished I had a guide to the common activities I need to log into a server to perform. Here is a quick starter to help you find your way around the servers provisioned by Adobe Managed Services. Since I can't guarantee AMS environments are consistent (and checking with other teams I've confirmed they're not) you may find these commands or paths don't exactly match yours, but they should be a good start.
+
+  
+## SSH Access
+
+  
+Before you can SSH into the AMS hosts, you will need to reach out to the CSE in order to create a user name and add your public key to the _\~/.ssh/authorized\_keys_ file on the host. I'd note that some AMS are still issued password based users (in 2020!!) so [ssh-copy-id](https://www.ssh.com/ssh/copy-id/) may come in handy.
+
+By default, the CSE will create a single username for all users to access. You can request they create named users as well, however you will need to be vigilant in adding / removing users as these users are not managed in a centralized repository.
+
+  
+## Lower vs. Upper Environment Access
+
+  
+ By default you will have more (if still limited) access to the Lower environments as compared to the upper environments. Even in the upper environments, you can request a "jailed user" with read-only access to the logs.
+
+ In the lower environments, you will be able to do a number of "write" activities by invoking sudo. For a full list of the commands you can execute, run:
+
+```bash
+sudo -l
+```
+
+ Your allowed sudo commands will generally use the full file path, it's important to note in that case, you cannot just execute the command from the relative directory, e.g. this won't work:
+
+```bash
+cd /etc/httpd/conf.d  
+sudo vi dispatcher_vhost.conf
+```
+
+but this will:
+
+```bash
+sudo vi /etc/httpd/conf.d/dispatcher_vhost.conf
+```
+
+  
+## Dispatchers
+
+  
+For those not experienced with AEM, Dispatcher servers run [Apache httpd](https://httpd.apache.org/) with a special module called the [Dispatcher](https://docs.adobe.com/content/help/en/experience-manager-dispatcher/using/dispatcher.html) and serve as a proxy, cache and quasi-security layer for the AEM Authors and Publishers.
+
+_Important Directories:_  
+
+* Logs: `/mnt/var/log/httpd/`  
+**Note -** you will not be able to change to the log directory and must use sudo
+* Apache Docroot: `/mnt/var/www/html/`
+* Apache Server Configuration: `/etc/httpd/`
+* Dispatcher Configuration: `/etc/httpd/conf.dispatcher.d/`
+
+_Useful Commands:_
+
+* Restart Apache: `sudo service httpd restart`
+* Diagnose build errors: `sudo journalctl --system -u httpd`
+* List the Apache environment variables: `cat /etc/sysconfig/httpd`
+* List log files: `sudo ls /mnt/var/log/httpd/`
+* Tail log file: `sudo tail -f /mnt/var/log/httpd/[log-file-name]`  
+**Note -** you cannot tail `/mnt/var/log/httpd/*`, you need to explicitly mention the log files to tail, e.g:  
+`sudo tail -f /mnt/var/log/httpd/access_log /mnt/var/log/httpd/error_log`
+* Edit a dispatcher configuration file: `sudo vi /etc/httpd/conf.dispatcher.d/[configuration-file]`
+  
+## AEM Instances  
+
+  
+This applies for both AEM Author and Publish instances as the setup of each from the AMS perspective is nearly identical besides the runmode.
+
+_Directories:_  
+
+* AEM Installation: `/mnt/crx/[author|publish]/crx-quickstart  
+`**Note -** You won't be able to access the parent of the crx-quickstart folder and have to change directly into the _crx-quickstart_ path
+* Logs:`/mnt/crx/[author|publish]/crx-quickstart/logs`
+
+_Useful Commands:_
+
+* Restart AEM: `sudo /etc/init.d/cq5 restart`
+* List Logs: `ls /mnt/crx/[author|publish]/crx-quickstart/logs`
+* Tail logs:`tail -f /mnt/crx/[author|publish]/crx-quickstart/logs/[log-file]`
+
+Hopefully, this helps you feel your away around your AMS installation and remember, we're always here to help. Having trouble getting to something or diagnosing an issue? Leave a comment!

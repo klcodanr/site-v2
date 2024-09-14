@@ -1,0 +1,76 @@
+---
+title: Conflicts with Sling Feature Model and Content Configurations
+description: Don't mingle Apache Sling OSGi Feature Model and content
+  configurations for content creation, ACLs or OSGi configuration definitions
+hideInNav: false
+tags:
+  - Feature Model
+  - Apache Sling
+  - Adobe Experience Manager
+  - OSGi
+pubDate: 2021-08-05
+display: post
+image: /images/posts/2021-08/conflict.jpg
+published: true
+---
+
+  
+
+> tl;dr - Don't mingle Apache Sling OSGi Feature Model and content configurations for content creation, ACLs or OSGi configuration definitions
+
+  
+Both [AEM as a Cloud Service](https://business.adobe.com/products/experience-manager/cloud-service.html) and [Sling CMS 1.0.2+](https://github.com/apache/sling-org-apache-sling-app-cms) use the [Sling OSGi Feature Model](https://sling.apache.org/documentation/development/feature-model.html) for provisioning instances. The Sling OSGi Feature Model offers several improvements over the Sling Provisioning Model it replaces in that it is richer in capabilities and more descriptive of the applications being created. 
+
+There _are_ some tricky situations you need to consider when converting legacy applications from a Provisioning Model paradigm to a Feature Model paradigm. Most revolve around the new initialization / configuration as code capabilities in the OSGi Feature Model. 
+
+  
+## RepoInit and Content Package ACLs
+
+  
+One of the abilities of the Sling OSGi Feature Model is to include [RepoInit scripts ](https://sling.apache.org/documentation/bundles/repository-initialization.html)as a part of the application definition. With RepoInit, we can express the desired state of the repository in a RepoInit script and the RepoInit Parser and Processor will initialize the repository in that state. This can include:
+
+* Creating users, groups and service users
+* Setting permissions
+* Creating resources and setting properties
+* And more!
+
+Before RepoInit was adopted, applications generally would use [Jackrabbit FileVault Content Packages](https://jackrabbit.apache.org/filevault/index.html) to initialize the content and permissions of the repository. 
+
+This was an awkward process however, as it was very difficult to define packages correctly to create users / groups, apply ACLs or create a base content structure without accidentally wiping out custom content. This is because, in the JCR, Access Control resources (rep:policy nodes) are stored underneath the node they apply to so you'd have to create complex rules to package the ACLs without overriding the other child resources.
+
+RepoInit makes this easy by extracting the logic of the ACL setting to a simple DSL, what used to be a series of folders and .content.xml files with a complex regex filter, now becomes:
+
+```
+set ACL on /libs,/apps
+    allow jcr:read for user1
+end
+```
+
+So much easier! 
+
+The problem starts when you have a mix of content package and RepoInit access controls. Traditionally, in AEM / Apache Sling we rely on the content packages and bundle content all being installed around the same time, so access controls get installed together. Now we have a two stage process, first the RepoInit statements get executed then the content packages / bundle content are installed. 
+
+For grant access controls, this is not an issue as regardless of order, grants are additive. Denies are another case. If you have a deny ACE in a content package and an allow ACE in a RepoInit, the allow will never take effect because the deny gets applied last and therefore your allow gets clobbered.  
+
+It's a tricky issue to figure out, but the solution is easy -- pick one method for defining access controls (RepoInit) and stick to it.
+
+  
+
+## OSGi Configurations
+
+  
+Another "fun" issue I ran into recently with Sling CMS comes with the Sling OSGi Feature Model's support for OSGi Configurations.
+
+Prior to the Sling OSGi Feature Model, most Apache Sling / AEM projects treated instances like [pets](https://www.hava.io/blog/cattle-vs-pets-devops-explained), carefully and manually configuring the instances. With the OSGi Feature Model, however these configurations can (and should) be provided in the codebase. Your application being deployed as a union of the base application feature with your custom code and configuration feature(s). 
+
+This works great in both theory and practice as long as OSGi configurations are applied consistently via the Sling OSGi Feature Model.
+
+Sling CMS includes an author-able forms implementation including the ability to send emails using [Apache Sling Commons Messaging Mail](https://github.com/apache/sling-org-apache-sling-commons-messaging-mail) and [Apache Sling Commons Crypto](https://sling.apache.org/documentation/bundles/commons-crypto.html). Since it'd first built this feature before using the Sling OSGi Feature Model, I created a content-based OSGi configuration to automatically create a base crypto configuration when the [reference project bundle](https://github.com/apache/sling-org-apache-sling-app-cms/blob/master/docs/reference.md) installed. 
+
+This backfired when I moved the project from the Sling Provisioning Model to the Sling OSGi Feature Mode. The content configuration was installed _after_ the Sling OSGi Feature Model configurations were read which meant when I tried to set the default crypto configuration via the Sling OSGi Feature Model it got overridden by the content configuration.
+
+I spent an embarrassingly long time staring at the OSGi Configuration Console and pulling my hair out over why it didn't match my configuration before I realized the problem. Once I got over my chagrin the fix took all of five minutes to remove the content configurations and rebuild Sling CMS.
+
+The [issue is now fixed](https://issues.apache.org/jira/browse/SLING-10454) and is available in [Sling CMS 1.0.4](https://github.com/apache/sling-org-apache-sling-app-cms/releases/tag/org.apache.sling.cms-1.0.4), so go ahead and update if you're not using the latest version!
+
+> Cover photo by [Frank Busch](https://unsplash.com/@frankbusch?utm%5Fsource=unsplash&utm%5Fmedium=referral&utm%5Fcontent=creditCopyText) on [Unsplash](https://unsplash.com/s/photos/conflict?utm%5Fsource=unsplash&utm%5Fmedium=referral&utm%5Fcontent=creditCopyText)

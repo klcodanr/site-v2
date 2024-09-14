@@ -1,0 +1,121 @@
+---
+title: "Demystifying Oak Search Part 3: Five Indexing Gotchas"
+description: Wouldn't it be great if it was just as easy as "use an index" Here
+  are 5 Oak Indexing Gotchas
+hideInNav: false
+tags:
+  - Oak Search & Indexing
+  - Apache Jackrabbit Oak
+  - Adobe Experience Manager
+pubDate: 2022-07-01
+display: post
+image: /images/posts/2022-07/net-hero.jpg
+published: true
+---
+
+  
+
+In my previous post in the [Demystifying Oak Search](/search.html?q=Demystifying+Oak+Search) series on [Traversal](/posts/2022/06/demystifying-oak-search-query-traversal.html), I mentioned that to avoid unnecessary traversals, you should:
+
+> Use an index
+
+This directive, is easy say and _much_ harder to implement correctly in practice. For not only do you want to _use_ an index, but you want every search constraint to be evaluated against said index.
+
+While there are certain complex use cases where this isn't possible, even relatively simple queries can be run into traversal issues if you don't plan an test your queries against real data. 
+
+This post outlines some of the more common mistakes and gotchas when working with Oak Search / Indexing.
+
+  
+## Play Along!
+
+  
+This blog post is interactive! I created a project you can checkout and run against your local AEM to illustrate the concepts covered in this post. Check it out on Github: [https://github.com/klcodanr/oak-search-gotchas](https://github.com/klcodanr/oak-search-gotchas)  
+
+  
+
+## Gotcha #1 - Not Using an Index
+
+  
+The first gotcha is the most obvious, however, especially in the throes of development, it's easy to put creating / customizing an Oak Index on the back-burner, after all, it works on your machine. Query issues won't appear until there's both:
+
+* Sufficient content to breach the traversal limit
+* Conditions in a query that can't be served out of the index
+
+So just smoke testing on your local instance isn't enough. You need to test with real content and real use cases.
+
+[Test #1 of the Oak Search Gotchas project](https://github.com/klcodanr/oak-search-gotchas#test-1---query-by-node-type) helps illustrate this, showing how a simple non-constrained query won't find issues which immediately appear once you apply constraints.
+
+It's worth mentioning, that due to the order of items in traversal, you may also have not experienced traversal problems if you ran a different query. For example the following query would likely succeed since the nodes are ordered by iteration:  
+
+```sql
+SELECT * FROM [test:content] AS s WHERE ISDESCENDANTNODE([/tests]) AND [test:iteration]=1
+```
+
+  
+
+## Gotcha #2 - Not Indexing Enough Properties
+
+  
+When creating or evaluating the use of an index, it's easy to settle on it being "good enough" because it covers your _primary_ query constraints. However before you move the story to done and pat yourself on the back, you should make sure that you've covered all of the use cases for your query and tested it thoroughly against different inputs.   
+
+If your query is dynamically built or can be executed against data sets with unpredictable distributions, having only _some_ fields in the index may may not be enough. While the index can limit the results by the indexed fields, there could still be enough results that need to be constrained by reading the nodes to hit the traversal limit.
+
+[Test #2 in the Oak Search Gotchas project](https://github.com/klcodanr/oak-search-gotchas#test-2---query-by-properties) illustrates this by showing how counterintuitively adding another constraint actually causes a traversal exception.  
+  
+
+  
+
+## Gotcha #3 - Ordering
+
+  
+Once your query has a limit set ([see #4](/posts/2022/06/demystifying-oak-search-query-traversal.html)) and all of the properties in the query are indexed, you should be good, right? 
+
+Wellll.... what happens if you want to order the results? Ordering a large set of results (no matter what the limit is) against a non-ordered field can _also_ cause traversal exceptions.
+
+This is because when a field isn't set as ordered in the index, the index won't return the results in order and therefore Oak has to read the full result set into memory to sort it.
+
+[Test #3 in the Oak Search Gotchas project](https://github.com/klcodanr/oak-search-gotchas#test-3---ordering) illustrates this problem.  
+
+  
+
+## Gotcha #4 - Not Equals and Nulls
+
+  
+Negation condition in Oak Search don't behave how you'd expect. When you specify a negation condition `e.g. [some:property]<>'some value'`, Oak will only return nodes that **have a value** that does not match 'some value'. Any node that does not have the property some:property will not be returned.
+
+To support negation with nulls, add OR statement, e.g.: `e.g. ([some:property]<>'some value' OR [some:property] IS NULL)`, now Oak will return both nodes with a different value and nodes with no value for the property.  
+  
+Unfortunately, this too can cause issues as there's another property in the property definitions to support null checks, `nullCheckEnabled`.  
+
+[Test #4 in the Oak Search Gotchas project](https://github.com/klcodanr/oak-search-gotchas#test-3---ordering) illustrates this problem.
+
+An unfortunate side-effect of requiring null checks is that it throws rain on the parade of INDEX ALL THE THINGS!!! In the [index for the solution to Test #2](https://github.com/klcodanr/oak-search-gotchas/blob/main/src/test/resources/02%5FQueryProperties/indexDef.json) and [Test #3](https://github.com/klcodanr/oak-search-gotchas/blob/main/src/test/resources/03%5FOrdering/indexDef.json) I used a r[egex property definition](https://jackrabbit.apache.org/oak/docs/query/lucene.html#index-definition). This is convenient and allows for simply indexing every property under a node type, but unfortunately, regex properties do not support null checks.
+
+  
+
+## Gotcha #5 - Permissions
+
+  
+You've tested your query against all possible inputs and real content so you're good to go right? If only life were so simple.
+
+Oak's indexes cannot themselves determine if a node is readable by the requesting user. To check this, Oak needs to read the nodes and evaluate the ACLs. So if your user cannot see a node that gets returned from a query, that still counts as a read BUT not towards the query limit.
+
+If your user cannot see enough nodes returned by the query, this could cause a read limit exception even if the limit is set to a low value.
+
+[Test #5 in the Oak Search Gotchas project](https://github.com/klcodanr/oak-search-gotchas#test-3---ordering) illustrates this problem.
+
+Unfortunately, there's no "silver bullet" here. This is a reason many AEM implementation's content model aligns with the implementation's Access Control model. Not only is this easier to maintain (e.g. GroupA has access to /content/groupa) but it makes it possible to avoid these sort of pernicious permissions issues by having a root folder under which your searches can be executed for each group.
+
+To avoid surprises due to permissions, both consider this during the architecture phase and test with non-admin users.
+
+  
+
+## That's a Wrap!
+
+  
+Hopefully this post helps you better identify and avoid some of the common gotchas and pitfalls when using Oak Search.
+
+If you find this helpful, check out my other posts about Demystifying Oak Search:
+
+* [Demystifying Oak Search Part 1: Exploring Indexes with Luke ](/posts/2022/03/demystifying-oak-search-exploring-indexes-with-luke.html)
+* [Demystifying Oak Search Part 2: Traversal](https://github.com/klcodanr/oak-search-gotchas#test-5---permissions)

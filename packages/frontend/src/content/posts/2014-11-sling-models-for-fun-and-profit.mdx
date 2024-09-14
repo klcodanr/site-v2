@@ -1,0 +1,120 @@
+---
+title: Sling Models for Fun and Profit
+description: Learn how Sling Models can make AEM development easier and more fun
+  by replacing spaghetti and boilerplate code with dynamic models.
+hideInNav: false
+tags:
+  - Apache Sling
+  - Sling Models
+  - Best Practices
+  - Adobe Experience Manager
+pubDate: 2014-11-21
+display: post
+image: /images/posts/2014-11-21-sling-models-for-fun-and-profit/configure-models-logger.png
+published: true
+---
+
+Recently, I finally had a chance to leverage [Sling Models](http://sling.apache.org/documentation/bundles/models.html) for a new project. If you are not familiar with Sling Models, they allow developers to inject methods and fields based on resource properties, other resources and OSGi services. For those developing in [AEM 6](http://docs.adobe.com/docs/en/aem/6-0/release-notes.html), Sling Models are available as part of the default installation, for those on older versions of AEM / CQ5, Sling Models are available [as downloadable bundles on the Sling website](http://sling.apache.org/downloads.cgi). Sling Models are a great way to do more with less code, thus you can "profit" by avoiding the costly technical debt from the large amount of boilerplate code required to access Sling content through POJOs or the spaghetti code when intermingling business logic for retrieving the same data directly from the underlying Resource or Node through a large codebase.
+
+## Basic Examples
+
+The format of a Sling Model injection is pretty simple, Sling Models can either inject fields on a Class or method return values in an Interface. To create a Sling Model first, add an `@Model` class level annotation with the adaptable type specified. For example:
+
+```
+@Model(adaptables=Resource.class)
+public interface MyModel {
+```
+
+Each method or field being injected then will have an `@Inject` annotation which is used to indicate the method or field is to be dynamically injected by Sling Models. A number of [additional annotations](http://sling.apache.org/documentation/bundles/models.html#annotation-reference) can be used to modify the injector behavior. In the case of a Class the annotation would be added on the appropriate field:
+
+```
+@Inject @Named("jcr:title")
+private String title;
+```
+
+In the case of an Interface the inject annotation would be be added to the method instead:
+
+```
+@Inject @Named("jcr:title")
+String getTitle();
+```
+
+## Class or Interface?
+
+Since you can use either a Class or Interface for Sling Models, one question you may ask is, which should I use? 
+
+In most cases, using a Sling Models Interface fill require less code to accomplish the same task. The most common case where you would want to use a Class is if you need to do any filtering or manipulation of the values being returned. Using a Class for your model, you can then inject the values into the field and generate the needed return value. For example:
+
+```
+@Model(adaptables = Resource.class)
+public class TranslationConfig {
+
+  @Inject
+  private ResourceResolver resourceResolver;
+
+  /**
+   * The configurations used to configure how the JSON representing a resource
+   * is to be serialized to Lingotek
+   * 
+   * @return the resource configurations
+   */
+  public final Map<String, ResourceMapping> getResourceConfigs() {
+    Map<String, ResourceMapping> configurations = new HashMap<String, ResourceMapping>();
+    Resource mappingsContainer = this.resourceResolver
+        .getResource(ResourceMapping.MAPPINGS_PATH);
+    Iterator mappings = mappingsContainer.listChildren();
+    while (mappings.hasNext()) {
+      Resource mappingResource = mappings.next();
+      ResourceMapping mapping = mappingResource
+          .adaptTo(ResourceMapping.class);
+      for(String resourceType : mapping.getResourceTypes()){
+        configurations.put(resourceType, mapping);
+      }
+    }
+    return configurations;
+  }
+}
+```
+
+### Keeping Your Options Open
+
+One of the interesting things about Sling Models is that, by default, it requires something to be injected for every field or method for the Model to be adapted correctly. If a value cannot be injected for one of the fields, the Sling Models adapter will return null when attempting to adapt the adaptable into the Model.
+
+Therefore, when designing your models it is very important to consider cases where a field or value may not be available but the overall Model should still be available. Given the unstructured nature of the JCR repository, you should plan around not having values available unless required to for the Model to function or enforced by the node type definition.
+
+Where this is the case, you can either add the [@Optional annotation](http://sling.apache.org/documentation/bundles/models.html#optional-and-required) to specify that the value is not required. For example:
+
+```
+@Inject @Optional
+private String otherName;
+```
+
+Or if it's a String or primitive, use the [@Default annotation](http://sling.apache.org/documentation/bundles/models.html#defaults) to specify a default value instead:
+
+```
+@Inject @Default(values="defaultValue")
+private String otherName;
+
+```
+
+Finally, if most of the fields / methods are not required you can change the default Injection Strategy for the model by setting the `defaultInjectionStrategy` parameter on the `@Model` annotation for the class, for example:
+
+```
+@Model(adaptables=Resource.class, defaultInjectionStrategy=DefaultInjectionStrategy.OPTIONAL)
+```
+
+**Note:** This option is only available when using Sling Models API v1.0.2 or greater.
+
+## Debugging Issues
+
+There is limited support for debugging Sling Models. If you want to see the injectors available, there is a screen in the Felix console:
+
+[http://localhost:4502/system/console/status-slingmodels](http://localhost:4502/system/console/status-slingmodels)
+
+In order to see logging specific to Sling Models, add a logger for the package org.apache.sling.models, TRACE level and to the appropriate log file. 
+
+![Configuring the SLF4J Logger for Sling Models](/images/posts/2014-11-21-sling-models-for-fun-and-profit/configure-models-logger.png)
+
+## Questions?
+
+Hopefully this gives you a good introduction to Sling Models and shows how they can help you. Please leave a comment below if you have any questions or run into any issues yourself.

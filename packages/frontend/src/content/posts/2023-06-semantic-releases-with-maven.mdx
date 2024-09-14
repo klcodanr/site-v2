@@ -1,0 +1,24 @@
+---
+title: Semantic Releases with Maven
+hideInNav: false
+tags: []
+image: ""
+published: false
+---
+
+Releasing code is hard. Having to think about how your changes may effect consumers and deciding what that means to the version number is challenging and even more if you are trying to figure it out across many commits.  
+  
+One of the common practices in the Node community, [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) addresses this problem by enabling code releases without emotional or human involvement.   
+  
+In essence, the commits developers make drive the release created. Commits fall into four buckets which map to the version update required in the semantic version of the release:  
+* Non releases: X.X.X: chores, test or documentation changes, etc
+* Bug Fixes: X.X.X+1: trivial changes or fixes to issues, changes the trivial version
+* Features: X.X+1.0: net new features or backwards compatible changes to existing features, changes the minor version
+* Breaking Changes: X+1.0.0: changes which break backwards compatibility between releases which are not fixing documented bugs, changes the major version number
+Semantic versioning is nothing new in the Java ecosystem, but most Java projects I’ve worked on tended to be conservative about releasing new versions and require a manual process to release code. While this may arguably result in a more stabile deliverable, it slows down the speed of delivery significantly and the manual intervention required introduces opportunities for human error.  
+  
+With Conventional Commits, each commit to the main or stable branch becomes a new release automatically based on keywords in the commit message. This flow works well with pull requests and squashed merges as all of your updates to the stable branch should go though a common process.  
+  
+note that you need to enable read/write for the github actions runner: [https://github.com/klcodanr/mvn-semantic-release-issue-demo/settings/actions](https://github.com/klcodanr/mvn-semantic-release-issue-demo/settings/actions)  
+  
+  

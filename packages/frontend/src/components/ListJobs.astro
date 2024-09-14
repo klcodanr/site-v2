@@ -1,0 +1,43 @@
+---
+import { getCollection } from "astro:content";
+
+const jobs = (await getCollection("jobs"));
+---
+
+<h2>Experience</h2>
+
+<ul>
+  {
+    jobs.map((job) => {
+      return (
+        <li>
+        <section>
+          <header>
+            <h3>
+              {job.data.company} — {job.data.location}
+              <span class="pull-right">
+                {job.data.start} - {job.data.end}
+              </span>
+            </h3>
+          </header>
+          <p>
+            <em>{job.data.role}</em>
+          </p>
+          <ul>
+            {job.data.tasks.map((task: unknown) => (
+              <li>{task}</li>
+            ))}
+          </ul>
+        </section>
+      </li>
+      );
+    })
+  }
+</ul>
+
+<style>
+  li {
+    margin: 0;
+    list-style: none;
+  }
+</style>

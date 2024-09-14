@@ -1,0 +1,64 @@
+---
+import "../styles/form.css";
+import { Icon } from "astro-icon/components";
+import Button from "./Button.astro";
+
+const endpoint = import.meta.env.PUBLIC_API_URL;
+---
+
+<hr />
+<div class="social-networks">
+  <Button link="https://twitter.com/klcodanr" hasIcon={true}>
+    <Icon name="mdi:linkedin" size={32} aria-label="Find me on LinkedIn" />
+  </Button>
+  <Button link="https://twitter.com/klcodanr" hasIcon={true}>
+    <Icon name="mdi:github" size={32} aria-label="Find my code on Github"/>
+  </Button>
+</div>
+<hr />
+
+<form
+  enctype="multipart/form-data"
+  method="post"
+  class="form"
+  action={`${endpoint}/contact`}
+  data-analytics-id="Contact"
+>
+  <fieldset>
+    <legend>Send a message directly to me!</legend>
+    <div class="field-group">
+      <label for="name">Your Name</label>
+      <input type="text" class="form-control" name="name" required />
+    </div>
+    <div class="field-group">
+      <label for="email"> Your Email Address </label>
+      <input type="text" id="email" name="email" required />
+    </div>
+    <div class="field-group">
+      <label for="subject">Subject</label>
+      <input type="text" id="subject" name="subject" required />
+    </div>
+    <div class="field-group">
+      <label for="message"> Message </label>
+      <textarea rows="5" id="message" name="message" required></textarea>
+    </div>
+    <div class="d-none">
+      <label for="contact_by_fax_only">Do not fill this out!</label>
+      <textarea cols="1" rows="1" id="contact_by_fax_only" name="contact_by_fax_only"></textarea>
+    </div>
+    <div>
+      <Button link="" type="submit">Contact Me!</Button>
+    </div>
+  </fieldset>
+</form>
+
+<style>
+  .d-none {
+    display: none;
+  }
+  .social-networks {
+    display: flex;
+    gap: 3em;
+    justify-content: center;
+  }
+</style>

@@ -1,0 +1,225 @@
+---
+title: Comparing AEM as a Cloud Service and AEM 6.5
+description: "Adobe's recent release of AEM as a Cloud Service has inspired a
+  ton of questions as we start to explore the platform. One of the first
+  questions I have is: how different is this than AEM 6.5?"
+hideInNav: false
+tags:
+  - AEM as a Cloud Service
+  - Adobe Experience Manager
+pubDate: 2020-01-30
+display: post
+image: /images/posts/2020-01/Comparison-Hero.jpg
+published: true
+---
+
+  
+Adobe's recent release of AEM as a Cloud Service has inspired a ton of questions as we start to explore the platform. One of the first questions I have is: how different is this than AEM 6.5?
+
+  
+## Not a Simple Answer  
+
+  
+Before we can answer that question, you need to consider how AEM as a Cloud Service differs from the classic AEM deployment model. In AEM as a Cloud Service, the instances are continually updated by Adobe and managed in transient containers in the cloud. This drastically differs from the classic model where either the customer or Adobe Managed Services would deploy a known released version of AEM to a virtual machine running in the cloud. 
+
+For developers and maintainers, this allowed us to easily set up local instances by just downloading the same AEM Jar, packages and content, at least until the next Service Pack!
+
+To give developers the ability to run a local AEM instance similar to AEM as a Cloud Service, Adobe released an AEM SDK Quickstart for local development. Unfortunately for the sake of comparison, the AEM SDK Quickstart and AEM as a Cloud Service running in the Adobe DataCenters are different. To compare the three, I downloaded the bundle list for all three versions of AEM to see what's running under the hood.
+
+To avoid the churn of version updates, I stripped out the version numbers. Please note that this is a snapshot and that Adobe will be updating AEM as a Cloud Service on a daily (if not more) basis.  
+  
+
+  
+
+## Bundles in AEM 6.5 but not in AEM as a Cloud Service
+
+  
+AEM as a Cloud Service is considerably lighter than AEM 6.5 there are 87 bundles not in AEM as a Cloud Service. Most of the bundles are related to features not included in AEM as a Cloud Service, specifically, AEM Communities, Forms and Screens or upgrading from CQ5.  
+
+* com.adobe.aem.transaction-core - AEM Forms Transaction Core Bundle
+* com.adobe.aemds.formsmanager.adobe-aemds-formsanddocuments-core - AEM Forms and Documents Core
+* com.adobe.aemds.guide.aemds-guide-core - Adaptive Forms Core API
+* com.adobe.aemds.guide.aemds-guide-core-impl - Adaptive Forms Core Implementation
+* com.adobe.aemfd.ccm.multichannel-ccm-multi-channel-core - Multi Channel Core
+* com.adobe.cq.commerce.cq-commerce-core - Adobe Communique 5 Commerce Core
+* com.adobe.cq.commerce.cq-commerce-pim - Adobe Communique 5 Commerce Product Information Manager
+* com.adobe.cq.commerce.cq-commerce-social - Adobe Communique 5 Commerce Social
+* com.adobe.cq.cq-activitymap-integration - AEM 6 ActivityMap Integration Bundle
+* com.adobe.cq.cq-pre-upgrade-backup - CQ Pre-upgrade Backup
+* com.adobe.cq.cq-pre-upgrade-cleanup - CQ Pre-upgrade Cleanup
+* com.adobe.cq.sample.we.retail.core - We.Retail - Core
+* com.adobe.cq.screens.com.adobe.cq.screens - AEM Screens - Core
+* com.adobe.cq.screens.com.adobe.cq.screens.apps.we\_retail - Screens WeRetail
+* com.adobe.cq.screens.com.adobe.cq.screens.dcc - AEM Screens - DCC
+* com.adobe.cq.screens.com.adobe.cq.screens.mq.activemq - Adobe Screens Apache ActiveMQ Implementation
+* com.adobe.cq.screens.com.adobe.cq.screens.mq.core - Adobe Screens JMS implementation
+* com.adobe.cq.screens.com.adobe.cq.screens.sessions -
+* com.adobe.cq.social.cq-social-activitystreams - AEM Communities ActivityStreams - Bundle
+* com.adobe.cq.social.cq-social-as-provider - AEM Communities AdobeSocial Resource Provider - Bundle
+* com.adobe.cq.social.cq-social-badging-api - AEM Communities Badging API - Bundle
+* com.adobe.cq.social.cq-social-badging-basic-impl - AEM Communities Basic Badging - Bundle
+* com.adobe.cq.social.cq-social-badging-impl - AEM Communities Badging - Bundle
+* com.adobe.cq.social.cq-social-calendar-api - AEM Communities Calendar - API Bundle
+* com.adobe.cq.social.cq-social-calendar-impl - AEM Communities Calendar - Impl Bundle
+* com.adobe.cq.social.cq-social-commons - AEM Communities Commons - Bundle
+* com.adobe.cq.social.cq-social-commons-oauth - AEM Communities Commons Oauth - Bundle
+* com.adobe.cq.social.cq-social-console - AEM Communities Console - Bundle
+* com.adobe.cq.social.cq-social-content-fragments-impl - AEM Communities Content Fragments Impl - Bundle
+* com.adobe.cq.social.cq-social-enablement-api - AEM Communities Enablement Api - Bundle
+* com.adobe.cq.social.cq-social-enablement-impl - AEM Communities Enablement Impl - Bundle
+* com.adobe.cq.social.cq-social-filelibrary - AEM Communities File Library - Bundle
+* com.adobe.cq.social.cq-social-forum - AEM Communities Forum - Bundle
+* com.adobe.cq.social.cq-social-gamification-api - AEM Communities Gamification API - Bundle
+* com.adobe.cq.social.cq-social-gamification-impl - AEM Communities Gamification Impl - Bundle
+* com.adobe.cq.social.cq-social-graph-api - AEM Communities SocialGraph API - Bundle
+* com.adobe.cq.social.cq-social-graph-impl - AEM Communities SocialGraph Impl - Bundle
+* com.adobe.cq.social.cq-social-group - AEM Communities CommunityGroup - Bundle
+* com.adobe.cq.social.cq-social-handlebars - AEM Communities Handlebars Scripting Engine - Bundle
+* com.adobe.cq.social.cq-social-ideation-api - AEM Communities Ideation API - Bundle
+* com.adobe.cq.social.cq-social-ideation-impl - AEM Communities Ideation - Bundle
+* com.adobe.cq.social.cq-social-jcr-provider - Bundle -
+* com.adobe.cq.social.cq-social-jcr-provider-common - AEM Communities JCR Resource Provider Common Code - Bundle
+* com.adobe.cq.social.cq-social-journal - AEM Communities Journal - Bundle
+* com.adobe.cq.social.cq-social-livefyre - AEM Livefyre - Bundle
+* com.adobe.cq.social.cq-social-members-api - AEM Communities Members API - Bundle
+* com.adobe.cq.social.cq-social-members-impl - AEM Communities Members Impl - Bundle
+* com.adobe.cq.social.cq-social-messaging-api - AEM Communities Messaging - API Bundle
+* com.adobe.cq.social.cq-social-messaging-impl - AEM Communities Messaging - Impl Bundle
+* com.adobe.cq.social.cq-social-moderation - AEM Communities Moderation - Bundle
+* com.adobe.cq.social.cq-social-moderation-spamdetector-core - AEM Communities Spam Detection Core - Bundle
+* com.adobe.cq.social.cq-social-ms-provider - AEM Communities Mongo Storage Resource Provider - Bundle
+* com.adobe.cq.social.cq-social-notifications-api - AEM Communities Notifications - API Bundle
+* com.adobe.cq.social.cq-social-notifications-channels-web - AEM Communities Notifications - Web Channel
+* com.adobe.cq.social.cq-social-notifications-impl - AEM Communities Notifications - IMPL Bundle
+* com.adobe.cq.social.cq-social-qna - AEM Communities QnA - Bundle
+* com.adobe.cq.social.cq-social-rdb-provider - AEM Communities Relational Social Resource Provider - Bundle
+* com.adobe.cq.social.cq-social-reporting-management - AEM Communities Enablement Reporting Management- Bundle
+* com.adobe.cq.social.cq-social-review - AEM Communities Review - Bundle
+* com.adobe.cq.social.cq-social-scf-api - AEM Communities SCF - API Bundle
+* com.adobe.cq.social.cq-social-scf-impl - AEM Communities SCF - Impl Bundle
+* com.adobe.cq.social.cq-social-scoring-api - AEM Communities Scoring API - Bundle
+* com.adobe.cq.social.cq-social-scoring-basic-impl - AEM Communities Scoring Basic - Bundle
+* com.adobe.cq.social.cq-social-scoring-impl - AEM Communities Scoring - Bundle
+* com.adobe.cq.social.cq-social-serviceusers-api - AEM Communities Service Users - Bundle
+* com.adobe.cq.social.cq-social-serviceusers-impl - AEM Communities Service Users - Impl Bundle
+* com.adobe.cq.social.cq-social-srp-api - AEM Communities SRP Base - API Bundle
+* com.adobe.cq.social.cq-social-srp-impl - AEM Communities SRP - Impl Bundle
+* com.adobe.cq.social.cq-social-sync - AEM Communities Sync - Bundle
+* com.adobe.cq.social.cq-social-tally - AEM Communities Tally - Bundle
+* com.adobe.cq.social.cq-social-translation - AEM Communities Translation - Bundle
+* com.adobe.cq.social.cq-social-ugc-search-collections - AEM Communities UGC SearchCollections - Bundle
+* com.adobe.cq.social.cq-social-ugcbase-api - AEM Communities UGC Base - API Bundle
+* com.adobe.cq.social.cq-social-ugcbase-impl - AEM Communities UGC Base - Impl Bundle
+* com.adobe.cq.social.cq-social-user-ugc-management - AEM Communities User Ugc Moderation - Bundle
+* com.adobe.forms.common.adobe-xfaforms-common - Mobile Forms Common Bundle
+* com.adobe.forms.foundation-forms-foundation-base - Forms Foundation Base Bundle
+* com.adobe.forms.foundation-forms-foundation-cloud-config - Forms Foundation Cloud Configurations Bundle
+* com.adobe.granite.apicontroller - Adobe Granite API Controller
+* com.adobe.livecycle.formsportal-bundle - Adobe FormsPortal Services Bundle
+* com.day.cq.cq-compat-codeupgrade - Day Communique 5 Code Upgrade service
+* com.day.cq.cq-upgrades-executor - Adobe Communique 5 Upgrades Executor
+* com.day.cq.dam.cq-dam-pim - Day Communique 5 DAM PIM Integration Implementation
+* com.day.cq.dam.cq-dam-rating - Day Communique 5 Assets Rating
+* com.day.cq.pre-upgrade-tasks - AEM Pre-Upgrade Maintenance Tasks
+* forms-foundation-bundle - Forms Foundation Layer Bundle
+  
+  
+
+  
+
+## New Bundles in AEM as a Cloud Service
+
+  
+Not surprisingly, AEM as a Cloud Service has some new bundles:  
+  
+* com.adobe.bp.bp-cloudservice - Adobe Brand Portal Cloudservice configuration
+* com.adobe.bp.bp-distribution - Adobe Brand Portal Distribution Implementation
+* com.adobe.cq.cq-ref-update-processor-util - AEM - Reference Update Processor Utility bundle
+* com.adobe.cq.dam.cq-dam-ui-models - AEM - DAM Sling Model Bundle
+* com.adobe.cq.inbox.cq-inbox-api - AEM - Inbox API
+* com.adobe.cq.remotedam.cq-remotedam-api - Adobe CQ Remote DAM API Bundle
+* com.adobe.cq.ups-integration - Unified Profile Service IMS integration
+* com.adobe.cq.ups-profile-lookup - Unified Profile Lookup routines
+* com.adobe.granite.jobs.async.ui.commons - Adobe Granite Async Jobs
+* com.adobe.granite.joda-time - Joda-Time
+* com.adobe.granite.toggle.api - Adobe Granite Toggle API
+* com.adobe.granite.toggle.impl - Adobe Granite Toggle Implementation
+* com.adobe.granite.toggle.impl.static - Adobe Granite Toggle Implementation
+* com.day.cq.dam.cq-dam-asset-sourcing - Day Communique 6 DAM Asset Sourcing Implementation
+* com.day.cq.remote.content.renderer - Remote Content Renderer
+* org.apache.felix.configadmin.plugin.interpolation - Apache Felix Configuration Admin Values Interpolation Plugin
+* org.apache.felix.log - Apache Felix Log Service
+* org.apache.felix.rootcause - Apache Felix - Root Cause Analysis
+* org.apache.jackrabbit.oak-authorization-principalbased - Oak Principal-Based Authorization
+* org.apache.sling.feature.apiregions - Apache Sling Feature API Regions Runtime
+* rideau - Adobe Rideau (PDF API)
+
+Some of the more interesting integrations to me are [Joda Time](https://www.joda.org/joda-time/) a superior Time library for Java and [Apache Felix RootCause](https://github.com/apache/felix/blob/trunk/rootcause/docs/README.md), an interesting utility for debugging Declarative Services issues. Additionally, the bundle list also shows some of the new features in AEM as a Cloud Service such as an integration with Adobe IMS, an improved Brand Portal integration and Remote Assets.
+
+  
+
+## Even More Differences: AEM SDK Quickstart to "true" AEM as a Cloud Service
+
+  
+One of the challenges I see with Adobe's current model for development enablement is that the deployment model for AEM as a Cloud Service is completely different than the SDK Quickstart they provide. Some of the difference are:  
+
+* The AEM SDK Quickstart runs natively on the computer, AEM as a Cloud Service runs in Docker containers
+* We don't know what JVM release or parameters are used for running AEM as a Cloud Service
+* AEM as a Cloud Service is backed by MongoDB Atlas not TarFS
+* AEM as a Cloud Service uses Sling Content Distribution instead of traditional replication like the SDK Quickstart
+
+None of these issues will be problems during the normal course of development, but if you run into performance or integration issues, not having an environment which matches the target architecture quickly becomes a challenge.
+
+Adding to this, there are a 32 bundles found only in the "real" version of AEM as a Cloud Service.   
+  
+* aem-api-metrics-feature-model-addon - AEM API metrics agent add-on for feature model analysis
+* com.adobe.granite.distribution.journal.pipeline - Adobe Granite Pipeline Distribution - Adobe Pipeline messaging implementation
+* com.adobe.granite.docker.version - Docker Version Metric Registry
+* com.adobe.granite.ims-yaml-loader - Granite ims yaml loader Bundle
+* com.adobe.granite.metrics.red - Granite RED Metrics
+* com.adobe.granite.prometheus.pull - Prometheus Pull Bundle
+* com.adobe.granite.uriprovider.dba - Granite URIProvider for Direct Binary Access
+* com.fasterxml.jackson.dataformat.jackson-dataformat-smile - Jackson dataformat: Smile
+* com.fasterxml.jackson.dataformat.jackson-dataformat-yaml - Jackson-dataformat-YAML
+* com.google.protobuf - Protocol Buffers \[Core\]
+* io.dropwizard.metrics.core - Metrics Core
+* io.jsonwebtoken.jjwt-api - JJWT :: API
+* io.jsonwebtoken.jjwt-impl - JJWT :: Impl
+* lz4-java - LZ4 Java Compression
+* org.apache.commons.lang - Commons Lang
+* org.apache.sling.distribution.journal - Apache Sling Journal based Content Distribution - Core bundle
+* org.apache.sling.distribution.journal.messages - Apache Sling Journal based Content Distribution - Messages bundle
+* org.apache.sling.feature - Apache Sling Feature
+* org.apache.sling.feature.apiregions.model - Apache Sling Feature Model API Regions
+* org.apache.sling.feature.diff - Apache Sling Feature Model diff tool
+* org.apache.sling.feature.inventoryprinter - Apache Sling Feature Inventory Printer
+* org.apache.sling.feature.io - Apache Sling Feature IO Module
+* org.apache.sling.feature.r2f - Apache Sling Feature Model runtime creator
+* org.apache.sling.jcr.packageinit - Apache Sling JCR Package Initializer module
+* org.apache.sling.launchpad.api - Apache Sling Launchpad API
+* org.apache.sling.launchpad.startupmanager - Apache Sling Launchpad Startup Manager
+* org.yaml.snakeyaml - SnakeYAML
+* pattern-database-aem65 - AEM Pattern Database for Pattern Detector
+* pattern-database-skyline - AEM Pattern Database for Pattern Detector
+* pattern-detector - AEM Pattern Detector
+* pipeline-client-core - pipeline-client-core
+* pipeline-protocol - pipeline-protocol
+
+Most of these bundles seem to be related to Adobe's deployment model for AEM as a Cloud Service, either via the IMS integration, monitoring, data loading or the Sling Feature Model. Most of these dependencies are internal and not for our use, but it's worth mentioning:
+
+* Granite Toggles - Feature flag functionality, meant for internal Adobe use
+* Prometheus Pull - internal metric gathering
+* Unified Profile Service - currently only supports authors, but AEP / SSO support is on the roadmap
+
+Continuing to add differences, the RELAX NG Object Model / Parser, Joda Time and Gson libraries are actually _different_ between the AEM SDK Quickstart and AEM as a Cloud Service. While they should both provide the same API surface, there's no guarantee of this nor that the underlying bundling process was the same. 
+
+  
+
+## Conclusion
+
+  
+AEM 6.5 and AEM as a Cloud Service are pretty similar under the hood, however there are just enough differences to trip you up, especially when diagnosing thorny technical issues. I would advise care in dependency management, as AEM SDK Quickstart and AEM as a Cloud Service do have some differences.  
+
+My hope is that Adobe will release a version of their AEM SDK Quickstart as a Docker Swarm setup so developers can run a "lite" version of AEM as a Cloud Service on their local computer to really end to end test their applications.  
+
+  

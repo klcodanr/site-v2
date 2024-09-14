@@ -1,0 +1,83 @@
+---
+title: "Be an #AEMRockstar: Use AEM DataLayer"
+description: Introducing AEM DataLayer, a new framework for AEM developers to
+  easily create and populate Digital Marketing DataLayers from the data in the
+  AEM repository.
+hideInNav: false
+tags:
+  - AEMRockstar
+  - Adobe Experience Manager
+  - AEM 6.3
+  - Adobe Analytics
+pubDate: 2017-04-18
+display: post
+image: /images/posts/2017-04-10-aemrockstar-using-aem-datalayer/aem-rockstar-intro.png
+published: true
+---
+
+During the AEM Rockstar session at Adobe Summit, I had a chance to talk about Digital Marketing DataLayers in AEM. I discussed how this important design pattern can help simplify Adobe Experience Manager and Adobe Marketing Cloud integrations, and introduced AEM DataLayer, a new Open Source library for creating DataLayers in AEM.
+
+I was thrilled to be awarded first prize for my presentation and would like to share some more with information with you about how to use the AEM DataLayer library on your project. 
+
+## Step 1: Identifying Data to Track
+
+In my talk, I discussed analyzing designs in the discovery phase, to identify what data you might need to capture for Digital Marketing. It is important to focus on the might rather than the need to ensure that your DataLayer will not require significant changes during the course of the implementation.
+
+![](/images/posts/2017-04-10-aemrockstar-using-aem-datalayer/weretail-about.png)
+
+Given the page above, you may want to track some of the following information as an example:
+
+| Track Time | Scope     | Information    | Example                                                            |
+| ---------- | --------- | -------------- | ------------------------------------------------------------------ |
+| On Load    | Page      | Page URL       | http://www.weretail.com/us/en/about-us.html                        |
+| On Load    | Page      | Page Path      | /us/en/about-us                                                    |
+| On Load    | Page      | Site Section   | about-us                                                           |
+| On Load    | Page      | Region         | us                                                                 |
+| On Load    | Page      | Language       | en                                                                 |
+| On Load    | Page      | Page Title     | About Us                                                           |
+| On Load    | Component | Video          | /content/dam/we-retail/en/videos/Perficient-Digita-Agency-Reel.mp4 |
+| Event      | Component | Video Play     |                                                                    |
+| Event      | Component | Video Complete |                                                                    |
+
+## Step 2: Configure AEM DataLayer
+
+The AEM DataLayer is available as a downloadable AEM Package and is easy to install and incorporate into your project.
+
+The steps to install and configure the AEM DataLayer are:
+
+1. Install the AEM DataLayer package
+2. Setup a Cloud Configuration for AEM DataLayer
+3. Add the Cloud Configuration on your site
+
+## Step 3: Add Your Custom DataLayer Code
+
+To create your own DataLayer code, create a simple Bundle project and add the dependencies:
+
+```
+<dependency>
+  <groupId>org.apache.sling</groupId>
+  <artifactId>org.apache.sling.models.api</artifactId>
+  <version>1.3.0</version>
+  <scope>provided</scope>
+</dependency>
+<dependency>
+  <groupId>com.perficient.aem</groupId>
+  <artifactId>aem-datalayer.core</artifactId>
+  <version>0.1.0</version>
+</dependency>
+```
+
+You can then create Sling Model classes implementing the ComponentDataElement interface:
+
+```
+@Model(adaptables = Resource.class, resourceType = {"myapp/components/myresource" }, adapters = ComponentDataElement.class)
+public class CustomDataElement implements ComponentDataElement {
+```
+
+For every class, you will need to specify the annotation parameters “resourceType” and “adapters”. You can specify any number of resource types, and when AEM encounters a resource of the type specified, it will call your Sling Model.
+
+The [WeRetail Reference project](https://github.com/PerficientDigital/AEM-DataLayer/tree/master/weretail-reference) contains a number of examples ComponentDataElement classes you can use as a base for your custom implementations. For example, if you wanted to track the video displayed in every instance of the video component you scoped in Step 1, you could create a class like the one below:
+
+## Further Support
+
+If you have any questions or comments about the AEM DataLayer, please open an [issue on GitHub](https://github.com/PerficientDigital/AEM-DataLayer/issues) or message me on Twitter at [@klcodanr](http://twitter.com/klcodanr). As the library matures, I will be building out more documentation and use cases on GitHub so please keep tuned!

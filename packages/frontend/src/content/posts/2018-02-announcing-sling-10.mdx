@@ -1,0 +1,88 @@
+---
+title: Introducing Apache Sling 10
+description: Announcing the release of Apache Sling 10 and the Service User WebConsole.
+hideInNav: false
+tags:
+  - Apache Sling
+  - Open Source
+  - Service Users
+pubDate: 2018-02-06
+display: post
+image: /images/posts/2018-02-05-announcing-sling-10/Sling-10.jpg
+published: true
+---
+
+The [Apache Sling](https://sling.apache.org) project recently announced the latest version of our runnable distribution, [Apache Sling 10](https://sling.apache.org/news/sling-10-released) or Apache Sling X if you are a fruit company fan. And much like the latest fruit product release, this release of Apache Sling is 32% skinnier and costs 200% more, after all, it's still free!
+
+## What's New in Apache Sling 10?
+
+Apache Sling 10 introduces a number of tweaks, enhancements, and whole new features, some of the highlights include:
+
+* Renaming release artifact from launchpad to starter
+* Java 9 / 10 Support to allow for running Apache Sling in Java versions 7-10 (theoretically since Oracle has not released Java 10)
+* Update to Oak 1.6.8 - Tons of bug fixes and improvements from the Jackrabbit / OAK team
+* Switch to tiki-parsers from tiki-bundle. This is what helped Apache Sling drop 32% in size from 9-10\. By only embedding the parsers, this significantly reduces the size of the release
+
+You can read more about the release of Apache Sling Starter 10 on the [Apache Sling website](https://sling.apache.org/news/sling-10-released.html)!
+
+## New Feature: Service User WebConsole
+
+One new feature in the Apache Sling Starter 10 is the Service User WebConsole. This tool was created to make it easier to support creating and managing Service Users in Apache Sling (or downstream applications such as Adobe Experience Manager). Service users in Apache Sling are a great idea, but creating them SUCKS. The console gives you a UI for creating and managing Service Users through the OSGi web console.
+
+### What are Service Users?
+
+Service Users are a solution to a flaw in the old security model in Apache Sling. It used to be that whenever you needed to run code which wasn't specifically tied to a user session (think Sling Jobs) you used slingRepository.loginAdministrative(null) to get a session. The problem here was that the resource resolver returned is logged in as admin and had superuser rights for the entire repository.
+
+Of course, as admin you \*could\* impersonate another user, but most developers happily wrote code using an administrative session.
+
+Service Users were introduced to allow OSGi services running in Apache Sling to retrieve restrictive permission service users without needing to touch an administrative session. These Service Users are granted very specific permissions within the Apache Sling repository.
+
+### Using the Service User WebConsole
+
+In Apache Sling Starter 10, you can access the Service User WebConsole by navigating to Service Console >> Sling >> Service Users or navigating directly to [http://localhost:8080/system/console/serviceusers](http://localhost:8080/system/console/serviceusers). 
+
+The initial screen shows a form to create new Service Users as well as a list of all of the current service users in the Sling instance:
+
+![/images/posts/2018-02-05-announcing-sling-10/Service-User-Web-Console.jpg](/images/posts/2018-02-05-announcing-sling-10/Service-User-Web-Console.jpg)
+
+#### Creating a new Service User
+
+Simply fill out the form to create a new Service User. 
+
+![/images/posts/2018-02-05-announcing-sling-10/Create-Service-User.jpg](/images/posts/2018-02-05-announcing-sling-10/Create-Service-User.jpg)
+
+Generally, you'll fill out all of the fields including:
+
+* **Service User Name** \- The name of the user to create. If a user already exists with this name, an additional Service User configuration will be created granting additional services access to use this user
+* **Intermediate Path** \- The path under which to create the user. This should start with system, ex: system/myapp would create a user under /home/users/system/myapp
+* **Bundle -** Select the bundle to make this Service User available
+* **Sub-Service Name -** Additional name for allowing different services within a bundle access to different Service Users
+* **Application Path -** The path under which to create the sling:OsgiConfig node to configure this Service User's settings
+* **ACLs** \- Create permissions along with the Service User. Allows for entering a repository path and selecting the ACL to apply at that path
+
+Once you click create, the Service User will be created (or updated) and the ACLs will be applied. This will then direct you to a details page showing the details for the Service User.
+
+![/images/posts/2018-02-05-announcing-sling-10/Service-User-Details.png](/images/posts/2018-02-05-announcing-sling-10/Service-User-Details.png)
+
+This page will show detailed information about the Service User as well as examples of Package filter.xml settings and example(s) of using the Service Users from an OSGi Service.
+
+#### Managing Service Users
+
+From the Service User WebConsole landing page, you can view all of the existing Service Users. If you select a Service User name, you will be taken to the details for this Service User. Selecting the bundle name will take you to the bundle details in the OSGi console.
+
+### 
+
+### Using the Service User WebConsole in Older Sling-based Applications
+
+The Service User WebConsole is compatible with older Sling-based applications, such as Apache Sling Launchpad 9 or Adobe Experience Manager 6.3\. To enable the Service User WebConsole in these applications, upload and install the following bundles in your OSGi Console:
+
+* [Service User Mapper 1.4.0](http://search.maven.org/#artifactdetails%7Corg.apache.sling%7Corg.apache.sling.serviceusermapper%7C1.4.0%7Cbundle)
+* [Service User WebConsole 1.0.0](http://search.maven.org/#artifactdetails%7Corg.apache.sling%7Corg.apache.sling.serviceuser.webconsole%7C1.0.0%7Cbundle)
+
+## Getting Apache Sling Starter 10
+
+Apache Sling Starter 10 can be downloaded from the [Apache Sling downloads page](http://sling.apache.org/downloads.cgi). From there just run:
+
+java -jar org.apache.sling.starter-10.jar
+
+To start the application and in a few moments you can browse through the documentation on the refreshed landing screen and use [Composum](https://github.com/ist-dresden/composum) to explore the Apache Sling repository!

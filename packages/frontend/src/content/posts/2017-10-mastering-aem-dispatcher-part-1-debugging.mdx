@@ -1,0 +1,165 @@
+---
+title: "Mastering the AEM Dispatcher Part 1: Debugging the Dispatcher"
+description: The AEM Dispatcher is the entry point for your AEM application, but
+  it's also a black box. Learn how to debug requests in the AEM dispatcher.
+hideInNav: false
+tags:
+  - AEM 6
+  - Adobe Experience Manager
+  - Dispatcher
+  - Apache
+  - Debugging
+  - Mastering the AEM Dispatcher
+pubDate: 2017-10-12
+display: post
+image: /images/posts/2017-10-12-mastering-aem-dispatcher-part-1-debugging/dispatcher-loch-ness.jpg
+published: true
+---
+
+Loch Ness, the Bermuda Triangle, and the AEM Dispatcher; three great mysteries of our time!
+
+Despite playing a critical role in Adobe project, the AEM Dispatcher is a black box. In this [series of blog posts](/tag/Mastering%20the%20AEM%20Dispatcher/), I'll tear back the veil concealing the AEM Dispatcher and help you master this essential tool!
+
+In this first post, we'll discuss how to debug requests flowing through the dispatcher to the AEM publishers. Some common reasons to debug the dispatcher include:
+
+* Redirects not working
+* Mappings not working
+* Pages not being served
+
+## 1\. Start with Apache
+
+Before requests are processed by the AEM Dispatcher module, they are first evaluated by Apache. If you are seeing issues with redirects or if the dispatcher does not seem to be firing correctly, you can check the Apache logs to make sure your requests aren't being redirected away or rewritten.
+
+There are a number of log files to check to determine what the Apache web server is receiving.
+
+### access\_log - View the Requests
+
+The first place to stop when checking Apache is the access\_log. The exact location of this log file can vary depending on the configuration of your Apache server and the virtual host (VHost) used to render the request. Generally, it will be at either /var/logs/httpd/access\_log or /mnt/var/logs/httpd/access\_log.
+
+Every request will be logged in this file including the path, headers, and host, for example:
+
+```
+55.55.55.55 www.client.com - [10/Oct/2017:13:39:34 -0400] "GET / HTTP/1.1" 200 11391 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36" "10.10.10.10"
+```
+
+This will help you determine first that Apache is processing the request and what the Apache server is seeing in the request.
+
+### error\_log - Finding those pesky errors!
+
+Next, the error\_log will generally be in the same directory. By default, this log file will capture errors which occur in Apache. These include things like misconfigurations, system stability issues and the like. For example, if you have a mistake in your dispatcher configuration, you'd see a message like the following in the error\_log:
+
+```
+[Tue Oct 10 12:40:57.728119 2017] [dispatcher:alert] [pid 14961:tid 140220820785280] Dispatcher initialization failed.
+AH00016: Configuration Failed
+```
+
+The error\_log in Apache can also be made more verbose by setting the [LogLevel](http://httpd.apache.org/docs/current/mod/core.html#loglevel) directive which even allows you to [debug mod\_rewrite rules](http://httpd.apache.org/docs/current/mod/mod%5Frewrite.html#logging)! This is a huge help if you're trying to figure out why your redirects aren't firing or why it's not rewriting URLs the way you expect.
+
+### VHost logs - Narrow it Down!
+
+Inside your VHost, you can also add specific loggers which will only log requests and errors for that particular VHost. To set a VHost specific log files add the [ErrorLog](https://httpd.apache.org/docs/2.4/mod/core.html#errorlog) and [CustomLog](http://httpd.apache.org/docs/current/mod/mod%5Flog%5Fconfig.html#customlog) directives into your VHost config.
+
+## 2\. Next: On to the Dispatcher Logs
+
+If you are having issues with requests being served error pages or if requests are not being cached. 
+
+The dispatcher logs are controlled within the dispatcher module configuration. Depending on your setup this can either a separate .conf file in /etc/httpd/conf.d or within the same file as the dispatcher vhost configuration. It really depends on how your sysadmin wanted to organize the configurations.
+
+This will look something like:
+
+```
+LoadModule dispatcher_module modules/mod_dispatcher.so
+
+# location of the configuration file. eg: 'conf/dispatcher.any'
+DispatcherConfig conf/dispatcher.any
+
+# location of the dispatcher log file. eg: 'logs/dispatcher.log'
+DispatcherLog    logs/dispatcher.log 
+
+# log level for the dispatcher log
+# 0 Errors
+# 1 Warnings
+# 2 Infos
+# 3 Debug
+DispatcherLogLevel 3
+
+# if turned to 1, the dispatcher looks like a normal module
+DispatcherNoServerHeader 1 
+
+# if turned to 1, request to / are not handled by the dispatcher
+# use the mod_alias then for the correct mapping
+DispatcherDeclineRoot 1
+
+# if turned to 1, the dispatcher uses the URL already processed 
+# by handlers preceeding the dispatcher (i.e. mod_rewrite) 
+# instead of the original one passed to the web server. 
+DispatcherUseProcessedURL 1
+```
+
+The important directives for logging are DispatcherLog and DispatcherLogLevel, these two configurations will set the location of the log and it's level. For most production instances you will want the DispatcherLogLevel to be set to 1\. For debugging, we will set this to 3, which is the most verbose log level.
+
+Within the logs you'd see a lot of logs like the following:
+
+```
+[Tue Oct 10 17:11:00 2017] [D] [pid 15623 (tid 139728858846976)] Found farm publishfarm for host.com
+[Tue Oct 10 17:11:00 2017] [D] [pid 15623 (tid 139728858846976)] checking [/content/dam/host/file.jpg]
+[Tue Oct 10 17:11:00 2017] [D] [pid 15623 (tid 139728858846976)] cache-action for [/content/dam/host/file.jpg]: DELIVER
+[Tue Oct 10 17:11:00 2017] [D] [pid 15623 (tid 139728858846976)] request declined
+[Tue Oct 10 17:11:00 2017] [I] [pid 15623 (tid 139728858846976)] "GET /content/dam/host/file.jpg" - - 0ms [publishfarm/-]
+```
+
+This means that the Dispatcher served the file /content/dam/host/file.jpg from the cache.
+
+This is another message you may see:
+
+```
+[Tue Oct 10 17:14:44 2017] [D] [pid 25214 (tid 139728858846976)] Found farm publishfarm for host.com
+[Tue Oct 10 17:14:44 2017] [D] [pid 25214 (tid 139728858846976)] checking [/crx/de]
+[Tue Oct 10 17:14:44 2017] [D] [pid 25214 (tid 139728858846976)] request URL has no extension: /crx/de
+[Tue Oct 10 17:14:44 2017] [D] [pid 25214 (tid 139728858846976)] cache-action for [/crx/de]: NONE
+[Tue Oct 10 17:14:44 2017] [D] [pid 25214 (tid 139728858846976)] Filter rejects: GET /crx/de HTTP/1.1
+[Tue Oct 10 17:14:44 2017] [I] [pid 25214 (tid 139728858846976)] "GET /crx/de" - - 1ms [publishfarm/-]
+```
+
+This has two important pieces of information. First, the cache-action here is NONE, this means that this request will not be cached in the Dispatcher. The second is that the Dispatcher filter is rejecting this request due to the configuration. 
+
+Generally speaking the easiest way to use this log file is to tail the file and use grep to limit it to just the requests you're looking to evaluate while checking in a browser. For example:
+
+```
+tail -f /var/log/httpd/dispatcher.log | grep "/crx/de"
+```
+
+## 3\. Debugging Mappings on the Publisher
+
+One really intractable problem is knowing why your [Sling Mapping](https://sling.apache.org/documentation/the-sling-engine/mappings-for-resource-resolution.html) rules aren't firing. This is especially difficult as it can be caused by issues in Apache, the Dispatcher or even in the Publisher. If you've traced the requests all the way back to the Publisher and have validated that the URLs are correct to this point, how do you know what the publisher is receiving and what rules it is firing?
+
+In order to debug mapping issues which aren't being caused by the Dispatcher, you'll have to:
+
+1. Log in the Publisher OSGi console
+2. Add in a Sling Logging configuration for `TRACE` logging on the package `org.apache.sling.resourceresolver.impl`
+3. Login into the Publisher server and look for Sling Mapping messages
+
+Since this package will log a large number of messages, you'll want to use tail and grep to filter just the Sling Mapping messages, as such:
+
+```
+tail -f resourceresolver.log | grep "resolve:"
+```
+
+From there, you will ideally see messages such as:
+
+```
+resolve: Resolving request path https/host.com.443/page.html
+resolve: MapEntry MapEntry: match:^https/host.com.443/, replacement:[/content/host/, /], internal matches, mapped path is [/content/host/page.html, /page.html]  
+resolve: Redirecting internally
+resolve: Mapped path is for resource tree
+resolve: Try absolute mapped path /content/host/page.html
+resolve: Path /page.html resolves to Resource JcrNodeResource, type=cq:Page, superType=null, path=/content/host/page
+```
+
+This message indicates that the publisher resolved the request: [https://host.com/page.html](https://host.com/page.html) to the internal mapped content /content/host/page.html. If you aren't seeing messages like this, it should help point you in the direction of where the disconnect is between your Sling Mappings and the incoming request.
+
+## Next in Mastering the AEM Dispatcher: Supporting Case Insensitivity in Apache
+
+Stay tuned for the next post, where we'll discuss supporting case insensitivity within the AEM Dispatcher and Apache httpd.
+
+This blog post is written based on a standard setup on a RedHat derivative (e.g. RedHat or CentOS) with the Apache Dispatcher Module. If you are using IIS or a Debian based OS (e.g. Debian or Ubuntu) the configurations, locations, and files may vary.

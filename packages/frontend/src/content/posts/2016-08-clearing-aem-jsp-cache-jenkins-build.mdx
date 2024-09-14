@@ -1,0 +1,81 @@
+---
+title: Clearing AEM's JSP Cache in your Jenkins Build
+description: How to clear AEM's Compiled JSP cache in your Continuous Integration build
+hideInNav: false
+tags:
+  - AEM 6
+  - Apache Sling
+  - Apache Felix
+  - Jenkins
+  - Continuous Integration
+pubDate: 2016-08-10
+display: post
+image: /images/posts/2016-08-10-clearing-aem-jsp-cache-jenkins-build/Build-Config-Cache.png
+published: true
+---
+
+AEM really likes caching you compiled JSPs. This can be a problem as you are developing code, especially when working on dependencies. Every so often you may forget to include a dependency in a bundle or include the wrong version. Because of AEM's JSP caching, even after fixing your dependency, you may see something like this:
+
+![AEM Failing to Resolve Packages](/images/posts/2016-08-10-clearing-aem-jsp-cache-jenkins-build/Resolves-Package.png)Image Credit: [anthony](http://stackoverflow.com/users/654203/anthony) from [How to import a class from third party jar file in an OSGi component](http://stackoverflow.com/questions/31395974/how-to-import-a-class-from-third-party-jar-file-in-an-osgi-component)
+
+As a developer, this is annoying, but if this same problem occurs on an integration or other environment, it causes significantly more extra work as the team will need to determine what is the problem and what caused it while having to potentially review many commits by different developers.
+
+### How to Clear AEM's JSP Cache
+
+To keep this from happening, you can automatically clear the JSP cache in AEM as part of your build. Apache Sling offers a simple console to do this at [http://localhost:4502/system/console/slingjsp](http://localhost:4502/system/console/slingjsp) and you can easily invoke it with the following cURL command:
+
+```
+curl -u admin:admin 'http://localhost:4502/system/console/slingjsp' -X POST -v
+```
+
+### Integration JSP Cache Clearing to the Build
+
+To make this happen, add this as an additional _Execute Shell_ build step in your build configuration. Given, this Jenkins build example:
+
+![Jenkins Build Config](/images/posts/2016-08-10-clearing-aem-jsp-cache-jenkins-build/Build-Config.png)
+
+Your updated configuration should look like:
+
+![Build Configuration with JSP Cache Clear](/images/posts/2016-08-10-clearing-aem-jsp-cache-jenkins-build/Build-Config-Cache.png)
+
+After adding this to your build you should see something like this:
+
+```
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time: 01:20 min
+[INFO] Finished at: 2016-08-10T16:04:05+00:00
+[INFO] Final Memory: 48M/192M
+[INFO] ------------------------------------------------------------------------
+[finn] $ /bin/sh -xe /tmp/hudson1194504770954027729.sh
++ curl -u admin:PASSWORD http://ec2-IP.compute-1.amazonaws.com:4502/system/console/slingjsp -X POST -v
+* About to connect() to ec2-IP.compute-1.amazonaws.com port 4502 (#0)
+*   Trying IP... connected
+* Connected to ec2-IP.compute-1.amazonaws.com (172.31.18.125) port 4502 (#0)
+* Server auth using Basic with user 'admin'
+> POST /system/console/slingjsp HTTP/1.1
+> Authorization: Basic CODE
+> User-Agent: curl/7.19.7 (x86_64-redhat-linux-gnu) libcurl/7.19.7 NSS/3.19.1 Basic ECC zlib/1.2.3 libidn/1.18 libssh2/1.4.2
+> Host: ec2-IP.compute-1.amazonaws.com:4502
+> Accept: */*
+> 
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0< HTTP/1.1 302 Found
+< Date: Wed, 10 Aug 2016 16:04:05 GMT
+< Set-Cookie: felix-webconsole-locale=en;Path=/system/console;Expires=Tue, 05-Aug-2036 16:04:05 GMT
+< Expires: Thu, 01 Jan 1970 00:00:00 GMT
+< Location: http://ec2-IP.compute-1.amazonaws.com:4502/system/console/slingjsp?reset
+< Content-Length: 0
+< 
+
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0* Connection #0 to host ec2-IP.compute-1.amazonaws.com left intact
+
+* Closing connection #0
+Finished: SUCCESS
+```
+
+Hopefully, this helps anyone else running into problems with JSP caching in AEM. If you have any questions, leave a comment below!

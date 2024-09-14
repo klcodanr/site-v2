@@ -1,0 +1,75 @@
+---
+title: Enabling Target Visual Experience Composer in AEM
+description: Running into errors setting up Adobe Target's Visual Experience
+  Composer in Adobe Experience Manager? The X-Frame-Options header could be the
+  culprit.
+hideInNav: false
+tags:
+  - Adobe Experience Manager
+  - Adobe Target
+  - How To
+  - Visual Experience Composer
+  - X-Frame-Options
+pubDate: 2018-03-06
+display: post
+image: /images/posts/2018-03-06-adobe-target-visual-experience-composer-aem/Target-Setup.jpg
+published: true
+---
+
+[Adobe Target's](https://www.adobe.com/marketing-cloud/target.html) [Visual Experience Composer](https://helpx.adobe.com/customer-care-office-hours/target/visual-experience-composer.html)(VEC) is a powerful editor for Digital Marketing Teams to easily create and test personalized experiences in the site context. This tool can be used by teams who are not interested in using the [Target in AEM integration](https://helpx.adobe.com/marketing-cloud/how-to/aem-target.html) either due to business processes or team preferences.
+
+Visual Experience Composer makes creating offers as easy as clicking on an element and selecting the desired action:
+
+![Editing Offers to Adobe Target Visual Experience Composer](/images/posts/2018-03-06-adobe-target-visual-experience-composer-aem/VEC-Edit.jpg)
+
+However, getting Visual Experience Composer integrated into a website can pose some particular challenges. In the simplest use cases, integrating Adobe Target's Visual Experience Composer can be as simple as setting up an [AEM Cloud Configuration](https://helpx.adobe.com/experience-manager/6-3/sites/administering/using/target-configuring.html), but depending on your AEM setup, more configuration may be required. 
+
+## The Challenge with Visual Experience Composer
+
+Similar to [AEM's TouchUI](https://blogs.perficient.com/adobe/2017/11/16/no-matter-what-a-anyone-tells-you-theres-no-touchui-under-etc/), Visual Experience Composer uses an iframe to frame in the webpage being edited and then draws the editing controls over the top.
+
+![The Structure of the Adobe Target Visual Experience Composer](/images/posts/2018-03-06-adobe-target-visual-experience-composer-aem/VEC-Structure.jpg)
+
+_The red area within the VEC is the_ iframe _of the web page._
+
+This is an issue as most AEM websites (and in websites general) use the X-Frame-Options header to prevent an attack vector called [clickjacking](https://www.owasp.org/index.php/Clickjacking). In this technique, an attacker will iframe in a copy of your site and overlay a transparent element over top to capture the user's interactions. This could include passwords, credit cards or any personal information.
+
+When Adobe Target's Visual Experience Composer attempts to load against a site with the X-Frame-Options header, the browser will block the request just as if it were coming from an attacker and you'll see an error like this one:
+
+![Error Message when the Visual Experience Composer is Blocked](/images/posts/2018-03-06-adobe-target-visual-experience-composer-aem/VEC-Blocked.jpg)
+
+`Error: Your website domain (ISP) is blocking the Enhanced Experience Composer. You can whitelist the Enhanced Experience Composer's IP addresses or turn off Enhanced Experience Composer in Configure > Page Delivery menu.`
+
+**Note -** Adobe's recommendation to whitelist the VEC, this applies if you are trying to use Target in a non-public site. If your site is behind a VPN or in a private network, you will need to whitelist Target through the VPN, but if you see this error on a public site, the X-Frame-Options header is the likely culprit.
+
+## Enabling Visual Experience Composer's Frames
+
+To enable VEC to use its frames but still keep the clickjacking protections of the X-Frame-Options header, add the following directive into your Dispatcher's Apache conf file. Ideally, you will want to do this in a single vhost as to not affect other sites.
+
+Header append X-Frame-Options "ALLOW-FROM https://[AMC_ID].marketing.adobe.com/"
+
+The value for \[AMC\_ID\] is your company's Adobe Marketing Cloud Company ID. You can retrieve this from the URL you use to access Adobe Target, so if you use https://mycompany.marketing.adobe.com/target, the \[AMC\_ID\] would be mycompany. 
+
+To test if the headers are correct, open a URL on your site and add the query string:
+
+?mboxEdit=1&mboxDisable=1
+
+Then open up your browser developer tools and inspect the headers on the network response to make sure the X-Frame-Options header is set correctly to ALLOW-FROM https://\[AMC\_ID\].marketing.adobe.com/.
+
+Assuming the header is set correctly, you should now be able to load any page on the site using VEC.
+
+## Still Not Working?
+
+If it _still_doesn't work and you are using Adobe Managed Services or have a somewhat paranoid sysadmin, you may find that no matter what changes you make in Apache, the URLs used by VEC may still have the _X-Frame-Options_ header set to _SAMEORIGIN_.
+
+If you see this behavior, Sling may be setting this header. To check, log into the publish server and open the OSGi console to http://\[server:port\]/system/console/configMgr/org.apache.sling.engine.impl.SlingMainServlet, this should open the configuration for the Apache Sling Main Servlet.
+
+![The Sling Main Servlet OSGi Config](/images/posts/2018-03-06-adobe-target-visual-experience-composer-aem/Sling-Main-Servlet-Config.jpg)
+
+If you see a configuration like the one above, update the value to:
+
+X-Frame-Options=ALLOW-FROM https://[AMC_ID].marketing.adobe.com/
+
+As soon as you save this setting, the publisher should no longer send the incorrect heading and VEC should start working.
+
+Hopefully, these steps help you get Adobe Target integrated with AEM so you can leverage the full power of the Adobe Marketing Cloud. Please leave a comment if you have any other integration tips or questions.

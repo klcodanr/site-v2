@@ -1,0 +1,70 @@
+---
+title: Pulling Private Dependencies with Cloud Manager
+description: Enable Adobe Cloud Manager to pull artifacts from a private Apache
+  Maven repository.
+hideInNav: false
+tags:
+  - Cloud Manager
+  - Adobe Managed Services
+  - Apache Maven
+  - Adobe Experience Manager
+pubDate: 2020-07-15
+display: post
+image: /images/posts/2020-07/cloud-manager-private-artifacts-hero.jpg
+published: true
+---
+
+  
+
+For customer's using Adobe Managed Services, [Cloud Manager](https://docs.adobe.com/content/help/en/experience-manager-cloud-manager/using/introduction-to-cloud-manager.html) has become the de facto system for deploying code to their Adobe Experience Manager environments. Among Cloud Manager's many deficiencies is the inability to fetch artifacts from private remote repositories.
+
+The good news is there's a workaround for internet-facing artifact repositories. Unfortunately non-internet facing artifact repositories are not supported as Cloud Manager spins up Docker containers to run the actual build process and they do not support a pool of IPs or virtual networks for the containers. According to feedback from Adobe, the Cloud Manager team is waiting on a feature from Microsoft Azure to allow all Cloud Manager Containers to be assigned an IP address out of a defined range. Once this feature is added to Azure, AMS will be able to provide an IP range to allow access to the artifact server.  
+  
+## Why Would I Want to Do This?
+
+  
+I think it's certainly worth asking: why not just follow Adobe's model with Cloud Manager and put everything in one big Maven project?  
+  
+There are a few good reasons you may not want to follow the Adobe pattern:  
+  
+* You are a larger enterprise and have multiple teams working on multiple different projects in parallel and consolidating on a single project would make releases and merging very difficult to manage
+* You have integrations or dependencies on upstream teams for things like service connections, UI frameworks or custom integrations
+* You want to integrate additional checks into your code not supported in Adobe Cloud Manager, but don't want to have to run a build twice
+  
+## Connecting to a Private Artifact Repository
+
+  
+The solution involves two parts:
+
+* Working with your CSE to configure Environment Variables
+* Overriding the settings.xml in the project
+
+### Custom Environment Variables
+
+  
+First, Adobe has a feature where your CSE can request the provisioning of [Custom Environment variables](https://docs.adobe.com/content/help/en/experience-manager-cloud-manager/using/getting-started/create-an-application-project.html#custom-environ-variables), this allows you to specify private variables such as the connection URL, username or password. This will require your CSE to open a support ticket with an internal team at Adobe, so you will simply need to provide the keys and values to the CSE to open the ticket.
+
+According to an inside source, [this may come as a feature in the API, which is currently available but not supported in Cloud Manager](https://www.adobe.io/apis/experiencecloud/cloud-manager/api-reference.html#/Variables).  
+  
+### Setting Your Artifact Server
+
+  
+In order to resolve the dependencies from your private repository, Maven needs three configuration steps.
+
+First, add the repository into the pom.xml, for example:  
+  
+
+  
+Next, you'll need to override the settings.xml to do this, create a file in the root of the project called .mvn/maven.config with the contents:  
+  
+-s ./settings.xml
+
+  
+This will instruct Maven to use a settings.xml file located in the project directory. 
+
+Finally, create a settings.xml and use the Custom Environment variables to set the username and password for the server (the ID must match the pom.xml) as well as providing the default adobe-public artifact repository:  
+  
+
+  
+Once all the configurations are in place, trigger a Cloud Manager build and you should see Cloud Manager connecting to your private artifact repository to download the dependencies for the project.   
+  

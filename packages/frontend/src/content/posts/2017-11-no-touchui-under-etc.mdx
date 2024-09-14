@@ -1,0 +1,75 @@
+---
+title: No Matter What Anyone Tells You There's No TouchUI Under /etc
+description: Except for a few specific conditions, you cannot use TouchUI to
+  edit any components under the /etc directory.
+hideInNav: false
+tags:
+  - Adobe Experience Manager
+  - TouchUI
+  - It's Not a Bug, It's a Feature
+pubDate: 2017-11-16
+display: post
+image: /images/posts/2017-11-16-no-touchui-under-etc/wrong-way.jpg
+published: true
+---
+
+I'm posting a little-known fact to save anyone else the frustration of banging their head against why this doesn't work for a couple hours:
+
+> Except for a few specific conditions, you cannot use TouchUI to edit any components under the /etc directory.
+
+There you have it! That's really the crux of the blog post! Of course, a reasonable question may be why? To understand why we'll need to first understand what's going on when AEM builds out the editor fields for a component.
+
+## How AEM Builds the Touch UI
+
+Astute users and developers of AEM have probably noticed the url structure of pages in the AEM editor looks something like:
+
+http://localhost:4502**/editor.html**_/content/site/page.html_
+
+The trick for building this out is that AEM is using a single page **/editor.html** for the page editing features and then using Sling Suffix to load the contents to edit _/content/site/page.html_ as an iframe. Something like this:
+
+![Breaking apart the AEM Editor](/images/posts/2017-11-16-no-touchui-under-etc/aem-editor.jpg)
+
+The red area is the editor chrome and the blue area is the iframe. AEM then lays a transparent div over the top of the iframe to add the actual editor actions and prevent certain actions, such as clicking links from occurring.
+
+## Editing Components
+
+Now you might ask: how does AEM know where the components are and how do some components support both Touch and Classic UI? The trick is Adobe injects some code surrounding each component in a filter called the WCMComponentFilter. This filter is called on all of the component includes in author and determines whether it should include ClassicUI code like this:
+
+```html
+<script type="text/javascript">  
+CQ.WCM.edit({"path":"/etc/page-status-report/jcr:content/parameters/*","type":"wcm/foundation/components/parsys/newpar","csp":"report-builder|app-page|page/parameters|parsys/newpar","editConfig":{"actions":[CQ.wcm.EditBase.INSERT],"disableTargeting":true}});  
+</script>
+```
+
+Or TouchUI code like this:
+
+```html
+<!--cq{"decorated":true,"type":"wcm/foundation/components/parsys/newpar","path":"/libs/page-status-report/jcr:content/parameters/*","selectors":null,"servlet":"Script /libs/wcm/foundation/components/parsys/newpar/newpar.html","totalTime":1,"selfTime":1}-->  
+<cq data-path="/libs/page-status-report/jcr:content/parameters/*" data-config="{&quot;path&quot;:&quot;/libs/page-status-report/jcr:content/parameters/*&quot;,&quot;slingPath&quot;:&quot;/libs/page-status-report/jcr:content/parameters/*.html&quot;,&quot;type&quot;:&quot;wcm/foundation/components/parsys/newpar&quot;,&quot;isResponsiveGrid&quot;:false,&quot;csp&quot;:&quot;report-builder|app-page|page/parameters|parsys/newpar&quot;,&quot;editConfig&quot;:{&quot;actions&quot;:[CQ.wcm.EditBase.INSERT],&quot;disableTargeting&quot;:true}}"></cq>
+```
+
+Normally, the Filter determines which editor mode to use by invoking the AuthoringUIModeService, which checks the user and system preferences for which editor to use as well as what kind of URL is used for iframing in the content, e.g. /editor.html or not. Unfortunately, there's also a special if statement for /etc:
+
+```java
+if("html".equals(slingRequest.getRequestPathInfo().getExtension()) && resource.adaptTo(com/day/cq/wcm/api/Page) != null && path.startsWith("/etc/") && !path.startsWith("/etc/commerce/") && !path.startsWith("/etc/segmentation/contexthub") && !TemplateUtils.isPageOfAuthoredTemplate(resource))  
+  authoringUIMode = AuthoringUIMode.CLASSIC;
+```
+
+So if you're under /etc, but not under:
+
+* /etc/commerce
+* /etc/segmentation/contexthub
+* or a page of an authored template (special case)
+
+Then, AEM _always_ forces the editor to classic, even if you are using the TouchUI editor window.
+
+This causes your page to not be editable when using the TouchUI editor window because it is using the legacy JavaScript. This code references a CQ.WCM.edit method, which does not exist in Touch UI, leading to errors like this:
+
+![Error when editing a page in TouchUI under /etc: Cannot read property edit of undefined](/images/posts/2017-11-16-no-touchui-under-etc/error.png) 
+
+## So what do I do?
+
+ There are a couple options on how to work around this issue:
+
+* You can use Classic UI - unfortunately, Classic UI is legacy and not ideal for building new functionality, but it works
+* You can use a different foder - anything outside of /etc will work, but I do find sometimes I want to keep "administrative" functionality separate from "authoring"

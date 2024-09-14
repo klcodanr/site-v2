@@ -1,0 +1,178 @@
+---
+title: 5 Maven Plugins to Turbocharge Your AEM Development
+description: There are numerous plugins for Maven which make it easier to work
+  with AEM from the command line, however the documentation for the plugins is
+  sprinkled across a number of plugin sites. Mastering these Maven commands
+  makes it easier and quicker for you to develop code.
+hideInNav: false
+tags:
+  - Apache Maven
+  - Adobe Experience Manager
+  - Command Line Interface
+pubDate: 2022-04-06
+display: post
+image: /images/posts/04/Turbo-Hero.jpg
+published: true
+---
+
+  
+
+A confession, oftentimes I use this blog as a bookmark for helpful tools and information that's scattered across the internet. This is _most definitely_ one of those type of posts. Hopefully you find it helpful too!  
+
+ There are numerous plugins for Maven which make it easier to work with AEM from the command line. Mastering these Maven commands makes it easier and quicker for you to develop code. However, unsurprisingly, the documentation for the plugins is sprinkled across a number of plugin sites.  
+  
+I'd note this post doesn't cover "basic" Maven commands such as installing an AEM project, but instead focuses on less-common but invaluable commands.
+
+  
+## Getting "Stuff" Into AEM   
+
+  
+AEM makes it pretty easy to get content / code in and out of the system with JCR FileVault Packages and OSGi Bundles. With these Maven plugins you can automate it!  
+
+  
+
+### #1 Install / Download Content Packages with the content-package-maven-plugin  
+
+  
+JCR FileVault Packages are the easiest way to get content in and out of AEM, allowing for developers and administrators to easily package, download and install content between AEM instances.
+
+Adobe provides the [Content Package Maven ](https://experienceleague.adobe.com/docs/experience-manager-cloud-service/content/implementing/developer-tools/maven-plugin.html?lang=en)Plugin which besides being critical to code deployments can be used for ad-hoc package installation.  
+  
+
+```bash
+# Install a package artifact from Maven
+mvn content-package:install -Dvault.artifact=com.adobe.aem.guides:aem-guides-wknd.all:1.1.0:zip
+
+# Installing a local file
+mvn content-package:install -Dvault.file=./package.zip
+```
+
+  
+You can use the content package plugin to install external content packages, but it also can be used as a one liner for building and installing your project with:  
+  
+
+```bash
+# Build and install an AEM project
+mvn clean install content-package:install
+```
+
+  
+
+You can even use the content package plugin to back up content in an instance automatically.
+
+  
+
+```bash
+# First we build the package
+mvn content-package:build -Dvault.path=/etc/packages/com.adobe.aem-assets/test-content.zip -DfailOnError=true
+
+# Next, download the package
+mvn content-package:download -Dvault.path=/etc/packages/com.adobe.aem-assets/test-content.zip -Dvault.outputFile=test-content.zip
+
+# Do whatever you need to do...
+
+# Reinstall the package
+mvn content-package:install -Dvault.file=test-content.zip
+```
+
+  
+
+### #2 Install Bundles with the sling-maven-plugin  
+
+  
+OSGi bundles contain the Java code for AEM projects. While you generally won't need to _download_ a bundle from an AEM instance, with the [sling-maven-plugin](https://sling.apache.org/components/sling-maven-plugin/) can deploy a bundle with a single command!  
+
+First, if you already have built your project and just want to install it, you can run:  
+  
+
+```bash
+# Install the bundle in the current project directory
+mvn sling:install
+```
+
+  
+Or if you need to build the project and want to also install the bundle in one step:  
+  
+
+```bash
+# Build and install a bundle project
+mvn clean install sling:install
+```
+
+  
+
+If this command tries to deploy the bundle to port 8080, ensure your POM.xml sets the _[slingUrl](https://sling.apache.org/components/sling-maven-plugin/install-file-mojo.html#slingUrl)_ to [http://localhost:4502/system/console](http://localhost:4502/system/console) and sets the [deploymentMethod](https://sling.apache.org/components/sling-maven-plugin/install-file-mojo.html#slingUrl) to WebConsole.
+
+Finally, you may want to install a bundle directly from a file or the Maven Repository:
+
+  
+
+```bash
+# Install from Maven
+mvn sling:install-file -Dsling.artifact=org.apache.sling:org.apache.sling.serviceuser.webconsole:1.0.2 -Dsling.url=http://localhost:4502/system/console -Dsling.deploy.method=WebConsole
+
+# Install from a file
+mvn sling:install-file -D sling.file=./mybundle.jar -Dsling.url=http://localhost:4502/system/console -Dsling.deploy.method=WebConsole
+```
+
+  
+
+## Managing AEM Projects
+
+  
+ Beyond the typical commands like `mvn clean install` or `mvn test` or `mvn verify -Dtest=[testname]`, Apache Maven plugins can make it much easier to maintain AEM projects.
+
+  
+### #3 Getting an Artifact with the Maven Dependencies Plugin
+
+  
+ It can be a pain to find, then download and copy dependencies you need to run locally from Maven outside the context of a Maven project. Thankfully, there's a plugin or that! 
+
+Let's say you needed oak-run v1.40.0:
+
+  
+
+```bash
+# Download Oak-Run into the current directory
+mvn dependency:copy -Dartifact=org.apache.jackrabbit:oak-run:1.40.0 -DoutputDirectory=.
+
+# Download the dependency and strip the version
+mvn dependency:copy -Dartifact=org.apache.jackrabbit:oak-run:1.40.0  -Dmdep.stripVersion=true -DoutputDirectory=.
+```
+
+  
+
+### #4 Getting a Property from a POM with the Help Maven Plugin
+
+  
+Let's say you had two projects with properties that you wanted to keep in sync. You could automate updating the variables, but how do you get the property value from the POM?   
+
+With the [Help Maven Plugin](https://maven.apache.org/plugins/maven-help-plugin/evaluate-mojo.html), you can evaluate a property and write the value to standard out:  
+
+```bash
+# Get the property java.version as a bash variable
+JAVA_VERSION=$(mvn help:evaluate -Dexpression=java.version -q -DforceStdout)
+```
+
+  
+
+### #5 Update Dependencies with the Maven Versions Plugin
+
+  
+AEM is composed of many dependencies, along with any dependencies specific to your project. Keeping these dependencies up to date, along with the various plugins for the project requires constant maintenance.
+
+  
+
+```bash
+# Displays the available dependencies
+mvn versions:display-dependency-updates
+
+# Displays the available plugin versions
+mvn versions:display-plugin-updates
+```
+
+  
+
+Hope these Maven commands help you be a more effective AEM developer. Did I miss your favorite command? Leave a comment!
+
+  

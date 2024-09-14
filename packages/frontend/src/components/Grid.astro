@@ -1,0 +1,29 @@
+---
+
+---
+
+<section class="grid-container">
+  <slot />
+</section>
+
+<style>
+  .grid-container {
+    display: grid;
+    gap: 1em;
+    min-height: 0;
+    min-width: 0;
+    grid-template-columns: auto auto auto;
+  }
+
+  @media (max-width: 1200px) {
+    .grid-container {
+      grid-template-columns: auto auto;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .grid-container {
+      grid-template-columns: auto;
+    }
+  }
+</style>

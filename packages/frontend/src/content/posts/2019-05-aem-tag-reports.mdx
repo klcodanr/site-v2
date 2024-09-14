@@ -1,0 +1,63 @@
+---
+title: "New ACS AEM Commons Contribution: Tag Reports"
+description: See how Tag Managers can use Tag Reports to create a report of all
+  the references to all of the tags under a path in AEM
+hideInNav: false
+tags:
+  - Adobe Experience Manager
+  - Taxonomy
+  - Open Source
+  - ACS AEM Commons
+pubDate: 2019-05-30
+display: post
+image: /images/posts/2019-06/tags.jpg
+published: true
+---
+
+  
+
+Tags are one of the most powerful features of Adobe Experience Manager (AEM), using tags [content authors](https://helpx.adobe.com/experience-manager/6-5/sites/authoring/using/editing-page-properties.html) and [asset managers](https://helpx.adobe.com/experience-manager/6-5/assets/using/organize-assets.html) can create secondary taxonomy associations between content.
+
+The challenge with many AEM installations is that tag taxonomies tend to grow over time, especially if ad-hoc tags are enabled. [AEM's Tag Administration](https://helpx.adobe.com/experience-manager/6-5/sites/administering/using/tags.html) console allows Taxonomy Managers to delete, merge and move tags, however, before making changes, you really understand how a tag is used. You can [view references](https://helpx.adobe.com/experience-manager/6-5/sites/administering/using/tags.html#ShowingTagReferences), but this is only available at the individual tag level.
+
+Recently, I built a new [Managed Controlled Process](https://adobe-consulting-services.github.io/acs-aem-commons/features/mcp/index.html) to create a report of the tags and their references.   
+  
+
+![Starting the Tag Report Managed Controlled Process](/images/posts/2019-06/start-tag-report.png)
+
+  
+
+This report allows for configuring the following settings:
+
+* **Tag Path** \- the path under which to search for tags. This will work for both /etc/tags and /content/cq:tags
+* **Root Search Path** \- the path under which to search for references
+* **Include References** \- whether or not to include the actual reference values in the report
+* **Reference Method** \- this option allows you to select between using [TagManager.find ](https://helpx.adobe.com/experience-manager/6-3/sites/developing/using/reference-materials/javadoc/com/day/cq/tagging/TagManager.html#find%28java.lang.String%29) which is faster, but will only search for cq:tags attributes under cq:Taggable nodes or a deeper search which does a full text search against the tag ID
+
+Starting the report will execute the process in the background. While the report executes, you can open a summary of the report execution.
+
+  
+
+![Tag Report Summary](/images/posts/2019-06/tag-report-summary.png)
+
+  
+
+Once the process completes, you can view a report with all of the tags under the path including:  
+
+* **Reference Count** \- the number of times the tag is referenced under the specified content tree
+* **References** \- the list of references if _Include References_ is checked
+* **Status** \- the status of attempting to report the tag, generally should be _Success_
+* **Tag Id** \- the AEM Tag ID for the tag
+* **Tag Title** \- the tag title in English
+
+The report can be viewed online or downloaded to an Excel file.
+
+  
+
+![View the Tag Report](/images/posts/2019-06/view-tag-report.png)
+
+  
+
+The Tag Report MCP will be available in the upcoming release of ACS AEM Commons. Check back soon to see when it's released!
+
+  

@@ -1,0 +1,81 @@
+---
+title: Sling Recent Requests Parser
+description: Introducing a new tool I’ve been working on the parse and analyze
+  Slong Recent Requests logs
+hideInNav: false
+tags:
+  - Apache Sling
+  - Performance
+  - Logging
+pubDate: 2023-08-28
+display: post
+image: /images/posts/2023-08/Heatmap-Summary-v2.png
+published: true
+---
+
+import Columns from '../../components/Columns.astro';
+import Column from '../../components/Column.astro';
+import Button from '../../components/Button.astro';
+
+  
+Performance is [critical for any customer facing application](https://developer.mozilla.org/en-US/docs/Learn/Performance/why%5Fweb%5Fperformance). 
+
+For web projects optimizing performance involves cache tuning, CSS/JS minification, deferred loading, adaptive serving and more front end techniques. However, when creating dynamic pages server side, as is done in classic AEM development, you also need to optimize the server side performance. 
+
+While caching can mitigate the need to render pages on the fly, caches still need to be filled at some point. Pages that are too slow to render under high load can lead to a [thundering herd problem](https://en.wikipedia.org/wiki/Thundering%5Fherd%5Fproblem) where the server is too slow to create the cache and gets slower with each subsequent to create and cache the page. 
+
+Apache Sling, the framework underlying AEM, includes a[ Recent Requests OSGi console](https://sling.apache.org/documentation/development/monitoring-requests.html) which keeps detailed logs of every step in rendering each request. This can be used to analyze and identify performance bottlenecks, however the format is... less than friendly as you can see below:  
+  
+
+![Sling Recent Requests Console](/images/posts/2023-08/Sling-Recent-Requests-Console.png)
+
+  
+The numbers on the left are critical to identifying the performance problems. Each is the number of microseconds since the start of the request at which the line was logged. Therefore, scanning down the logs, you can identify slow steps by identifying large increases.
+
+But which line is actually the problem? And what if a script is called many times? Each one may only take a few microseconds, but they all add up to a significant amount of time.
+
+After banging my head against this problem on a previous project, I threw together a quick parser for the Recent Request log. I've spent some time verifying, optimizing and improving the script and made it into a [small single page app](/recent-requests-parser.html).
+
+Pasting in the same Request log from above, click Parse and you get a [Flame Graph](https://www.brendangregg.com/flamegraphs.html) of the execution tree:  
+  
+
+![Summary and Flame Grap View](/images/posts/2023-08/Heatmap-Summary-v2.png)
+
+  
+Each color in the Flame Graph denotes the component of AEM that's executing the portion of the request making it easier to classify.
+
+The parser also outputs a searchable table of all of the logs:
+
+  
+
+![All Requests Table](/images/posts/2023-08/All-Requests.png)
+
+  
+During the parsing process, the parser calculates the duration of each step as well as determining how much of the execution time is from sub-components.
+
+  
+The parser even outputs tables of the most expensive and most common steps of the request, deduplicating repeated steps:  
+  
+
+<Columns>
+
+<Column>
+
+![Expensive Operations](/images/posts/2023-08/Expensive-Operations.png)
+
+</Column>
+
+<Column>
+
+![Common Operations](/images/posts/2023-08/Common-Operations.png)
+
+</Column>
+
+</Columns>
+
+  
+The Sling Recent Requests parser is a pretty [simple VueJs app](https://github.com/klcodanr/sling-request-log-parser) and deployed via [AWS Amplify](https://aws.amazon.com/amplify/) and is 100% client side. Check it out!
+
+  
+
+<Button link="/recent-requests-parser">Sling Recent Requests Parser</Button>

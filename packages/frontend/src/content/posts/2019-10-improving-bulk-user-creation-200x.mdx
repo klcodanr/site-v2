@@ -1,0 +1,53 @@
+---
+title: Improving Bulk User Creation in AEM 200x
+description: Concrete tips and solutions for optimizing the creation & update of
+  large numbers (100,000+) of users and groups in Adobe Experience Manager.
+hideInNav: false
+tags:
+  - Apache Jackrabbit Oak
+  - Adobe Experience Manager
+  - Performance
+pubDate: 2019-10-30
+display: post
+image: /images/posts/2019-10/group-banner.jpg
+published: true
+---
+
+  
+
+Recently, we had a particularly challenging problem where an AEM website needed to support up to several hundred thousand logins within approximately a 2-hour window. To support this level of load, we couldn't have user profiles get populated as the users logged in. Instead, the team created a job to populate the users and groups ahead of time. A couple of days later, we knew we had a problem, the job was still running!
+
+After approximately, three days, the job finally finished, so we had a baseline of the performance. To say the least, we had exceeded the off-hours window before users would start accessing the system in bulk.  
+  
+## Hashing Users
+
+  
+Our first attempt to resolve the issue was to hash the user's ID to create a hashed path. We used the SHA-1 algorithm to hash the user's principal and generate the user's path, broken down into two character segments. This limited the number of sub-items in each folder to 128 folders/users. This helped as AEM does generally not handle a large number of sub-items well.
+
+This resulted in a significant performance increase when creating users, but updating users was still far too slow.
+
+  
+## Calculate & Create
+
+  
+The next step to optimize the update of users. After monitoring the job, I found that the process to find and check users was a major performance concern. Since we were already hashing the user paths and creating them at known locations, I could optimize this lookup by retrieving the [users and groups by path](https://jackrabbit.apache.org/oak/docs/security/user/query.html) and creating a lazy-loading in-memory cache of all the users and groups for subsequent updates. Since only the job would be creating or deleting users, we could read from the cache to avoid having to query the JCR to check if a user or group exists.
+
+To further optimize saves, I optimized the process away from streaming the users and one at a time. Instead, the code calculates the differences and creates / updates the users in bulk. These changes resulted in a drastic increase in performance with the job completing in under an hour on both create and update.
+
+Unfortunately, performance hit the wall once again when assigning the users into groups. 
+
+  
+## Hashed Sub-Groups
+
+  
+The problem with adding users to groups has to do with how Jackrabbit groups persist membership. Jackrabbit saves group members as an array of User ID's. To check and then add group members, our code was performing an array traversal over several hundred thousand members.
+
+Similar to how we handled the hashing, we leveraged the principal hash to create child groups and assigned users into the child groups by their initial hash segments. This ensured each group had a relatively small number of members but allowed us to retrieve the groups with an O(n) operation.
+
+Finally, we add each child group into the parent group. This kept the number of direct parents smaller (allowing us to only traverse the direct members) which increased performance while allowing for permissions to still work using membership inheritance.
+  
+  
+## Wrapup
+
+  
+Handling massive numbers of users and groups in AEM can cause severe performance issues. By leveraging hashing and sharding group and user folder membership you can handle up to hundreds of thousands of users in AEM with ease.

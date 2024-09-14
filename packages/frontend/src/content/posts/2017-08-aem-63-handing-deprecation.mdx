@@ -1,0 +1,74 @@
+---
+title: "AEM 6.3: Handling Feelings of Deprecation"
+description: The latest version of Adobe Experience Manager, AEM 6.3 includes
+  depreciation of the Apache Felix SCR Annotations and Apache Sling Commons
+  JSON, how do you cope?
+hideInNav: false
+tags:
+  - AEM 6.3
+  - JSON
+  - OSGi
+  - Deprecation
+  - Apache Sling
+  - Apache Felix
+pubDate: 2017-08-02
+display: post
+image: /images/posts/2017-08-03-aem-63-handing-deprecation/doctor.jpg
+published: true
+---
+
+Have you noticed new warnings showing up on your JSONObject? Have your Felix SCR Annotations not been looking quite right? If so, you may have a case of AEM 6.3\. 
+
+![Speak with your Doctor about AEM 6.3](/images/posts/2017-08-03-aem-63-handing-deprecation/doctor.jpg)
+
+AEM 6.3 is the latest version of Adobe Experience Manager. While this new version comes with some great new features such as Content as a Service and Core WCM Components, it also deprecates some common functionalities. Two of the most common functionalities deprecated in AEM 6.3 are Apache Sling Commons JSON and Apache Felix SCR Annotations.
+
+## Apache Sling Commons JSON
+
+Apache Sling's JSON library is used on many projects for simple JSON parsing and generation. Unfortunately, Apache's legal team determined the basis for Apache Sling's Commons JSON library, [org.json](http://www.json.org/) has a unique license which is not compatible with the Apache 2.0 license used by Apache Sling. Thus, the library [was deprecated](http://markmail.org/thread/3kx7kkeaksqiduz5) and is now officially deprecated in AEM 6.3.
+
+![99% of lawyers give the rest a bad name](/images/posts/2017-08-03-aem-63-handing-deprecation/legal.jpg)
+
+So what does this mean? Apache Sling Commons JSON is available in AEM 6.3 and will be available as a download from the Apache Sling website, but is no longer officially supported. If you are using the Apache Sling Commons JSON library in AEM 6.3 you should stop using it immediately and heavily consider removing any existing code to avoid future headaches.
+
+So if Apache Sling Commons JSON is deprecated, what is the replacement? There are a few options:
+
+* [Apache Johnzon](https://johnzon.apache.org) \- This library is used internally used for JSON parsing in Apache Sling and is available as a bundle [download from Sling's website](/sling.apache.org/downloads.cgi).
+* [org.json](http://www.json.org/) \- Adobe's Granite framework includes a bundled version of the org.json Java library
+* [Gson](https://github.com/google/gson) \- Google's JSON library is available as a bundle and version 2.3.0 is available in AEM
+
+The best option depends on your needs. Apache Johnzon is a good choice if you need a stable, open source library, but don't need the full serialization options available in Gson. You will just need to install Apache Johnzon separately, but it's simple to embed it into your code package. 
+
+org.json and Gson just work out of the box, however, they are tied to Adobe's updates and thus may go away or not be updated to a more recent version.
+
+## Apache Felix SCR Annotations
+
+Apache Felix's SCR Annotations are used to easily define OSGi Services, Components and Properties. In OSGi R6, the OSGi consortium has released [annotations for Declarative Services](http://enroute.osgi.org/services/org.osgi.service.component.html). These annotations duplicate the functionality of the Apache Felix SCR Annotations and thus the Apache Felix SCR annotations were deprecated. 
+
+![The Department of Redundant Bureaus](/images/posts/2017-08-03-aem-63-handing-deprecation/clones.jpg)
+
+Here are some good blog posts about this change including:
+
+* [**Migrating from the Apache Felix SCR Annotations to the OSGi Declarative Services Annotations by Carsten Ziegeler**](https://blog.osoco.de/2016/05/migrating-from-the-apache-felix-scr-annotations-to-the-osgi-declarative-services-annotations/)  
+_Covers how to map the old Apache Felix SCR Annotations to the OSGi DS Annotations._
+* [**Official OSGi Declarative Services Annotations in AEM by Nate Yolles**](http://www.nateyolles.com/blog/2017/05/osgi-declarative-services-annotations-in-aem)  
+_Goes deeper and does a good job of explaining the changes to how properties are defined._
+
+The advantages to the new OSGi DS annotations are:
+
+* They're supported! The Apache Felix SCR Annotations are no longer supported and though Open Source are not guaranteed to work in the future.
+* More concise, for example:  
+   * **Apache Felix SCR Annotations:**  
+   ```  
+   @Component(immediate=true)  
+   @Service(MyService.class)  
+   ```  
+   * **OSGI DS Annotations:**  
+   ```  
+   @Service(service={MyService.class},immediate=true)  
+   ```
+* Better property support - the OSGi DS Annotations support settings static properties inline and moving configurable properties to a separate class which makes it easier to write clean code by not mixing property retrieval with service code.
+
+## Other Symptoms of AEM 6.3
+
+If you have other symptoms of AEM 6.3, talk to one of Perficient's Adobe Certified Architects about upgrading your codebase to AEM 6.3.

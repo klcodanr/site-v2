@@ -1,0 +1,62 @@
+---
+title: Safely Iterating the AEM Content Repository
+description: Iterating the AEM repository gets a bad rap. Here's some tips to
+  iterate safely.
+hideInNav: false
+tags:
+  - Adobe Experience Manager
+  - Best Practices
+pubDate: 2023-07-31
+display: post
+image: /images/posts/2023-07/mathew-schwartz-5qRWQEdK7Sg-unsplash.jpg
+published: true
+---
+
+  
+
+Adobe Experience Manager (AEM) is an incredibly powerful tool, giving users and developers almost unlimited capabilities to deliver solutions. However to quote Uncle Ben:
+
+![Great Responsibility](/images/posts/2023-07/great-power.webp)
+
+  
+
+AEM’s content repository is a great power. The AEM content repository gives you tremendous flexibility in organizing and accessing content. However, this great flexibility can create great issues.
+
+One way to introduce these issues is via iterating the repository. Iteration issues are also especially hard to detect because they only occur at scale, both in terms of traffic and content quantity.
+
+For example, a class which recursively traverses the content tree to generate a navigation would execute in a handful of milliseconds on a developer’s laptop but could bring a website to a crawl when trying to generate a navigation from thousands of pages for thousands of concurrent requests. 
+
+These performance issues are critical when serving uncached content either due to poor caching rules or cache flushes. This can introduce a [thundering herd](https://en.wikipedia.org/wiki/Thundering%5Fherd%5Fproblem) where every request attempts to create the cache causing increasing load and slowing other requests until the entire system fails under the load.  
+  
+## Iterating Safely
+
+  
+Iterating the repository doesn't have to be a bad thing, in fact sometime it's necessary. However, to iterate safely you need to follow some rules:  
+  
+### Don't iterate on Request
+
+Any iteration of an unknown size tree should not occur in the context of a request. Of course, there's nuance here. For example if you're building a list of 50 locations for a regional hospital system, iteration may be fine. Building a list of all of the global locations of a fast food giant? Problematic for sure. 
+
+Since large iterations can take a significant amount of time and thus quickly become a ever growing performance problem, iterations should not occur during a request but instead should be cached or returned asynchronously.  
+  
+### Always Iterate Asynchronously
+
+It might be tempting to come out of this thinking: "Oh! I get it, iterating the repository can be expensive, so I'll iterate on the first request and cache the result!"
+
+Even more dangerously, this will _usually_ work... until your site gets more than the usual amount of traffic. Some big event or sale gets announced and all the sudden thousands of requests pour in, causing AEM to spin up more servers, each one churning and ultimately failing to return that first request as each subsequent request is also attempting to iterate and create the cache until either the traffic slows down or the whole things grinds to a halt.
+
+Iterations should always be detached from any synchronous request, running on their own thread to avoid blocking other resources. Since iterations shouldn't be run synchronously, you'll need to have some mechanism to communicate the results of the iteration to consumers. This could include building a cache on instance startup, returning a status and a job indicator to retrieve the job results when done or persisting the cache into the repository.  
+  
+### Keep Iteration Functions Simple
+
+Iteration can be expensive. Just accessing 10,000 resources can take a few seconds, but let's say your iteration function then makes other calls for each resources this can easily turn into an O(n^2) complexity problem. 
+
+For example, lets imagine an iteration function which checks for references to each item. This could easily run a sub-function which traverses a good portion of the repository for every item it iterates. 
+
+Therefore, keep your iteration function simple! Whether this would be performing post-processing in a Job or working with the lowest-possible level APIs, iteration functions should be as performant and simple as possible.  
+  
+## Fin
+
+Iterating the AEM repository doesn't have to cause performance issues, you just need to be careful to ensure that the complexity of what the AEM repository can do doesn't come at the cost of performance. Hopefully these tips help. 
+
+Any other ideas or recommendations? Leave a comment!

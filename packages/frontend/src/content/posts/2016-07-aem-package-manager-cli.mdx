@@ -1,0 +1,132 @@
+---
+title: Managing AEM Packages from the CLI
+description: I created a small script AEM Package Manager to make it easier to
+  manage AEM packages via the command line
+hideInNav: false
+tags:
+  - Adobe Experience Manager
+  - Bash
+  - CLI
+pubDate: 2016-07-21
+display: post
+image: /images/posts/2016-07-12-aem-package-manager-cli/Screenshot.png
+published: true
+---
+
+After the umpteenth time of having to check [this excellent reference](https://gist.github.com/2916697) of the cURL commands for AEM to upload a package, I finally thought "this is silly". So, I created a small script to make it easier to manage packages via the command line.
+
+The [AEM Package Manager](https://github.com/PerficientDigital/AEM-Package-Manager) is just that, a small script to help you manage scripts from the command line. This script is useful for many occasions, such as:
+
+* Exchanging content packages
+* Installing a dependency package outside the build
+* Or when you just want something quicker and easier than using the AEM web UI to upload a package
+
+Using the script is as simple as:
+
+* Downloading the script from [GitHub](https://raw.githubusercontent.com/PerficientDigital/AEM-Package-Manager/master/aem-pkmgr.sh)
+* Making it executable
+* Putting it in your system path
+
+Once you have the script installed, you can use it as shown in the following examples:
+
+### List Packages
+
+Lists all of the packages in the _my\_packages_ group.
+
+```bash
+danklco@EDS-Klco-MAC ~> aem-pkmgr list -g my_packages  
+AVAILABLE PACKAGES
+  
+ForLocalContent_062216  
+ Description:   
+ Version:   
+ Group: my_packages  
+ Path: /etc/packages/my_packages/ForLocalContent_062216.zip
+  
+TagsForLocal_071416  
+ Description:   
+ Version:   
+ Group: my_packages  
+ Path: /etc/packages/my_packages/TagsForLocal_071416.zip
+  
+tes  
+ Description:   
+ Version: tes  
+ Group: my_packages  
+ Path: /etc/packages/my_packages/tes-tes.zip
+```
+
+### Download Package
+
+Downloads the package /etc/packages/my\_packages/TagsForLocal\_071416.zip.
+
+```bash
+danklco@EDS-Klco-MAC ~> aem-pkmgr download -pk /etc/packages/my_packages/TagsForLocal_071416.zip
+DOWNLOADING PACKAGE /etc/packages/my_packages/TagsForLocal_071416.zip...
+ % Total % Received % Xferd Average Speed Time Time Time Current
+ Dload Upload Total Spent Left Speed
+100 41.3M 100 41.3M 0 0 140M 0 --:--:-- --:--:-- --:--:-- 140M
+```
+
+### Upload / Install Package
+
+Uploads and installs the package _TagsForLocal\_071416.zip_.
+
+```bash
+danklco@EDS-Klco-MAC ~> aem-pkmgr upload-install -pk TagsForLocal_071416.zip   
+UPLOADING PACKAGE TagsForLocal_071416.zip...  
+<crx version="1.2.2" user="admin" workspace="crx.default">  
+ <request>  
+ <param name="file" value="TagsForLocal_071416.zip"/>  
+ <param name="force" value="true"/>  
+ <param name="install" value="true"/>  
+ </request>  
+ <response>  
+ <data>  
+ <package>  
+ <group>my_packages</group>  
+ <name>TagsForLocal_071416</name>  
+ <version></version>  
+ <downloadName>TagsForLocal_071416.zip</downloadName>  
+ <size>43330621</size>  
+ <created>Wed, 20 Jul 2016 12:41:05 -0500</created>  
+ <createdBy>admin</createdBy>  
+ <lastModified>Wed, 20 Jul 2016 12:40:26 -0500</lastModified>  
+ <lastModifiedBy>admin</lastModifiedBy>  
+ <lastUnpacked>Wed, 20 Jul 2016 15:33:04 -0500</lastUnpacked>  
+ <lastUnpackedBy>admin</lastUnpackedBy>  
+ </package>  
+ <log>  
+Installing content...  
+Collecting import information...   
+Installing node types...   
+- rep -&gt; internal  
+- mix -&gt; http://www.jcp.org/jcr/mix/1.0  
+- nt -&gt; http://www.jcp.org/jcr/nt/1.0  
+- sling -&gt; http://sling.apache.org/jcr/sling/1.0  
+- cq -&gt; http://www.day.com/jcr/cq/1.0  
+- sling:Folder  
+- sling:Redirect  
+- sling:Resource  
+- cq:ReplicationStatus  
+- cq:Tag  
+- rep:RepoAccessControllable  
+Installing privileges...   
+Importing content...   
+- /  
+- /etc  
+- /etc/tags  
+[... trim ...]  
+saving approx 0 nodes...   
+Package imported.   
+Package installed in 55497ms.  
+ </log>  
+ </data>  
+ <status code="200">ok</status>  
+ </response>  
+</crx>
+```
+
+Hopefully, this helps you manage AEM packages via the command line. You can find more detailed usage documentation on the [GitHub site](https://github.com/PerficientDigital/AEM-Package-Manager).
+
+If you have any questions or you'd like to see something added, leave a comment here or [create an issue](https://github.com/PerficientDigital/AEM-Package-Manager/issues).

@@ -1,0 +1,222 @@
+---
+title: "Thoughts on REST APIs: Open API v. Hypermedia"
+description: Building a great API is much more than picking the right tech, the
+  quality of an API is driven by the quality of the documentation, upgrade path,
+  libraries and the consistency and execution of the API. However, bu chosing
+  the most applicable format you can get a great start and best position your
+  API for the consumers needs.
+hideInNav: false
+tags:
+  - Architecture
+  - RESTful Web Services
+  - API Design
+pubDate: 2021-11-03
+display: post
+image: /images/posts/2021-10/Direction-Hero.jpeg
+published: true
+---
+
+  
+It's been interesting moving from the consulting side of technology to the development side, from using APIs to building them. While I designed and implemented a few APIs over the course of my consulting career, most were targeted to specific consumers within the organization or affiliates, not general-purpose APIs. This has been educational, thinking bigger and broader and no longer having the luxury to email everyone using the API to tell them I'm making a change.
+
+Experienced consumers of APIs, instinctively can tell a good or bad API, like Justice Potter Stewart, ["\[you\] know it when \[you\] see it."](https://en.wikipedia.org/wiki/I%5Fknow%5Fit%5Fwhen%5FI%5Fsee%5Fit) But what makes a good API? And more importantly what makes a bad API?   
+
+In my experience, a good API meets all of these criteria:
+
+1. Clearly and well documented
+2. Applicable to the desired function
+3. Intuitive to explore
+4. Has a sane upgrade path
+5. Easy to read and debug
+Bonus criterion #6:  
+* Not XML / SOAP
+  
+## The Temptation of Consistency
+
+  
+Consistency in technology [is ](https://skiplist.com/insights/blog-software-principle-6-consistency-is-king)_[generally](https://skiplist.com/insights/blog-software-principle-6-consistency-is-king)_[ a good thing](https://skiplist.com/insights/blog-software-principle-6-consistency-is-king). Thus by the transitive property, most architects could conclude being consistent about the form of APIs would be a good thing as well. This is true within an API surface, but unfortunately across APIs, this misses a vital criterion of a good API, they must be applicable to their desired function.   
+
+Truth is, 4/5 of the criterion for a good API have nothing to do with what technology or specification type you use, they're more of API hygiene and execution. The only criterion that's dependent on the technology you choose (because using XML/SOAP isn't _really_ a choice in 2021) is what technology best fits your desired function for the API. After all, who wants to fit a square peg in a round hole?  
+
+![Should we really make our user put up with this?](/images/posts/2021-10/apollo-13.jpg)
+
+  
+Among the multiple different methods for defining APIs, we'll consider two REST API schemes Hypermedia and OpenAPI.  
+
+  
+### Hypermedia
+
+  
+REST APIs use resource URLs over HTTP methods to statelessly exchange data between loosely coupled clients and servers.   
+
+One of the key criteria for a REST API is that the URLs should be treated as identifiers and not inspected or manipulated except as defined in templated URLs.  
+
+Hypermedia APIs extend REST by representing resources and links to other resources within the response body. For example in HAL, a resource could look like:
+
+```json
+{
+  "_links": {
+      "self": {
+        "href": "/api/resource"
+      }
+      "search": {
+        "href": "/api/search{?q}",
+        "templated": true
+      }
+    },
+    "name": "A Resource",
+    "property": "Value"
+}
+```
+
+  
+
+Hypermedia APIs are useful for representing content-driven applications and are due to the loose coupling are flexible and scalable.   
+
+Due to their unstructured nature, Hypermedia APIs can be more difficult for consumers to use and are difficult to implement well, however for certain use cases Hypermedia APIs are the best choice to support the flexibility needs.  
+
+  
+### Open API
+
+  
+Producing an API is one thing, but what about consumers? Open API's are REST-like, with one big difference: consumers are expected to manipulate URLs. Open APIs are defined with Swagger 2.0 or Open API 3.0 YAML spec files which define the endpoints and expected requests and responses.
+
+Thus, consumers treat the API as a series of command-responses with each endpoint taking a rigid, structured request and returning a similarly structured response.  
+
+Using the YAML spec file, consumers have an exacting specification to understand the API and even auto-generate client code.
+
+An extremely simple API could look like the below:  
+
+```yaml
+openapi: 3.0.1
+info:
+  title: Simple API
+  version: "1.0"
+servers:
+- url: //apis.danklco.com/simple-api/
+paths:
+  /resource:
+    get:
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: string
+        404:
+          description: Not Found
+  /search:
+    get:
+      parameters:
+      - name: q
+        in: query
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: string
+        404:
+          description: Not Found
+```
+
+  
+
+An important aspect of producing an OpenAPI spec is that you can be imperative about the expected requests and responses indicating the shape and format of every interaction with the service. This allows your consumer to work with the API with confidence, however it does constrain your flexibility as an API developer.
+
+  
+## Best of Both Worlds
+
+  
+For recent APIs, I've been incorporating both OpenAPI and Hypermedia principals, producing an API which is flexible, but also with a defined schema.   
+
+Luckily, [Spring](https://spring.io/) makes this easy. First you'll need the following dependencies in your pom.xml:
+
+  
+
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-hateoas</artifactId>
+</dependency>
+<dependency>
+    <groupId>io.springfox</groupId>
+    <artifactId>springfox-swagger2</artifactId>
+</dependency>
+```
+
+  
+
+With the dependencies included, you can add the [Swagger annotations](https://docs.swagger.io/service/java/tomcat-jersey-1.html#annotate-your-code) to auto-generate a Swagger spec for the service by decorating the parameters and responses.
+
+```java
+@GetMapping("/{id}")
+@ApiResponses(value = {  @ApiResponse(code = 200, message="Successful response", response = MyResponseModel.class) })
+public void getBatch(@ApiParam @PathVariable String id) {
+    [...]
+}
+```
+
+  
+
+Your models can then add HAL-style links to support Hypermedia-traversal by extending the [RepresentationModel](https://docs.spring.io/spring-hateoas/docs/current/api/org/springframework/hateoas/RepresentationModel.html) and adding [Link](https://docs.spring.io/spring-hateoas/docs/current/api/org/springframework/hateoas/Link.html) objects.
+
+```java
+@Value
+@EqualsAndHashCode(callSuper = false)
+public class MyResponseModel extends RepresentationModel<MyResponseModel> {
+
+    private final String message;
+
+    @JsonCreator
+    public StartBatchResponse(@JsonProperty("message") String message) {
+        this.message = message;
+        this.add(Link.of("/messages?{messageId}", "messages"));
+    }
+}
+```
+
+  
+
+To return a collection of models you can instead use return a [CollectionModel](https://docs.spring.io/spring-hateoas/docs/current/api/org/springframework/hateoas/CollectionModel.html) of the model objects.
+
+```java
+@GetMapping("/messages")
+@ApiOperation(value = "Get Messages", notes = "Gets all of the available messages")
+@ApiResponses(value = { @ApiResponse(code = 200, message = "Success", response = CollectionModel.class),
+        @ApiResponse(code = 400, message = "Bad Request", response = ErrorResponse.class),
+        @ApiResponse(code = 500, message = "Internal Error", response = ErrorResponse.class) })
+public ResponseEntity<CollectionModel<MyResponseModel>> getMessages() throws ServiceException {
+    [...]
+    return new ResponseEntity<>(CollectionModel.of(messages), HttpStatus.OK);
+}
+```
+
+  
+
+With the combination of Spring's support for HATEOS / HAL Hypermedia APIs and Swagger 2 Open API definitions, you can produce an API with the best of these two REST API types.  
+  
+## What about GraphQL?
+
+  
+GraphQL is a different beast than a REST-based API. While the quality of an API isn't directly related to it's format, choosing GraphQL or REST significantly influences the usability and form of the API.  
+
+On the plus side, GraphQL APIs provide maximum flexibility and performance for consumers by enabling the consumer to retrieve only the resources they need and join multiple objects into a single response. This does come at a cost as GraphQL responses cannot be easily cached and require a more complex interplay between server and client.   
+
+GraphQL does include type support, however with with OpenAPI specifications, you can create an similarly typed client library with REST (though Hypermedia-only APIs do make this more challenging).  
+
+When choosing REST vs. GraphQL, consider the primary purpose of the API. Is the API publishing data in a standard format? If so, REST would probably be the best choice. On the other hand if the API requires querying for data or joining disparate objects together, GraphQL would be a better choice.
+
+  
+
+## Final Thoughts   
+
+  
+Building a great API is much more than picking the right tech, the quality of an API is driven by the quality of the documentation, upgrade path, libraries and the consistency and execution of the API. However, bu chosing the most applicable format you can get a great start and best position your API for the consumers needs.
+
+  

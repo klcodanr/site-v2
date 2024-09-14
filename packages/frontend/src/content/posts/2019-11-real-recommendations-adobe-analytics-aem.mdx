@@ -1,0 +1,217 @@
+---
+title: "Bridging the Data / Content Gap: Bringing Adobe Analytics into AEM"
+description: In this blog post, we'll walk through a simple example showing how
+  to retrieve Adobe Analytics Workspace report data from Adobe Experience
+  Manager using Adobe I/O.
+hideInNav: false
+tags:
+  - Adobe Analytics
+  - Adobe Experience Manager
+  - Adobe I/O
+pubDate: 2019-11-14
+display: post
+image: /images/posts/2019-11/bridge.jpg
+published: true
+---
+
+  
+As marketers we work tirelessly to extract meaningful data from our digital experiences, but how often do we actually close the loop?
+
+In this blog post, we'll walk through of how to retrieve Adobe Analytics Workspace report data from Adobe Experience Manager using Adobe I/O. Our use case is that we want to prompt the user of a search component in AEM with the top search terms as reported by Adobe Analytics.  
+  
+## Step 1: Setup AEM & Adobe Analytics I/O Integration
+
+  
+To get started, we can use the excellent [Adobe I/O APIs feature available in the ACS AEM Commons](https://adobe-consulting-services.github.io/acs-aem-commons/features/adobe-io-apis/index.html). With this API we can avoid the tedious step of creating the [JWT authentication with Adobe I/O](https://www.adobe.io/authentication/auth-methods.html#!AdobeDocs/adobeio-auth/master/JWT/JWT.md).
+
+We still must gather the required credentials to connect to Adobe I/O.
+
+First, in AEM navigate to the OSGi Configuration Console and open [ACS AEM Commons - Adobe I/O Integration Configuration](http://localhost:4502/system/console/configMgr/com.adobe.acs.commons.adobeio.service.impl.IntegrationServiceImpl). You should get a screen like this:
+
+  
+
+![ACS AEM Commons Adobe I/O Integration Configuration OSGi Console](/images/posts/2019-11/acs-adobe-io-configuration.png)
+
+  
+
+Next, login to [console.adobe.io](https://console.adobe.io/integrations) and navigate to your integration. From here you will access the credentials for connecting to Adobe I/O. If you have not created an integration already, [follow the steps to create a Service Account Integration](https://www.adobe.io/authentication/auth-methods.html#!AdobeDocs/adobeio-auth/master/AuthenticationOverview/ServiceAccountIntegration.md). Make sure to grant your Service Account access to the Adobe Analytics Service.
+
+Most of the credentials we need are located on the initial screen for the integration:
+
+  
+
+![Adobe I/O Integration](/images/posts/2019-11/adobe-io-integration.png)
+
+  
+From the Adobe I/O Integration Overview screen, copy the following fields into the ACS AEM Commons - Adobe I/O Integration OSGi configuration:
+
+* API Key (Client ID) -> ClientId
+* Client secret -> ClientSecret
+* Organization ID -> OrgId
+* Technical account ID -> TechAccountId
+
+Your PrivateKey should be available on your computer and should match one of the Public keys associated with the I/O Integration.
+
+Finally, set the LoginClaim to: `https://ims-na1.adobelogin.com/s/ent_analytics_bulk_ingest_sdk` and save the configuration.
+
+  
+## Step 2: Configure I/O Endpoint Instance
+
+  
+Now that we have AEM configured to connect via Adobe I/O, we can configure the Analytics API 2.0 connection. Reopen the OSGi Configuration Console and select [ACS AEM Commons - Adobe I/O Endpoint Factory Configuration +](http://localhost:4502/system/console/configMgr/com.adobe.acs.commons.adobeio.service.impl.EndpointServiceImpl).
+
+  
+
+![ACS AEM Commons - Adobe I/O Endpoint Factory Configuration](/images/posts/2019-11/acs-endpoint-config.png)
+
+  
+
+The ID is arbitrary, set it to something meaningful and concise. Set the Method to POST and then enter the following for the URL Endpoint:
+
+```
+https://analytics.adobe.io/api/{{companyId}}/reports
+```
+
+What is companyId? It's not clear / straightforward from the API, but this is _another_ ID for your company you can't get directly from the I/O Console. The easiest way to get this is to use the [Adobe Analytics 2.0 Discovery Endpoint](https://github.com/AdobeDocs/analytics-2.0-apis/blob/master/discovery.md). Since this won't change you can keep the value handy. 
+
+Finally, add the following Service specific Headers:  
+
+* x-api-key:`{{API Key (Client ID)}}`
+* x-proxy-global-company-id:{`companyId`}
+* Accept:application/json
+* Content-Type:application/json
+And save the configuration.  
+  
+## Step 3: Get Workspace Request
+
+  
+Adobe Analytics Workspace natively uses the Adobe Analytics 2.0 API, so we can reproduce any Workspace report via the API. In our case, we'll create a simple report with just the prop we want to report on.  
+
+  
+
+![Simple Adobe Analytics Workspace Report](/images/posts/2019-11/workspace-report.png)
+
+  
+Once you have the report created, follow the [guide on enabling Workspace debugging,](https://github.com/AdobeDocs/analytics-2.0-apis/blob/master/reporting-tricks.md) select the bug icon, and then copy the JSON Request. You should have something like this:  
+  
+
+```json
+{
+    "rsid": "myreportsuite",
+    "globalFilters": [
+        {
+            "type": "dateRange",
+            "dateRange": "2019-11-01T00:00:00.000/2019-12-01T00:00:00.000"
+        }
+    ],
+    "metricContainer": {
+        "metrics": [
+            {
+                "columnId": "0",
+                "id": "metrics/occurrences",
+                "sort": "desc"
+            }
+        ]
+    },
+    "dimension": "variables/propXX",
+    "settings": {
+        "countRepeatInstances": true,
+        "limit": 50,
+        "page": 0,
+        "nonesBehavior": "exclude-nones"
+    },
+    "statistics": {
+        "functions": [
+            "col-max",
+            "col-min"
+        ]
+    }
+}
+```
+
+  
+
+## Step 4: Create OSGi Service
+
+  
+The final step is to create the OSGi Service to connect to the Adobe Analytics I/O API from AEM. This service will use Endpoint Instance ID we created in Step 2 to reference the correct [EndpointService](https://adobe-consulting-services.github.io/acs-aem-commons/apidocs/com/adobe/acs/commons/adobeio/service/EndpointService.html) instance and call the [perform\_IOAction method](https://adobe-consulting-services.github.io/acs-aem-commons/apidocs/com/adobe/acs/commons/adobeio/service/EndpointService.html#performIO%5FAction-com.google.gson.JsonObject-) with the Adobe Analytics Workspace JSON we retrieved in Step 3\. 
+
+In the code sample below, I'm creating a Scheduled task to retrieve the values every 24 hours. 
+
+  
+
+```java
+package com.company.internal.scheduler;
+
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
+
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.metatype.annotations.AttributeDefinition;
+import org.osgi.service.metatype.annotations.Designate;
+import org.osgi.service.metatype.annotations.ObjectClassDefinition;
+
+import com.adobe.acs.commons.adobeio.service.EndpointService;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
+@Component(service = Runnable.class, property = { "scheduler.expression=0 1 0 ? * *" })
+@Designate(ocd = AnalyticsReport.Config.class)
+public class AnalyticsReport implements Runnable {
+
+	@ObjectClassDefinition(name = "Analytics Report")
+	@interface Config {
+
+		@AttributeDefinition(name = "Report Suite ID")
+		String reportSuiteId();
+
+		@AttributeDefinition(name = "Variable ID")
+		String variableId();
+
+	}
+
+	private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd:00:00.000");
+	private Config config;
+
+	public void activate(Config config) {
+		this.config = config;
+	}
+
+	@Reference(target = "(id=analytics-report)")
+	private EndpointService analyticsReport;
+
+	public void run() {
+		JsonParser parser = new JsonParser();
+		Date end = new Date();
+		Calendar cal = new GregorianCalendar();
+		cal.setTime(end);
+		cal.add(Calendar.DAY_OF_MONTH, -30);
+		Date start = cal.getTime();
+		JsonElement json = parser.parse("{\\"rsid\\":\\"" + config.reportSuiteId()
+				+ "\\",\\"globalFilters\\":[{\\"type\\":\\"dateRange\\",\\"dateRange\\":\\"" + DATE_FORMAT.format(start) + "/"
+				+ DATE_FORMAT.format(end)
+				+ "\\"}],\\"metricContainer\\":{\\"metrics\\":[{\\"columnId\\":\\"0\\",\\"id\\":\\"metrics/occurrences\\",\\"sort\\":\\"desc\\"}]},\\"dimension\\":\\"variables/"
+				+ config.variableId()
+				+ "\\",\\"settings\\":{\\"countRepeatInstances\\":true,\\"limit\\":50,\\"page\\":0},\\"statistics\\":{\\"functions\\":[\\"col-max\\",\\"col-min\\"]}}");
+		JsonObject ioResponse = parser.parse(analyticsReport.performIO_Action(json.getAsJsonObject()).toString())
+				.getAsJsonObject();
+		
+		// TODO: Store / do something with the response
+
+	}
+}
+```
+
+  
+And there you have it! In four steps, we've retrieved data out of Adobe Analytics into Adobe Experience Manager using Adobe I/O. Once you have the data you can save the values into the AEM Repository or make it available directly from an OSGi service.  
+  
+## Bonus: Swagger Java Code Generation
+
+  
+In the example above, I'm using Gson to parse / generate the JSON requests for Adobe I/O. Since Adobe publishes Swagger documentation it would be possible to use the [Open API Generator Maven Plugin](https://github.com/OpenAPITools/openapi-generator/tree/master/modules/openapi-generator-maven-plugin) to generate the models for accessing and retrieving data from the Adobe Analytics 2.0 API.
+
+  

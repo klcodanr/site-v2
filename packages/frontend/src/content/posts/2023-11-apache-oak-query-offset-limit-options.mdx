@@ -1,0 +1,49 @@
+---
+title: "New(ish) in Apache Oak: Query Offset / Limit Options"
+description: Now in Apache Oak you can specify limit and offset options in the
+  body of Oak queries
+hideInNav: false
+tags:
+  - Oak Search & Indexing
+  - JCR-SQL2
+  - Apache Jackrabbit Oak
+pubDate: 2023-11-14
+display: post
+image: /images/posts/2022-09/limit-hero.jpg
+published: true
+---
+
+I had the opportunity to work with the Oak indexing team this year and took the opportunity scratch an itch I've had for some time: [adding support for offset and limit options](https://jackrabbit.apache.org/oak/docs/query/query-engine.html#query-option-offset-limit) in any Oak query including [JCR-SQL2](https://jackrabbit.apache.org/oak/docs/query/grammar-sql2.html#options) and [xpath](https://jackrabbit.apache.org/oak/docs/query/grammar-xpath.html#options).
+
+The new offset and limit options are available in [Apache Jackrabbit Oak Search v1.44.0](https://search.maven.org/artifact/org.apache.jackrabbit/oak-search/1.44.0/bundle) which is included in [Adobe Experience Manager as a Cloud Service release 8182+](https://experience.adobe.com/#/downloads).
+
+To use the option, add the limit and offset options in the end of the query, for example if I wanted to get the first 10 _nt:file_ nodes under _/content/dam_:  
+
+### JCR-SQL2
+
+```sql
+SELECT * FROM [nt:file] AS s WHERE ISDESCENDANTNODE([/content/dam]) OPTION(LIMIT 10)
+```
+
+### xpath
+```
+/jcr:root/content/dam//element(*,nt:file) option(limit 10)
+```
+
+  
+
+Now, you might be asking, can't I already set the [limit](https://developer.adobe.com/experience-manager/reference-materials/spec/jsr170/javadocs/jcr-2.0/javax/jcr/query/Query.html#setLimit%28long%29) and [offset](https://developer.adobe.com/experience-manager/reference-materials/spec/jsr170/javadocs/jcr-2.0/javax/jcr/query/Query.html#setOffset%28long%29) in the javax.jcr.query.Query object? You certainly can if you have access to the Query object... but what if you wanted to use [an API](https://sling.apache.org/apidocs/sling12/org/apache/sling/api/resource/ResourceResolver.html#findResources-java.lang.String-java.lang.String-) or [a UI](https://experienceleague.adobe.com/docs/experience-manager-cloud-service/content/implementing/developer-tools/crxde.html?lang=en) that doesn't allow you to access the Java Query object directly.   
+
+As I discussed in [Demystifying Oak Search Part 2: Traversal](/posts/2022-06-demystifying-oak-search-query-traversal), you should always set a limit on queries, even when writing a test query in CRXDE. 
+
+To page through results, you can use the offset option as well:  
+
+```sql
+SELECT * FROM [nt:file] AS s WHERE ISDESCENDANTNODE([/content/dam]) OPTION(LIMIT 10, OFFSET 10)
+```
+
+  
+
+_However_ to calculate the offset, Oak needs to read the nodes until it reaches the offset. This can cause major performance / memory issues for large offsets and even trigger a traversal error. Instead, the recommended approach to page large result sets is to use [keyset pagination](https://jackrabbit.apache.org/oak/docs/query/query-engine.html#keyset-pagination).
+
+Hope you find the new feature as useful as I have. Happy querying!

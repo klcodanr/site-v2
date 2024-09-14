@@ -1,0 +1,72 @@
+---
+title: Custom Adobe Analytics Tracking Using Google Tag Manager
+description: Demonstrating a flexible and scalable method for tracking Adobe
+  Analytics through Google Tag Manager and the GTM DataLayer.
+hideInNav: false
+tags:
+  - Adobe Analytics
+  - Google Tag Manager
+  - Custom Analytics
+pubDate: 2017-04-12
+display: post
+image: /images/posts/2017-04-17-adobe-analytics-custom-tracking-google-tag-manager/aa-gtm-blog-header.png
+published: true
+---
+
+On a recent project, I'd gotten an interesting request to implement custom Adobe Analytics tracking for a web application using Google Tag Manager (GTM) for tag management. The customer already used Google Tag Manager for tracking AdSense and other ad tools but they had a legacy implementation of Adobe Analytics that they wanted to use for Analytics reporting. One of their challenges with this implementation is that it used a combination of inline scripts and s\_code.js customizations which required developer support to make analytics tracking changes.
+
+Given the effort required to rip and replace their legacy analytics implementation and the limited scope of the engagement, it made sense to move forward with using Google Tag Manager to manage Adobe Analytics, but what's the best approach?
+
+In order to accomplish the client's goal of being able to change analytics without making code changes, I decided to use GTM's DataLayer to push data from the web application into GTM and the retrieve the information from the DataLayer and persist it into Adobe Analytics.
+
+## Step 1: Save Data to the DataLayer
+
+Knowing that the client could eventually decide to upgrade their Analytics implementation, I decided to separate the tracking logic out into a separate JavaScript function, so that a single function call would need to be updated rather than updating the dozen or so event calls within the app:
+
+```
+App.util.track: function(data){
+  window.dataLayer = window.dataLayer || [];
+  dataLayer.push(data);
+}
+```
+
+Then I added the event calls as appropriate into the app:
+
+```
+App.util.track({
+  'event': 'app_calculationStart',
+  'app_region': App.region
+});
+```
+
+I also ensured that all of the events occurring with the app and all the data which could be potentially captured are persisted into the DataLayer, even though not all of it is currently sent to Adobe Analytics. This ensures in the future if the client wants to add tracking, it does not require code changes.
+
+## Step 2: Create an Event Trigger in GTM
+
+Every tracking object contained a named event, these events will cause triggers to fire inside GTM. To create the trigger, login to GTM, select the workspace and then select Triggers >> New, this will bring up the new trigger configuration screen. From here, you can create a trigger for your custom event, in this case, "app\_calculationStart"
+
+![Setting Up a Trigger in GTM](/images/posts/2017-04-17-adobe-analytics-custom-tracking-google-tag-manager/trigger.png)
+
+## 
+
+## Step 3: Implement the Adobe Analytics Tag in GTM
+
+Once I created the trigger, it was time to create the custom tag for the trigger to invoke. To do this, I selected Tags >> New then chose my trigger from the Triggering selection.
+
+Next, I selected Custom HTML for the tag type. This allows for adding the JavaScript to map the data in the GTM DataLayer into the props, eVars and events in Adobe Analytics. For example, for the event app\_Calculate, I wanted to trigger event54 in Adobe Analytics and track the region, category and device.
+
+![Custom HTML Tag](/images/posts/2017-04-17-adobe-analytics-custom-tracking-google-tag-manager/custom-html-tag.png)
+
+The key section of code is: 
+
+```
+google_tag_manager[{{Container ID}}].dataLayer
+```
+
+At runtime, the `{{Container ID}}` token will be replaced with the ID of the container. This allows me to retrieve the variables I previously saved into the GTM DataLayer and subsequently persist them into Adobe Analytics. 
+
+## 
+
+## That's it!
+
+Once I had it all figured out the process was pretty easily repeatable. The data is now flowing seamlessly through the two systems and in the future if the client wants to track more variables or events than were initially defined, they can make a simple update to Google Tag Manager.

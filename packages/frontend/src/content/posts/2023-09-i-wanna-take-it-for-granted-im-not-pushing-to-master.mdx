@@ -1,0 +1,66 @@
+---
+title: I wanna take it for granted; I'm not pushing to master
+hideInNav: false
+tags:
+  - Open Source
+  - GitHub
+  - Development
+pubDate: 2023-09-12
+display: post
+image: /images/posts/2023-09/ashley-jurius-1ZvFTjgEodk-unsplash.jpg
+published: true
+---
+
+  
+Sometimes when I accidentally push to the wrong branch in git, things get so crazy I want to [head to the beach and play guitar at you](https://www.youtube.com/watch?v=uJLgKXp375I):
+
+> I just want to push code around,  
+> Well, I will, well, I will  
+> I don't wanna push to master  
+> No, I don't, no, I don't  
+> I wanna take it for granted  
+> Yeah, I wanna take it for granted  
+> Well, I will, well, I will
+
+But seriously, there are few things more annoying than realizing that you accidentally pushed code to the main / master branch instead of a PR branch, especially when branch protection is not enabled for a repository.  
+  
+Frustratingly, this has happened to me a few times recently, so I wrote a [pre-push hook](https://gist.github.com/klcodanr/9cb36294d9e76c0b392b3209241ad900#file-pre-push) to warn me if I'm about to push into a branch with a name containing main, master or release.  
+  
+The hook is enabled globally, so if I'm working on a project and try to push to main, I get a warning like:  
+  
+
+![Screenshot of the Pre-Push warning](/images/posts/2023-09/Screenshot 2023-09-08 at 9.40.57 AM.png)
+
+  
+
+As it's a warning, I can still allow the push to continue by pressing Y, but most of the time the warning is sufficient to avoid pushing to the wrong branch by accident.  
+  
+## How do I get it?
+
+  
+You can install the hook from the Github Gist with the following commands:
+
+  
+
+```bash
+mkdir -p ~/.githooks
+curl https://gist.githubusercontent.com/klcodanr/9cb36294d9e76c0b392b3209241ad900/raw/915f2d42d8dec5a52e1ce72b69e22d17925d6356/pre-push --output ~/.githooks/pre-push
+chmod +x ~/.githooks/pre-push
+git config --global core.hooksPath ~/.githooks/
+```
+
+  
+
+Want to try it out first? You can run [this Dockerfile](https://gist.github.com/klcodanr/9cb36294d9e76c0b392b3209241ad900#file-dockerfile) to demo the functionality in the \~/local folder:
+
+  
+
+```bash
+docker build . -t hook-test
+docker run -it hook-test /bin/bash
+```
+
+  
+Hopefully you find the pre-push hook as useful as I do. While ideally this is also enforced at the repository level, but especially when working on multiple legacy projects you can never be sure how the repositories are configured.
+
+  

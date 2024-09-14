@@ -1,0 +1,49 @@
+---
+import { Icon } from "astro-icon/components";
+const today = new Date();
+---
+
+<footer>
+  &copy; {today.getFullYear()} Dan Klco All rights reserved.
+  <div class="social-links">
+    <a
+      href="https://github.com/klcodanr"
+      target="_blank"
+      aria-label="Go to Dan's Github home"
+    >
+      <Icon name="mdi:github" size={32} />
+    </a>
+    <a
+      href="https://www.linkedin.com/in/danielklco/"
+      target="_blank"
+      aria-label="Go to Dan's LinkedIn home"
+    >
+      <Icon name="mdi:linkedin" size={32} />
+    </a>
+    <a href="/search" aria-label="Search the site">
+      <Icon name="mdi:search" size={32} />
+    </a>
+  </div>
+</footer>
+<style>
+  footer {
+    padding: 2em;
+    background: var(--gray-dark);
+    color: var(--gray-light);
+    text-align: center;
+  }
+  .social-links {
+    display: flex;
+    justify-content: center;
+    gap: 1em;
+    margin-top: 1em;
+  }
+  .social-links a {
+    text-decoration: none;
+    color: var(--gray-light);
+  }
+  .social-links a:hover {
+    color: var(--gray-light);
+    opacity: 0.8;
+  }
+</style>

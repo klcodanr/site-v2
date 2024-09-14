@@ -1,0 +1,19 @@
+---
+const { media } = Astro.props;
+---
+
+<div class="container">
+  <iframe title="Embed Frame" src={media}></iframe>
+</div>
+
+<style>
+  .container {
+    display: flex;
+    justify-content: center;
+  }
+
+  iframe {
+    aspect-ratio: 16 / 9;
+    width: 100% !important;
+  }
+</style>

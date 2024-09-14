@@ -1,0 +1,20 @@
+---
+title: Vault with a Repository on Port 80
+description: How to fix errors when connecting to a CQ server running on port 80 with VLT
+hideInNav: false
+tags:
+  - Adobe CQ
+  - VLT
+pubDate: 2009-10-14
+display: post
+image: ""
+published: true
+---
+
+ Recently, when using Vault to connect to an Integration server, I started getting an the following error when Vault tried to connect.
+
+ \[ERROR\] import: java.lang.IllegalArgumentException: Workspace missmatch.
+
+ The error, besides being misspelled, was not terribly helpful, but eventually I figured out when using Vault to connect to a repository running on port 80, you should not specify the port. Normally, when you you use Vault, you specity the port the server is running on as part of the url, for example: http://localhost:4502/crx/server, however with port 80 this causes an error.
+
+ For those not familiar, Vault is a tool provided by Adobe for connecting to CQ and CRX repositories. You can read more about it [here](http://dev.day.com/docs/en/cq/current/developing/developmenttools/developing%5Fwith%5Feclipse.html#Installing%20FileVault%20%28VLT%29).

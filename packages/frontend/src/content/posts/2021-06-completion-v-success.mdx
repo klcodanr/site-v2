@@ -1,0 +1,66 @@
+---
+title: Completion vs Success
+description: Conflating completion and success makes developer's jobs harder.
+  These two ideas are similar, but there are significant differences in the
+  meaning and situations where the two concepts are useful.
+hideInNav: false
+tags:
+  - Architecture
+  - Adobe Experience Manager
+  - Apache Sling
+pubDate: 2021-06-28
+display: post
+image: /images/posts/2021-06/race-hero.jpg
+published: true
+---
+
+  
+Naming in programming is hard enough. It's even harder when you don't have a clear scope of what your code is trying to do. 
+
+One of the common places where I see developers make their jobs harder when coming up with names is conflating completion and success. These two ideas are _similar_, but there's significant differences in the meaning and situations where the two concepts are useful.
+
+To understand how these two concepts are different, imagine we're talking about a car race. At some point, the race will start, be in progress and complete, e.g. cars will stop going around the track.
+
+But will the race itself be successful? What meaning does success have in context of the race?
+
+In addition, in the context of the race, completion isn't possible to determine based on any individual car. Presumedly at some point a car will pass the finish line, but race won't yet be complete. Many cars may still be racing or some may never finish having spun out or crashed.   
+  
+
+## Completion
+
+  
+Just like our race, completion measures groups of items with status. What we care about is not that they are successful, but whether the group as a whole has not yet started, is in progress or is complete. 
+
+It's important to note, that completion does not denote that every item has completed successfully or even completed at all. Just that the group is done and its resources can be reclaimed.
+
+Why wouldn't we track the success of the group? Unless the entire group is atomic (e.g. the group is only updated if every operation succeeds) trying to track the success of the group leads to strange situations where you need to understand partial success. Is the job successful only if all items complete? A majority? What happens when the job is done, but all items failed? 
+
+By conflating success and completion, we make a simple question: "is the job done?" much harder to answer.   
+  
+
+## Success
+
+  
+Unlike the race itself, what matters for each car or each individual item is success, not just completion. Of course it is important to know if the individual is complete, but did they successfully complete or fail is critical and a binary choice.  
+  
+The key difference why success makes sense in the context of an item vs a group of items is that an item is atomic and therefore each item is either successful or not. Since groups of items are _not_ atomic, the group itself may be complete, but the individual items can have different success states.  
+  
+
+## Completion vs Success
+
+  
+The differentiation is clear: 
+
+* When dealing with groups of atomic items where the group is not atomic: **Completion**
+* When dealing with an atomic item: **Success**
+
+## Where this Falls Apart
+
+  
+Unfortunately, AEM / Apache Sling / Apache Jackrabbit's best practices make this more challenging. 
+
+When saving a large number of Nodes / Resources, the best practice is to save via batches for performance reasons. Individual commits are expensive as they incur significant chatter with the backend whereas saving more than 1000 resources can also negatively influence performance.  
+
+And now are atomicity becomes much more complicated. The overall job isn't atomic and the items aren't atomic within themselves, the batch is atomic. So how do we know when the batch fails which item caused the failure?
+
+Truth is, there's not a great answer and the correct behavior depends on your application.  The simplest option would be to just log and fail, but this will result in a large number of failed items potentially caused by one issue. An alternative approach would be to, when the batch fails, convert the batch into individual items and process each separately.

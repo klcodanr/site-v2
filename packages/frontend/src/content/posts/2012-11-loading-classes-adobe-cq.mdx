@@ -1,0 +1,53 @@
+---
+title: Loading Classes in Adobe CQ
+description: Learn how to dynamically load classes in Adobe CQ
+hideInNav: false
+tags:
+  - Adobe CQ
+  - Apache Sling
+  - ClassLoader
+pubDate: 2012-11-02
+display: post
+image: /images/posts/shared/sling.jpeg
+published: true
+---
+
+So you’ve got a problem. You need to load a resource from the Classpath or you need to dynamically load a class and you’re using Adobe CQ. Since Adobe CQ uses an OSGi container, a regular [ClassLoader](http://docs.oracle.com/javase/6/docs/api/java/lang/ClassLoader.html) will not be able to retrieve the class information from the OSGi Bundles.
+
+Never fear, Apache Sling provides the [Dynamic ClassLoader Service](http://sling.apache.org/apidocs/sling6/org/apache/sling/commons/classloader/package-summary.html). This OSGi Service allows you to retrieve a ClassLoader which will allow you to interact with classes contained in OSGi Bundles.
+
+### Using the Service
+
+Using the service is easy, simply retrieve an instance of the service [org.apache.sling.commons.classloader.DynamicClassLoaderManager](http://sling.apache.org/apidocs/sling6/org/apache/sling/commons/classloader/DynamicClassLoaderManager.html) and call the method [getDynamicClassLoader()](http://sling.apache.org/apidocs/sling6/org/apache/sling/commons/classloader/DynamicClassLoaderManager.html#getDynamicClassLoader%28%29).
+
+In JSP scripts, you can simply use the [Sling Script Helper](http://sling.apache.org/apidocs/sling6/org/apache/sling/scripting/core/ScriptHelper.html):
+
+```
+<%
+  DynamicClassLoaderManager classLoaderManager = sling.getService(DynamicClassLoaderManager.class);
+  ClassLoader classLoader = classLoaderManager.getDynamicClassLoader();
+  [... Use the ClassLoader ...]
+%>
+
+```
+
+OSGi Services can just use a Reference to load the DynamicClassLoaderManager
+
+```
+@Reference
+private DynamicClassLoaderManager classLoaderManager;
+
+```
+
+Tags need to first retrieve the SlingBindings and then retrieve the Script Helper to get the DynamicClassLoaderManager.
+
+```
+final SlingBindings bindings = (SlingBindings) pageContext.getRequest()
+	.getAttribute(SlingBindings.class.getName());
+final SlingScriptHelper scriptHelper = bindings.getSling();
+final DynamicClassLoaderManager dynamicClassLoaderManager = 
+	scriptHelper.getService(DynamicClassLoaderManager.class);
+
+```
+
+Once you have the ClassLoader, it can be used like any other ClassLoader to retrieve resources from the Classpath or dynamically retrieve Classes.

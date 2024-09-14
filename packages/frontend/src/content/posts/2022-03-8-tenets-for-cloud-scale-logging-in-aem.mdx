@@ -1,0 +1,313 @@
+---
+title: 8 Tenets for Cloud-Scale Logging in AEM
+description: The how and the why of logging in AEM to support cloud scale observability
+hideInNav: false
+tags:
+  - AEM as a Cloud Service
+  - Adobe Experience Manager
+  - Logging
+  - Monitoring
+  - SLF4J
+pubDate: 2022-03-02
+display: post
+image: /images/posts/2022-03/logs.jpg
+published: true
+---
+
+  
+
+AEM has supported logging since the beginning and fundamentally, the logging implementation between AEM as a Cloud Service, AEM in Adobe Managed Services and AEM 6 are very similar. However, since AEM Cloud Service is executed as a Cloud Service, and orchestrated as containers, you can't SSH into the server to look at the logs to diagnose issues.   
+
+So how do we get logs in AEM Cloud Service and what more should developers consider when writing logs for a cloud platform like AEM Cloud Service?  
+
+  
+## Getting Logs in AEM Cloud Service
+
+  
+In AEM as a Cloud Service, the logs from your containers are automatically collected and can be [downloaded via Cloud Manager](https://experienceleague.adobe.com/docs/experience-manager-cloud-service/content/implementing/developing/logging.html?lang=en#cloud-environments) or forwarded to [your own Splunk service.](https://experienceleague.adobe.com/docs/experience-manager-cloud-service/content/implementing/developing/logging.html?lang=en#splunk-logs) Forwarding logs to Splunk allows your organization to seamlessly consume logs from AEM and develop your own monitoring and metrics for your AEM application or website.  
+  
+ Great! Now you have access to the logs for your instance. So how do you ensure your logs provide not just more data but insights?
+
+  
+## Why do we log?
+
+  
+There are many reasons we may add logging, some of the more common ones include:
+
+* debugging issues during the development process
+* gathering event statistics to derive data / trends
+* monitoring error events to identify issues
+* monitoring events to identify activity
+
+Each of these use cases has different objectives and considers log messages differently:  
+  
+
+| Use Case                                           | Environments        | Log messages are...           |
+| -------------------------------------------------- | ------------------- | ----------------------------- |
+| debugging issues during the development process    | Local / Development | Sequential stream of messages |
+| gathering event statistics to derive data / trends | Production          | Independent events            |
+| monitoring error events to identify issues         | All Environments    | Independent events            |
+| monitoring events to identify activity             | Production          | Independent events            |
+
+  
+
+I'm going to go out on a limb and say that most developers _mostly_ implement logging in the context of their development process. Using logs for debugging and validating their code is working correctly. When debugging, each log messages can be read sequentially and only needs to contain the data for a single step in the sequence. 
+
+From both a volume and analysis perspective sequential logging doesn't scale and does not help creating a maintainable application.
+
+In production, concurrency makes following a sequence of messages difficult and having to stitch multiple entries together to derive an event makes log analysis significantly more complex and expensive to execute.
+
+In addition, the volume of data required when an event needs to be stitched together from multiple messages increases storage volumes many fold.
+
+So how do you create logs that will help you create a maintainable, monitor-able cloud-scale AEM application?
+
+  
+
+## Log Tenets  
+
+  
+To set ourselves up for success with cloud-scale logging, we need to follow some fundamental principals for writing logs:  
+  
+### 1\. Always use a log library 
+
+ Never use the language default console writer (E.g. System.out in Java or console.log in NodeJS) for logging Not using a log framework makes impossible to change logging level or collection at runtime and these frameworks provide features and better performance than directly logging to console.
+
+For AEM, you could use SLF4J. End of story :-)
+
+Using SLF4J is as simple as adding the following to your classes:
+
+  
+
+```java
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class MyCoolClass {
+  private static final Logger log = LoggerFactory.getLogger(MyCoolClass.class);
+
+  public void myCoolMethod(String name) {
+    log.debug("You invoked my cool method: {}", name);
+  }
+}
+```
+
+  
+
+### 2\. Create a logger per class
+
+The overhead of declaring a logger is negligible, so always create a new logger per class.  
+
+Additionally, since AEM is an IoC container, you should declare your logger as `private static final`. Arguably, you could save a few keystrokes by declaring loggers as class members and inheriting, but I'd argue that forcing to declare a logger in every class is a feature rather than a bug, as especially if you have inherited classes, using an inherited logger makes it harder to understand where log messages originated. See [https://www.slf4j.org/faq.html#declared\_static](https://www.slf4j.org/faq.html#declared%5Fstatic) for more discussion on this topic.
+
+  
+
+### 3\. Use the right log level 
+
+  
+What is the "right" logging level? SLF4J defines the following logger 5 levels, these guidelines will help you pick the right level based on your use case:
+
+**TRACE**  
+The most verbose level of logging, trace logging is used to log detailed data to diagnose application behavior. It is extremely granular and significantly more verbose than debug level logging. Trace logging, is commonly used for logging I/O details, such as Request / Response details and full file contents.
+
+**DEBUG**  
+Debug logging is used to track diagnostic information about the state of an application. Debug logging is verbose and should be used to diagnose, troubleshoot and test applications during development. Debug logging can be composed of multiple messages to illustrate the sequence that makes up the event.
+
+**INFO**  
+ Info level logging provides the "heartbeat" of the running application. Each info message should be a self-contained event that encapsulate all of the relevant data for that event. Info messages should be informative and not indicate any issue with the application. Good examples of info level messages include form submissions, background task completions, or service activation.
+
+ **WARN**  
+ Warn level log messages indicate that something unexpected occurred, but that it should not cause user-visible or application stability issues. Warnings indicate that something should be investigated and can help to identify trends which may point to larger issues. Usually (though not always) warnings are accompanied by an exception. 
+
+Warn messages should be pretty rare in a codebase as they indicate issues the application can recover from, but more common in the logs as unexpected things happen all the time. 
+
+Some good examples of situations where warn messages are appropriate include:
+
+* A file fails to open, thus needing to re-prompt the user
+* A user attempts to access a resource they do not have access to
+* The application gets an unexpected hangup from a client request
+* User input doesn't match the expected form
+
+ All of these situations can be handled by the application and further more may indicate that something else could be going on. For example a large number of invalid input warnings could indicate that someone is trying to use an injection attack against your website.
+
+**ERROR**  
+The highest level supported by the SLF4J logger, errors indicate that something has gone wrong in your application and it could be visible to the user or cause application issues. Error messages should be frequent in your codebase but extremely rare in logs.   
+
+Error messages should be logged in any exceptional case where the exception cannot be handled normally, so as a defensive developer, you should be looking for and logging errors. However, in logs, if an error message is logged frequently, this either indicates that there's a major problem... or it should be set to a lower log level. 
+
+### 4\. Use unique, informative messages 
+
+  
+How do you tell the difference between log messages like "here" and "unexpected exception"? Great question, if you can figure out the answer, please let me know.
+
+While using one logger per class will help determine what class a message came from, but unique log messages make it quicker and easier to both filter logs and pinpoint exactly where the message was logged in code.
+
+This is especially important when logging exceptions as a unique, informative log message helps to identify the root cause of an exception as soon as possible.
+
+Consider the following log messages:  
+
+```java
+// Bad message, tells us nothing more than we already knew from the exception
+} catch (IOException ioe) {
+  log.error("Encountered I/O exception", ioe);
+}
+
+// Bad message, really?? Why not use a debugger
+log.debug("Here!");
+
+// Mediocre message, should provide more context
+log.info("Handing request");
+```
+
+  
+How could we improve them? To make these messages better, add context and data! 
+
+Context tells you where in the program the message is from and what the code is doing. For example rather than just encountering an IOException, the program encountered an IOException reading from a HTTP API. This immediately gives the reader more information without requiring them to go back to the code and makes the message easier to find in the log stream.  
+
+Context should be unique and static for the log message. Data on the other hand is dynamic and provides the state of the application / function at the time of the log message.   
+
+Let's add some more context and data to the log messages:  
+
+```java
+// Now I know what file we were trying to read and for what purpose
+} catch (IOException ioe) {
+  log.error("Failed to read configuration from file: {}", file, ioe);
+}
+
+// This actually tells me what's happening and makes it easy for me to debug
+log.debug("Found {} results from query {}", results.size(), query);
+
+// Now we know what the request is that's being handled and from what URI
+log.info("Handing RSS request for: {}", uri);
+```
+
+  
+
+### 5\. Log exceptions  
+
+When exceptions are not re-thrown, they should be logged. Except in rare circumstances, they should be logged either at the warn or error level and should include a full stack trace.
+
+Note that there is a difference between the following so make sure to use the right variant:
+
+  
+
+```java
+// BAD - will just log e.toString()
+logger.error("OH NO MR BILL: " + e);
+
+// BAD - will just log e.toString()
+logger.error("OH NO MR BILL: {}", e);
+
+// GOOD - will log the full stack trace
+logger.error("OH NO MR BILL!", e);
+
+// EVEN BETTER - log data and exceptions
+logger.error("OH NO MR BILL! You were crushed by a {}!", equipmentType, e);
+```
+
+  
+When I'm doing code reviews, an un-logged exception is an instant rejection and it should be for you as well.
+
+  
+### 6\. Use Parametrized Messages
+
+You may have noticed in the examples above, I used curly brackets in the log message. These indicate to SLF4J that it should format the message with the parameters I provide with the log method.
+
+There are two key advantages to parameterized messages:
+
+1. It makes your code cleaner and easier to read
+2. It can be up to 30x faster when the log message is not enabled. This is because you don't pay the cost of concatenating the log message with the parameters and creating a new string object because SLF4J will only format the message with the parameters if the log level is enabled. Otherwise it's practically a no-op.
+You can specify any number of parameters to a log message. As a note past two parameters, they are silently converted into an Object\[\]:  
+  
+  
+
+```java
+// expect to log: DEBUG Attempting to calculate Ratio of Circumference to Diameter: 3.14159
+log.debug("Attempting to calculate Ratio of Circumference to Diameter: {}.{}{}{}{}{}, primary, digit1, digit2, digit3, digit4, digit5);
+
+// expect to log: WARN Failed to read input file, not found: myfile.json
+log.warn("Failed to read input file, not found: {}", file);
+
+// expect to log: INFO Completed import job:myco/myjob; startTime:1646191442974; duration:1232
+log.info("Completed import job:{}; startTime:{}; duration:{}", jobId, startMs, durationMs);
+
+// If there is an exception as the last parameter, the full exception stack trace will be logged
+log.error("Failed import due to unexpected exception; job:{}; startTime:{}; duration:{}", jobId, startMs, durationMs, e);
+```
+
+  
+
+### 7\. Log for Observability
+
+Especially for INFO, WARN and ERROR, log messages should be composed for observability, e.g. logged in such a way they can be analyzed out of context to provide insight into how your AEM application is functioning. Beyond what we already discussed about making messages unique, to be observable messages should:
+
+* Contain all of the data required to understand a single event
+* Make the data easy to parse
+
+First, about containing all of the data for a single event. It can be really tempting to use the same paradigm for logging at INFO / WARN / ERROR levels as we did for TRACE and DEBUG, something like:
+
+  
+
+```
+private void myProcess(String input) throws IOException {
+  log.info("Started my cool process with input: {}", input);
+  // do some work
+  log.info("My cool process complete, produced result: {}", result);
+}
+```
+
+  
+However, this makes it _significantly_ harder to correlate the process starts and completions and requires log analysis to determine how often the process fails.   
+  
+Instead if we provide all of the data at completion and log any exceptional cases we get a single message with all the data we need.  
+  
+
+```java
+private void myProcess(String input)  {
+  try {
+    // do some work
+    log.info("Successfully executed my process with input:{}; result:{}", input, result);
+  } catch (IOException e) {
+    log.warn("Could not execute my process,  to read input: {}", input, e);
+  }
+}
+```
+
+  
+Admittedly, this is easier in a contrived example than with real life applications. However, if you have trouble logging a consolidated message, that probably indicated that there's other problems with your program such as methods being too complex or code being scattered across too many disparate classes.
+
+On to parse-able log messages. AEM's logs currently only support text logging, so to get data out of the messages in Splunk, you'll have to extract from the messages. Therefore get your insights to the next level without requiring horrifying Splunk queries, make sure as you're composing messages to make the data easy to parse out. I'd recommend doing this by:
+
+* Adding data only at the end of log messages
+* Including clear delimiters
+
+The examples above do a pretty good job of illustrating the concept. If you follow these principals, you can parse out data from your log messages pretty easily:
+
+  
+
+```java
+// log statement
+log.info("Reading configuration values file:{}; user:{}", file, userId);
+
+// message in logs
+INFO Reading configuration values file:myfile.json; user:user123
+
+// then I could extract the data to fields in Splunk with:
+my_splunk_index package=com.myco.myapp.CoolProcess "Reading configuration values"
+| rex field=msg "file:<(?<file>.*)>; user:<(?<user>.*)>"
+```
+
+  
+
+### 8\. Logs are code
+
+Logs should be treated like any form of code. They should be tested, improved and considered during the implementation of every story.
+
+Like writing defensive code it's 10x easier to write good log messages up front than trying to back port logs into existing functionality (or figuring out what's wrong with useless logs).  
+  
+## Wrapup
+
+  
+Hopefully, you've found this article helpful. Clearly, it's a topic I care a bit too much about, but having excellent logging benefits you as a developer and every other developer, user and support engineer working with your application.   
+  
+ Pay your future self dividends and invest in following these eight steps to write better logs. Have a question or different opinion? Leave a comment!  
+  

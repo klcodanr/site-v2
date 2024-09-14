@@ -1,0 +1,133 @@
+---
+title: "A Retrospective on HTL: The Wrong Solution for the Problem"
+description: "I have a confession to make: in my heart of hearts I know JSP is
+  better than HTL / Sightly."
+hideInNav: false
+tags:
+  - Adobe Experience Manager
+  - Sightly
+pubDate: 2018-08-27
+display: post
+image: /images/posts/2018-08/mess.jpg
+published: true
+---
+
+I have a confession to make: in my heart of hearts I know JSP is better than HTL / Sightly.  
+  
+There I said it! whew, that's a load off my chest!   
+  
+So why, besides my paradoxical Luddite tendencies, would I be so firmly convinced that a widely-panned, ancient technology to be superior to Adobe's latest hot thing in templating languages?  
+  
+Simply put: Adobe is trying to solve the wrong problem with HTL.   
+
+  
+## Where it All Began  
+
+  
+Back in the CQ5 days, we wrote a lot of truly awful code and it started to become a perception problem for Day's new owner Adobe. AEM still has a reputation for being more challenging to implement, but before the advent of Sling Models and JSP Taglib 2.2.0+ there were reams of Scriptlet spaghetti churned out creating fragile, error prone applications.
+
+Which is not to say that there weren't people following best practices, but CQ5 made it _**hard**_.
+
+There are two causes of this code quality problem:
+
+1. **Bad examples** \- the foundation components simply put are a mess. Poorly structured, rigid code with a liberal dose of Scriptlet and inline JavaScript. When your work is extending a dumpster fire, it should be no surprise if you get singed. Combine a messy starting point with a dash of poor practices and you have a recipe for disaster
+2. **No Data Bindings** \- overwhelmingly, what we do as AEM developers is the R in CRUD, reading content from the AEM repository and displaying it to users. This worked fine if the current resource had everything you need but there was not a mechanism to retrieve other resources or access more complex structures. This lead to the trade-off of writing some complex process to bind data or just having a few lines of Scriptlet. Usually, developers usually chose the latter
+
+The first problem is still not really solved. Like our [friendly neighborhood pool guy](https://i.imgur.com/1jTqHUp.gif "Captain Deadpool"), the foundation components are doomed to live forever for the sake of backwards compatibility. In addition, much of the code (even the new code) in the AEM UI is the same spaghetti-mess of JSP Scriptlet.  
+  
+While there have been laudable efforts with the AEM Core components to provide a clean starting point, there are still many code vipers lurking in the bushes of /libs.
+
+Data Bindings were already solved without HTL's help, thank you very much. The combination of two contributions to the Apache Sling project enables developers to access an any data they need from the AEM repository:
+
+1. **[Sling JSP Taglib 2.2.0](https://sling.apache.org/documentation/bundles/scripting/scripting-jsp.html)** \- these new ([circa 2013](/posts/2013/08/new-apache-sling-resource-access-tags.html)) tags support fetching resources and getting data from them. When combined with JSTL, the AEM repository is your oyster.
+2. **[Sling Models](https://sling.apache.org/documentation/bundles/models.html)** \- any time you need to access a more complex data model or do something not supported in Expression Language, Sling Models make it easy. Simply create your model class and adapt a resource into it and you are off to the races.
+
+  
+## Unsolved Problems
+
+  
+Clearly the first problem isn't solved. And no wonder, it's a hard problem, not technically, but long and tedious and doesn't garner magical quadrant placements. Rewriting code is no fun and frankly, instead, it would make sense to make a clean break (AEM 7?).  
+
+The second problem HTL was supposed to solve is already solved, so why introduce another language for it?
+
+  
+## A Step Back
+
+  
+As a language, HTL is a step back from JSP in a few ways.  
+
+  
+### Templating on Training Wheels  
+
+  
+First, HTL is objectively less capable.   
+
+Now you may be concerned that I'm going to talk about the benefits of Scriptlets, but have no fear. No good comes from Scriptlets and if you ever work in JSPs in AEM / Sling the first thing you should do is remove all Scriptlet variables from your global.jsp and ban any commits with Scriptlet.
+
+No, here I'm talking about Taglibs and the Sling JSP Taglib in particular. HTL does not include extension capabilities so if Adobe doesn't provide it, good luck sucker. JSP's Taglibs, however, allow you to provide custom tags to extend the language in whatever way makes sense for your project.   
+
+The Sling JSP Taglibs, in particular, are especially useful. These tags unleash the power of Sling in your project allowing you to write 1/5th of the code required to implement the same functionality in HTL. Take my colleague Ahmed's [ recent post on Composite Multifield support in HTL](https://blogs.perficientdigital.com/2018/08/24/using-sling-models-with-nested-composite-mulitifields-in-aem-6-3/). His code sample clocks in at 60 lines, the same functionality in JSP is only 12 lines:
+
+  
+
+```html
+ <c:forEach var="company" items="${sling:listChildren(resource)}">
+   <li>
+     <ul>
+         <c:forEach var="department" items="${sling:listChildren(company)}">
+           <li>
+               <strong>Department: </strong> ${sling:encode(department.valueMap.name,'HTML')} <br/>
+             <strong>Manager: </strong> ${sling:encode(department,'HTML')}
+           </li>
+         </c:forEach>
+       </ul>
+     </li>
+ </c:forEach>
+```
+
+  
+It's certainly not anything Ahmed did wrong; his code is exemplary, HTL by design puts training wheels on our development resulting in verbose, redundant code.
+
+The color in the lines mentality of HTL has lead to what I call "Death by Models". Since you have to write a Model for everything but the simplest use cases, HTL projects become littered with similar, but different models for practically every component. Hours of wasted time writing boilerplate code _and_ now if you want to make a change you have to update the corresponding Sling models, not just the component scripts. 
+
+  
+### Harder to Learn  
+
+  
+Additionally, HTL makes it harder for new developers to learn to develop on AEM since it is not used outside AEM. JSPs have been around since 1999 and are pretty widely understood and documented, HTL... not so much. Even if the direction was to use another of the plethora of templating languages out there already (to name a few: [Thymeleaf](https://www.thymeleaf.org/), [Velocity](http://velocity.apache.org/), [Handlebars](https://handlebarsjs.com/), [Freemarker](https://freemarker.apache.org/), [JTwig](http://jtwig.org/)) developers could leverage the collective knowledge of a larger community than just AEM developers.
+
+  
+
+  
+## Easier for Front End Developers?
+
+  
+One of the arguments I hear forHTL is that it "makes it easier for front end developers to concentrate on Front-End and back end developers to concentrate on back end". This is, in my opinion, a load of crock. 
+
+  
+Does anyone really believe that the hard part about AEM development is creating basic components which can easily be mocked up in HTML? The hard part is designing the authoring experience, managing the content and data flows / relationships and creating a taxonomy to support the business needs without being unnecessarily complex. Making a templating language _look_ like HTML only makes the language harder to read and understand. 
+
+  
+Indeed, I would argue that Handlebars and JTwig, with their radically different control syntax are far superior in this regard as it's easy to tell at a glance what is code and what is markup. This is of course, a matter of opinion, but I just have a hard time buying the argument where making something look like something it's not makes it easier to understand. 
+
+  
+
+  
+## Security by Default
+
+  
+There is one area where HTL is undoubtedly superior to JSP: security by default. HTL uses the syntax of the current expression to determine the correct escaping method for the content. This can be overridden, but in most cases offers a reasonable default. JSP, on the other hand, writes out unescaped by default. In fact, until [version 2.2.4 of the Sling JSP Taglib](/posts/2014/09/new-from-apache-sling-xss-protection.html), there wasn't a mechanism to encode content without using scriptlet in Apache Sling. 
+
+This is important as correctly escaping content prevents Cross Site Scripting (XSS) attacks and will also help with unexpected markup issues from authors using extended characters (such as ampersands or angle brackets) within basic text fields. 
+
+While this now _can_ be done with JSP, it does require the additional step of using the [sling:encode EL function or tag](https://sling.apache.org/documentation/bundles/scripting/scripting-jsp.html#encode). This is not hard to do, but JSP does require the additional step vs. HTL and thus introduces more opportunities to miss an XSS issue.   
+
+  
+## In Conclusion
+
+  
+Clearly, I have no love lost with HTL. I am more productive writing JSP code and I believe most developers would be as well, as long as they avoid Scriptlet and leverage the Sling JSP Taglib and Sling Models. 
+
+Ultimately, your choice in templating language really boils down to what your team is most comfortable with. For simple development, HTL works acceptably. I would _highly_ encourage any team developing with HTL to develop a reusable set of Sling Models as I describe [in Developing Clean and Efficient Lists of Items with HTL](https://blogs.perficientdigital.com/2018/05/01/developing-clean-and-efficient-lists-of-items-with-htl/) to avoid "Death by Models" so similar components share Models instead of recreating the wheel.
+
+Hopefully this post helps shake some of the stigma JSP has received in the AEM community. Unfortunately, JSP was conflated with the bad JSP code in AEM, rather than the potential JSP has as a templating language.  

@@ -1,0 +1,99 @@
+---
+title: "Mastering the AEM Dispatcher Part 4: Sharing Content with SSI"
+description: Using Apache Server Side Includes (SSI) allows you to share content
+  between AEM and non-AEM websites such as header and footers.
+hideInNav: false
+tags:
+  - Mastering the AEM Dispatcher
+  - Best Practices
+  - AEM 6
+  - Dispatcher
+  - Apache httpd
+pubDate: 2017-10-30
+display: post
+image: /images/posts/2017-10-31-mastering-aem-dispatcher-part-4-sharing-content-ssi/copying.jpg
+published: true
+---
+
+We're delving deeper into the AEM Dispatcher as we continue in the series, [Mastering the AEM Dispatcher](https://blogs.perficient.com/adobe/tag/mastering-the-aem-dispatcher/). In this post, we'll discuss how to share content with non-AEM applications in the Dispatcher using SSI includes.
+
+Integrating AEM and non-AEM websites is tricky. To create a consistent look and feel, you need to share the stylesheets, header, and footer, but you don't want to be duplicating information or hard-coding in markup into non-AEM sites. If your website lives in or publishes to Apache, you can use [Server Side Includes (or SSI)](https://httpd.apache.org/docs/current/howto/ssi.html) to include the content seamlessly into the non-AEM websites.
+
+Using SSI to include content from AEM websites on non-AEM sites, requires a few steps to get set up and work properly to avoid caching issues.
+
+## Step 1: Enable SSI
+
+SSI is not enabled in Apache by default, so the first thing you'll need to do is enable SSI. You can do this globally if you need it in a number of places or just do it for particular VirtualHosts. 
+
+# Add support for SSI  
+Options +Includes  
+AddOutputFilter INCLUDES .html
+
+Not that the AddOutputFilter directive can take one or more extension types, so you could support multiple file types or limit it to a particular file type used in the non-AEM website.
+
+## Step 2: Add the Includes
+
+Once SSI is enabled in Apache, you can add in the includes. These are added in the format:
+
+```html
+<!--#include virtual="/header.html" -->
+```
+
+The /header.html can be any file, doesn't have to exist yet and must be within the website root.
+
+## Step 3: Link Files Between Website Roots
+
+Unfortunately, since the includes must live within the website root, you can't include them via the absolute URL or from the AEM Dispatcher directory. The easiest way to add them into the non-AEM website root is to create a symbolic link:
+
+```bash
+ln -s /mnt/var/www/vhosts/aem-site/jcr:content/header.html /mnt/var/www/vhosts/non-aem-site/header.html
+```
+
+The exact paths will vary depending on your server setup, but generally, the idea is to create a symbolic link between the file in the non-AEM website to the file in AEM.
+
+## Step 4: Recache on Invalidation
+
+Once you set up the links, you have another issue. If you invalidate the dispatcher cache, the files will be removed and the links will break. To fix this, we'll add in a script on the AEM Dispatcher which calls the website over localhost using a host named "recache":
+
+```bash
+#!/bin/bash
+REQUESTS=(
+	"/content/aem-site/jcr:content/header.html"
+	"/content/aem-site/jcr:content/footer.html"
+)
+for PATH in "${REQUESTS[@]}"
+do
+	: 
+	/bin/curl -L -s -H "Host: recache" "http://127.0.0.1$PATH" >> /dev/null
+done
+```
+
+Then created a simple VirtualHost configuration for recache:
+
+```apache
+<VirtualHost *:80>  
+  ServerName recache  
+  <Directory />  
+    <IfModule disp_apache2.c>  
+      ModMimeUsePathInfo On  
+      SetHandler dispatcher-handler  
+    </IfModule>  
+  </Directory>  
+</VirtualHost>
+```
+
+And add an entry into the AEM Dispatcher farm's /virtualhosts configuration. In the AMS configuration, would be the file publish-renders.any.
+
+Finally, we'll configure AEM dispatcher to invoke the script after every invalidation request. We copy the invalidate.sh script above into the local bin and then add the following setting in the /cache section of the AEM Dispatcher configuration:
+
+```apache
+/invalidateHandler "/usr/local/bin/invalidate.sh"
+```
+
+This will be called after every invalidation request in the AEM Dispatcher. The script will then request the files from the dispatcher and recache the files.
+
+## Wrapup
+
+Stay tuned for our next post in [Mastering the AEM Dispatcher](https://blogs.perficient.com/adobe/tag/mastering-the-aem-dispatcher/) series, where we'll discuss managing redirects in the AEM Dispatcher.
+
+**Note:** This blog post is written based on a standard setup on a RedHat derivative (e.g. RedHat or CentOS) with the Apache Dispatcher Module. If you are using IIS or a Debian based OS (e.g. Debian or Ubuntu) the configurations, locations, and files may vary.

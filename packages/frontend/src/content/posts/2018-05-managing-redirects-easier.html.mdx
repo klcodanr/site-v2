@@ -1,0 +1,64 @@
+---
+title: "Mastering AEM Dispatcher Part 6: Managing Redirects Made Even Easier!"
+description: Introducing an enhancement to the Redirect Manager to allow for
+  direct editing of the redirect map entries.
+hideInNav: false
+tags:
+  - Mastering the AEM Dispatcher
+  - Apache httpd
+  - Dispatcher
+  - ACS AEM Commons
+pubDate: 2018-05-23
+display: post
+image: /images/posts/2018-05/weight.jpg
+published: true
+---
+
+In my previous post [Mastering AEM Dispatcher Part 5: Managing Redirects Like a Master](https://blogs.perficient.com/adobe/2017/12/07/mastering-aem-dispatcher-part-5-managing-redirects-like-a-master/), I introduced an easy way to maintain lists of redirects in AEM. After using the tool for awhile, the team suggested some improvements to make it easier to maintain redirect maps, especially when maintaining an existing list of redirects.
+
+Most users found the process of downloading the file, making updates and re-uploading confusing as it was easy to accidentally upload the wrong file to the wrong configuration.
+
+To make it easier to add, update and remove individual entries, we added a new editor to allow users to create, find and remove entries from the redirect list. The latest version [ACS AEM Commons, version 3.17.0](https://github.com/Adobe-Consulting-Services/acs-aem-commons/releases/tag/acs-aem-commons-3.17.0), includes an entirely new Edit Entries tab which makes it easy for administrators and advanced users to modify the redirect map without having to deal with uploading and downloading redirect map files.
+
+  
+
+![Demonstration of the new version Redirect Manager](/images/posts/2018-05/redirect-manager.gif)
+
+  
+## Finding Entries
+
+  
+When you first switch to the Edit Entries tab, then entry list will be empty, enter a value into the search field and select _Find Entries_ to filter entries containing the term you specify. To view all entries, enter \* and the _Find Entries_, though depending on the number of entries in the redirect map, this can cause performance problems.
+
+The entry list will contain all of the entries loaded from the file and from the property configurations, as denoted by the Origin column. In each entry row, you can choose to remove entries from the file and click the pencil to directly open the AEM editor for a property entry.
+
+  
+
+![Filtering Entries in the Redirect Map](/images/posts/2018-05/filter-entries.png)
+
+  
+## Adding an Entry  
+
+  
+Instead of having to upload a new redirect map file, you can add entries through a form above the list of entries. Simply enter the redirect Source and the Target URL and the entry will be added into the redirect map.
+
+  
+
+![Adding an entry into the redirect map](/images/posts/2018-05/add-entry.png)
+
+  
+## Detecting Errors
+
+  
+One of the great new features is detection of errors in both the files and the configured properties. This makes it easier for you to identify potential problems such as duplicate entries, entries with too many values or entries without a target. 
+
+Each entry in error will be called out in a warning block and the entry will be highlighted in red in the entry list.
+
+  
+
+![Instantly identify errors in the redirect map](/images/posts/2018-05/instant-error.png)
+
+  
+The new entry editor makes it far easier to maintain redirect maps using Redirect Manager, download the [latest version of ACS AEM Commons](https://github.com/Adobe-Consulting-Services/acs-aem-commons/releases/tag/acs-aem-commons-3.17.0) to get started with it today!
+
+  

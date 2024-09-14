@@ -1,0 +1,85 @@
+---
+title: Early Thoughts on the Adobe Client Data Layer
+description: Last month, Adobe Open Sourced an Event-Driven Data Layer
+  implementation called the Adobe Client Data Layer. I've tried it out and
+  believe it will be the way to implement a DataLayer soon.
+hideInNav: false
+tags:
+  - Adobe Analytics
+  - Adobe Launch
+  - DataLayer
+  - Adobe Target
+  - Adobe Experience Cloud
+pubDate: 2019-11-11
+display: post
+image: /images/posts/2019-11/dawn.jpg
+published: true
+---
+
+  
+
+Last month, Adobe Open Sourced an Event-Driven Data Layer implementation. They call it the Adobe Client Data Layer and you can find it on GitHub:
+
+[https://github.com/adobe/adobe-client-data-layer](https://github.com/adobe/adobe-client-data-layer)
+
+The project is currently a tech preview and should not be used in production. However for the more enterprising among us, it's fun to investigate bleeding edge solutions from Adobe.
+
+I've tried out the Adobe Client Data Layer and I believe soon this will be _the_ way to implement a DataLayer with the Adobe solutions. While the final API / implementation of the Adobe Client Data Layer is not complete, here are some initial thoughts.
+
+  
+## Things I Like
+
+  
+### It's Event-Driven!!
+
+  
+So what's the big deal? Most DataLayer implementations on the Adobe Experience Cloud followed the [WC3 CEDDL specification](https://www.w3.org/2013/12/ceddl-201312.pdf). The problem was that this specification described a static DataLayer. Events, data, etc are properties, but the DataLayer maintains no history of any changes. This was fine for static sites where most interactions required a page refresh but is outmoded in this era of Single Page Applications and AJAX.
+
+You could, of course, create your own Event Driven Data Layer, but that's a significant investment in code. Adobe's lack of a good solution for this has been the Achilles Heel of many an Adobe Analytics implementations, which instead rely on clunky workarounds. Now the DataLayer itself can respond to data / interaction pushes and Launch can listen to those events.
+
+  
+### Just Enough Structure
+
+  
+The Adobe Client Data Layer imposes some structure on the data you pass in. The top-level element defines what you are pushing in including:
+
+* Data
+* Events
+* Listeners
+
+Below that it's up to the implementor to decide how to structure the data.
+
+  
+### Listeners
+
+  
+Listeners are an interesting concept, you can register a listener to listen to events to occur and then invoke some code to handle the event. Some interesting concepts include:  
+
+* Getting user profiles / data when the DataLayer loads
+* Performing some calculations when a form is submitted
+* Invoking another action / tag when an event occurs
+  
+## Areas of Improvement
+
+  
+Not surprisingly, given this isn't even released, there are some areas of improvement.  
+  
+### Integrations
+
+  
+It's not clear at the moment, how the Adobe Client Data Layer will be integrated into the Adobe solutions, though again it is still early. For sure, it would be great to have integrations right into Adobe Launch, Target and Experience Manager.
+
+One other integration issue I did see is with the use in conjunction with Google Tag Manager. Not that it's a common scenario to deploy Launch and GTM together long term, but it does happen during tool migrations. [Allowing renaming](https://github.com/adobe/adobe-client-data-layer/issues/42) should resolve this issue.  
+  
+### Getting State
+
+  
+Currently, the way to get the state of the DataLayer is to call the getState() method. This will require more code in certain situations than if the state was exposed as a property. I also understand there are are downsides to recomputing the state with every push.  
+  
+## Next Steps for the Adobe Client Data Layer
+
+  
+As Adobe clearly states, the Adobe Client Data Layer is still a tech preview, but I would encourage you to take a look and [provide feedback](https://groups.google.com/forum/#!forum/aem-core-components-dev) or [open an issue.](https://github.com/adobe/adobe-client-data-layer/issues) 
+
+I don't have special insight into (and I feel like asking may put me in a NDA situation) Adobe's roadmap for the Adobe Client Data Layer. Judging by where they are in development, I'm hoping that by [Adobe Summit 2020](https://summit.adobe.com/na/), the Adobe Client Data Layer will be ready for primetime use and they'll have some reference implementations to show!  
+  

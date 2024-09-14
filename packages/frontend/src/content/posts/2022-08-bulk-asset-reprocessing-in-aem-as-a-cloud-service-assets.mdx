@@ -1,0 +1,55 @@
+---
+title: Bulk Asset Reprocessing in AEM as a Cloud Service Assets
+description: A quick script to reprocess assets in bulk
+hideInNav: false
+tags:
+  - AEM as a Cloud Service
+  - AEM Assets
+  - Asset Compute
+pubDate: 2022-08-31
+display: post
+image: /images/posts/2022-08/bulk-hero.jpg
+published: true
+---
+
+AEM as a Cloud Service Assets (AEMCS Assets) introduces a new method for processing assets, [Asset Compute](https://experienceleague.adobe.com/docs/experience-manager-cloud-service/content/assets/asset-microservices-overview.html?lang=en). With Asset Compute, newly uploaded assets are processed in the Adobe Runtime I/O microservice framework.
+
+The advantage to this new architecture, is that this offloads the CPU and memory-heavy work of rendering renditions and reading metadata from binaries to a scalable, cloud framework vs being limited by (and even overwhelming) the server running AEM. 
+
+Along with this new architecture, a new feature in AEM Cloud Service Assets is that you can request reprocessing of assets. Reprocessing will send the assets through the entire processing flow, regenerating all renditions and overriding the metadata with newly extracted metadata from the asset. To reprocess assets, select an asset (or a folder) and click the reprocess button:  
+
+![Select Assets for Reprocessing](/images/posts/2022-08/Select-Assets.png)
+
+  
+
+Then configure how you want the assets to be reprocessed. You can change the [processing profile](https://experienceleague.adobe.com/docs/experience-manager-learn/assets/configuring/processing-profiles.html?lang=en) to use when processing the assets and select whether or not to run the post-processing workflows.  
+
+![Configure Reprocessing](/images/posts/2022-08/Configure-Reprocessing.png)
+
+  
+
+This manual process works fairly well if you have a relatively small number of assets (> 100) and when the assets are in a few folders. However for larger use cases, such as reprocessing following a migration or reprocessing a large number of assets with a new processing profile.   
+
+You _could_ use folder-level reprocessing, however this will overwrite the renditions and metadata applied on all the assets within a folder _including_ custom metadata and renditions.
+
+Similarly, you could find and select the assets, however this is tedious and because of the overhead of the reprocessing job, running multiple small reprocessing requests is orders of magnitude slower than fewer, larger reprocessing requests.
+
+As an alternative, I created the following script to run reprocessing requests in bulk. To use the script, create a file containing the paths to the assets you want to reprocess with new line separators (and a newline at the end), then run the command:  
+
+```bash
+# Default Profile: ./reprocess.sh [aem-host] [asset-file]
+/bin/bash ./reprocess.sh https://author-p123-e456-cm.adobeaemcloud.com assets.txt
+
+# Custom Profile: ./reprocess.sh [aem-host] [asset-file] <profile-name>
+/bin/bash ./reprocess.sh https://author-p123-e456-cm.adobeaemcloud.com assets.txt test-profile
+```
+
+  
+
+The script will then prompt you for a username and password to connect to the AEM as a Cloud Service instance, confirm what it is planning on doing and display the results.
+
+You can download the script from this gist:
+
+This script is provided for your convenience and in compliance with the terms of the MIT license is provided "As is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose nor is it officially supported.  
+  
+ All that being said, if you find any issues, leave a comment or [contact me](/contact.html).   

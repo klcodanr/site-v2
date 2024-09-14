@@ -1,0 +1,116 @@
+---
+title: Creating a Scalable Application Ecosystem
+description: In many applications, although the application itself has an MVC
+  structure, the application is built as a monolith. Services, libraries, and
+  the application code are all intermingled, making the process of extending or
+  creating a similar application far more difficult than should be required.
+hideInNav: false
+tags:
+  - Architecture
+  - Best Practices
+  - Technical Solutions
+  - Strategy
+pubDate: 2018-11-29
+display: post
+image: /images/posts/2018-11/ecosystem-header.jpg
+published: true
+---
+
+  
+The Model View Controller (MVC) pattern is a programming paradigm for creating organized, scalable applications. The MVC pattern cleanly separates applications concerns and shows developers to create complex applications without creating a tangled mess. 
+
+This pattern separates the three common application concerns. Models hold and convey data. Views render the data to application viewers. And controllers route data between the various sub-systems.
+
+Unfortunately. in many applications, although the application itself has an MVC structure, the application is built as a monolith. Services, libraries, and the application code are all intermingled, making the process of extending or creating a similar application far more difficult than should be required.
+
+This is not a concern if applications are considered in isolation, but how often are applications truly isolated?
+
+Instead of creating a series of isolated applications, we should create an application ecosystem. To create an application ecosystem, you must extend the MVC paradigm outside of a single application and think of the applications themselves as composable parts. 
+
+  
+
+## What is an Application Ecosystem?
+
+  
+Most enterprise applications are, quite unfortunately, stand-alone applications. While these applications may share a look and feel with other enterprise applications or even share some service endpoints, they otherwise co-exist only in that they live in the same Data Center or cloud environment.
+
+An application ecosystem, on the other hand, leverages shared code across multiple applications by abstracting common concepts and functions from a single application.
+
+As an example, let's take a typical digital marketing application. Let's say the solutions uses Adobe Experience Manager to serve a marketing website and Oracle Eloqua to provide marketing automation.
+
+  
+
+![Simple Digital Marketing Solution Diagram](/images/posts/2018-11/Simple-Digital-Marketing.png)
+
+  
+Your users don't care in the slightest whether they are on a form served by Eloqua or an AEM content page, so why should these experiences ever look different? And far too often they do; because these applications have different foundational technologies and different teams the user experience is it best inconsistent and at worst jarring.
+
+By abstracting a design library and brand compliant front-end code, you ensure the Eloqua forms and the AEM pages provide a consistent experience to the end user.
+
+Creating a consistent experience is table stakes, but extending the concept to data sharing, how many times have you have you filled out a lead form and it's clear later on the site the company has no idea who you are?
+
+Integrating user profile data is painful with isolated applications, but if you think in terms of an applications ecosystem both applications could share profiles via a profile service ensuring no matter which application your users visit, they are treated as known users.
+
+  
+
+![Application Ecosystem for Digital Marketing](/images/posts/2018-11/App-Ecosystem-Digital-Marketing.png)
+
+  
+
+## Separating Concerns
+
+ A core tenant to building an application ecosystem is separating concerns. Most, if not all, code within a monolithic application will fall into one of three patterns: applications, libraries, and services.  
+  
+
+![Example Application Ecosystem](/images/posts/2018-11/Example-App-Ecosystem.png)
+
+  
+
+### Services
+
+  
+Starting at the end, services are consumed by libraries and end applications. Services interact via structured data and are not designed to be used by end-users directly. Services can be any format whether we're talking REST, GraphQA, or SOAP and running any container whether it's a standalone Jetty application, within another application, within Cloud Foundry or in a cloud function.  
+  
+### Libraries
+
+  
+Libraries are the Lego blocks of an application ecosystem. Each Library should have a single area of concern and be individually versioned. Libraries to do anything from consuming services, providing utilities, to providing a brand component framework. Much of the code contained within a monolithic application would be moved to libraries so they can be shared between applications.  
+  
+### Applications
+
+  
+Applications are the end result of an application ecosystem and are used directly by the users. Applications are the concept we're the most familiar with, however, in an application ecosystem, the applications themselves are quite different from our traditional approach. In an application ecosystem, applications are mostly "glue".
+
+Instead of containing the code and business logic for the majority of the application, applications in an application ecosystem tie a number of libraries and services together, provide application-specific configurations and have "glue" code to make everything work together.  
+  
+## Honorable mentions
+
+  
+There are a few other patterns to support this concept which deserve honorable mentions.  
+  
+### Archetypes
+
+  
+Archetypes are projects for building projects. This concept comes from Apache Maven, but it can be as simple or as complex as required by your application environment. For very complex application environments, the need to quickly and frequently create libraries, services and applications justify the time investment in creating an automatic archetype. For simpler or smaller application environments this may be as simple as a folder you copy or instructions for extending an open-source archetype.
+
+### Configurations
+
+  
+Configurations are projects to contain configuration values. Everything a programmer writes should be in Source Control. It's a whole lot easier to diagnose the problems with a malfunctioning server if you can look back through and commit log and see what changed before the problem started.
+
+While those of us working in PaaS environments are expected to be able to tear down and rebuild servers automatically with CI tools, applications built on IaaS frequently do not follow this best practice. Whether you are needing to stand up a new instance, upgrade an instance, or diagnose something wrong with the server having everything in Source Control makes your life significantly easier.  
+  
+### Parents
+
+  
+Parent projects define the common dependencies for an application environment at a point in time. Parent projects promote consistency by providing a shared foundation of dependency versions and deployment configurations. Parent projects are then versioned so the applications and libraries can be supported across multiple parent versions and upgraded easily.
+
+  
+
+  
+
+## Decomposing a Monolithic Application
+
+  
+Using this framework, you can decompose a monolithic application or a monolithic application design into the separate, constituent services, libraries and applications. By creating an application ecosystem and considering applications in the context of the larger enterprise, you will create a more deeply integrated and scalable solution than any stand-alone application.  
+  

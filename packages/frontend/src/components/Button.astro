@@ -1,0 +1,41 @@
+---
+interface Props {
+  link: string;
+  hasIcon?: boolean;
+  type?: "button" | "submit" | "reset";
+}
+
+const { link, hasIcon, type } = Astro.props;
+---
+
+{!type && (
+  <a href={link} class:list={[ { icon: hasIcon }]}>
+    <slot/>
+  </a>
+)}
+
+{type && (
+  <button class:list={[ { icon: hasIcon }]} type={type}>
+    <slot/>
+  </button>
+)}
+<style>
+  a, button {
+    color: white;
+    text-decoration: none;
+    background: var(--gray-dark);
+    padding: .5em;
+    border-radius: .5em;
+    display: inline-block;
+  }
+  button {
+    font-size: 18px;
+  }
+  a.icon {
+    padding-bottom: 0;
+  }
+  a:hover, button:hover {
+    color: white;
+    filter: brightness(85%);
+  }
+</style>

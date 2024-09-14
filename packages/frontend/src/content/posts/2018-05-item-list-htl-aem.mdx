@@ -1,0 +1,115 @@
+---
+title: Developing Clean and Efficient Lists of Items with HTL
+description: In HTL many developers create overly complex Sling Model driven
+  components for simple content lists. Instead, using child-component includes
+  you can create complex content-driven components without a line of Java code.
+hideInNav: false
+tags:
+  - Adobe Experience Manager
+  - Sightly
+  - Development
+  - Best Practices
+pubDate: 2018-05-01
+display: post
+image: /images/posts/2018-05/clean.jpg
+published: true
+---
+
+One of the most common patterns in AEM development is the link list. You can find this pattern in typical web elements such as navigations, headers and footers. Usually, this will be a list of links with a title and potentially some additional data such as the target or an icon. The link list is then contained within a larger component which provides the styling and wraps the link list in some containing markup.
+
+In the image below you can see some example link lists contained in red boxes.
+
+  
+
+![An Example link List](/images/posts/2018-05/link-list-example.jpg)
+
+Using JSP and the [Sling TagLib](https://sling.apache.org/documentation/bundles/scripting/scripting-jsp.html), these are pretty simple to create, you'd just add something like this:
+
+```html
+<ul>  
+  <c:foreach var="link" items="${sling:getRelativeResource('list', resource).children}">  
+    <li>  
+      <a href="${link.valueMap.path}">  
+        <sling:encode value="${link.valueMap.title}" mode="HTML"></sling:encode>  
+      </a>  
+    </li>  
+  </c:foreach>  
+</ul>
+```
+
+However, in HTL, this is somewhat more difficult. HTL doesn't really provide the features required to traverse the AEM repository or an extension model, so you are left with creating Sling Models to retrieve the data as there is not a good method to retrieve a relative node by name in HTL. 
+
+An experienced team will create a shared model which exposes the list of links in consumable format. This model can then be reused for all similar requirements in the codebase. Something like this:
+
+```java
+package com.myco.models;  
+  
+@Model  
+public class MyModel {  
+  
+  private Resource resource;  
+  
+  public MyModel(Resource resource){  
+    this.resource = resource;  
+  }  
+  
+  public Iterator getLinks(){  
+    return resource.getChild('links').listChildren();  
+  }  
+}  
+[...]  
+<sly data-sly-use.model="com.myco.models.MyModel">  
+  <ul data-sly-list.link="${model.links}">  
+    <li>  
+      <a href="${link.path @context='uri'}">  
+        ${link.title}  
+      </a>  
+    </li>  
+  </ul>  
+</sly>
+```
+
+ Often however, if you're working with an inexperience team or a team that [thinks lines of code is a good measure of work](https://www.goodreads.com/quotes/536587-measuring-programming-progress-by-lines-of-code-is-like-measuring), you may end up with a multitude of Sling Models to perform similar functions for different components.
+
+Even in the best case where you are leveraging a shared model, since the markup is subtly different for each instance, you'll end up creating a separate component and markup for each link list, so what good does this do for you? And you're writing Java code to for business logic to get around a language deficiency. Not the best use of a compiler or your time.
+
+  
+### Avoiding Unnecessary Sling Models
+
+  
+Instead of writing Sling Models _and_ the HTL code to render a linked list, why not just write the HTL scripts? That way, you're keeping the templating code together and not bringing in Java code just to render a simple list. 
+
+One approach to do this is to create a sub-component of your component to render the list. This component should be in the .hidden group as to not appear in the sidekick. You then include the sub-component from your parent component. For example, let's say I'm creating a component called footer, I would create a structure like the below:
+
+```plaintext
+- footer (cq:Component)
+ - cq:dialog
+ - footer.html
+- linklist (cq:Component)
+ - linklist.html
+```
+
+The footer's dialog would contain a multifield to create the list of links. To render the links, I then include the linklist sub-component from my footer.html script:
+
+```html
+<sly data-sly-resource="${'linklist' @ resourceType='myapp/components/structure/footer/linklist'}" />
+```
+
+  
+Inside the linklist component, I can then loop through the resources children with data-sly-list:
+
+```html
+<ul class="menu" data-sly-list.link="${resource.listChildren}">  
+  <li>  
+    <a href="${link.valueMap.link}">  
+      ${link.valueMap.text}  
+    </a>  
+  </li>  
+</ul>
+```
+  
+And there you have it! A list of links in HTL with 0 Java code required!
+
+Extending this model further, you can avoid bringing Java code into the mix even for relatively complex content structures and instead use sub-components in HTL to render the content structure. Using this technique, I've managed to make footers and navigations with multi-level lists without a single line of Java code!
+
+I hope this tip helps anyone looking to develop clean and maintainable components using HTL!

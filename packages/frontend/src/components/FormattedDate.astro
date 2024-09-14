@@ -1,0 +1,24 @@
+---
+interface Props {
+  date?: Date;
+  excludeDay?: boolean;
+}
+
+const { date, excludeDay } = Astro.props;
+
+let format: Record<string,string> = {
+  year: "numeric",
+  month: "short",
+  day: "numeric",
+};
+if (excludeDay) {
+  format = {
+    year: "numeric",
+    month: "short",
+  };
+}
+---
+
+{date && (<time datetime={date.toISOString()}>
+  {date.toLocaleDateString("en-us", format)}
+</time>)}

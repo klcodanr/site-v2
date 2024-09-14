@@ -1,0 +1,43 @@
+---
+title: Are You Ready For AT.js?
+description: AT.js is a new client library for Adobe Target which is more
+  flexible, faster and more secure than the current mbox.js
+hideInNav: false
+tags:
+  - Adobe Target
+  - Single Page Applications
+  - JavaScript
+  - Adobe Marketing Cloud
+pubDate: 2016-01-05
+display: post
+image: /images/posts/2015-12-16-are-you-ready-for-atjs/adobe-target.png
+published: true
+---
+
+I recently attended an excellent webinar "[Ask the Experts - Adobe Target New Features](http://help-forums.adobe.com/content/adobeforums/en/target-forum/adobe-target.topic.html/forum%5F%5Fpqsm-hi%5Fall%5Fpleasejo.html)" presented by Adobe's [@kimenwarner](https://twitter.com/kimenwarner). During the webinar, Kimen mentioned a very exciting new feature coming to Adobe Target in February 2016: AT.js.
+
+AT.js is the new client library for [Adobe Target](http://www.adobe.com/marketing-cloud/testing-targeting.html), replacing the legacy mbox.js. This new client library is currently in beta testing and promises to be more flexible, faster and safer than the current library. Specifically, AT.js offers:
+
+* **Flexibility:** Supports standard websites and single page apps
+* ****Flexibility:** Customize error handling and timeouts
+* **Modern Coding:** Uses XMLHttpRequest method for all AJAX loading
+* **Speed:** Doesn't require blocking calls -- can be loaded asynchronously
+* **Speed:** Avoids document.write() calls
+* **Safety:** Doesn't immediately execute JavaScript on errors and timeouts
+* **Safety:** No longer reloads on timeouts
+
+These new features are especially exciting for those developing single page applications, as it allows marketers to no longer rely on developers to implement personalization and optimization strategies when supporting single page applications, such as those built in [AngularJS](https://angularjs.org/) or [ember.js](http://emberjs.com/). Single page applications are becoming the new standard for complex, user-friendly application development and are becoming more and more common as companies modernize their legacy applications and migrate desktop apps to web applications.
+
+Additionally, the speed and safety improvements will make Adobe Target more enticing for anyone looking to do personalization; users increasingly expect near-instant page loads, while also expecting a personalized experience. 
+
+Of course, all of these new features require some deprecation of some legacy integrations and support. With AT.js, the following will be deprecated:
+
+* IE7 or older support
+* Legacy SiteCatalyst -> Test&Target Integration
+* Legacy Test&Target -> SiteCatalyst Integration
+* Legacy Adobe Audience Manager -> Test&Target Integration
+* Direct access to internal mbox.js functions
+
+If you are using these integrations, you will need to upgrade to the latest product versions to leverage the new integrations and when migrating you will need to ensure that you are not invoking internal methods. The migration process is a great time to evaluate your current personalization and optimization implementation as well, especially given the speed and platform improvements in AT.js.
+
+_Are you ready for AT.JS?_ I know I am!

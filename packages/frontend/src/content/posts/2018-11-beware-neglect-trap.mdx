@@ -1,0 +1,94 @@
+---
+title: Beware the Neglect Trap
+description: "The dark corners of the internet and many an extranet are filled
+  with enterprise applications collecting dust. These applications were once
+  viewed as a potential solution to all of the businesses problems, but they
+  have withered on the vine and are now an impediment to doing business every
+  day. "
+hideInNav: false
+tags:
+  - Architecture
+  - Best Practices
+  - Program Management
+pubDate: 2018-11-13
+display: post
+image: /images/posts/2018-11/trap-header.jpg
+published: true
+---
+
+  
+The dark corners of the internet and many an extranet are filled with enterprise applications collecting dust. These applications were once viewed as a potential solution to all of the businesses problems, but they have withered on the vine and are now an impediment to doing business every day. We've all seen these applications, unresponsive, slow, difficult to work with, but essential to the way business is operated and so deeply entangled and poorly documented that no one dares to update them.
+
+These dusty relics our results of a common issue in many enterprise organizations. The organization will allocate capital budgets to build a new application but not consider the continued investment in long-term maintenance. Consequently, these organizations will end up accruing more cost for an abysmal user experience, when they would have been much better off if they had maintained the application over time.
+
+Internal and commercial applications are subject to the same problem. Indeed, some companies have whole business models on supporting out-of-date, legacy applications. Look at the changes for the licensing in the Oracle JDK or IBM's continued support of mainframes for example. While it does not receive the same attention as the latest JavaScript framework, I would bet that in most Enterprises more developers are supporting an out-of-date application than anything exciting or new.  
+  
+## Application Decay 
+
+  
+There's an interesting parallel here to Urban Decay. In many Midwest cities, including my home base of Cincinnati, many neighborhoods that were once the crown jewel of the city are now mired in decay. The grand houses crowning the hills are costly to maintain and update. As neighborhoods change and elderly homeowners stop taking over homes, less wealthy residents moved in and unscrupulous slumlords took over, reducing home values. With lower values, it is no longer worth any return on investment to improve these homes. Long-term lack of maintenance and neglect has turned former mansions into crumbling money pits.  
+
+![Urban Decay in Cincinnati](/images/posts/2018-11/urban-decay.jpg)
+
+  
+Your enterprise applications can end in the same state by over building a mansion when a ranch would do. By not investing in maintenance and upgrades, you'll be left with a crumbling boarded-up application that's an eyesore within your enterprises' solutions.  
+  
+## Why Neglect _Seems_ to Make Fiscal Sense
+
+  
+Excepting unscrupulous landlords, no one sets out to ruin something beautiful, but short-sighted budgeting just as much as distorted financial incentives will lead to the same outcome. 
+
+New applications within the Enterprise solve problems and people leaving these applications to get budgets because the business need is obvious and successfully delivering on such an application can be a great boon to one's career. Maintenance on Legacy applications, on the other hand, is viewed as a cost to be reduced as much as possible while still maintaining an acceptable level of service.
+
+By considering solely the maintenance cost, instead of the return on investment with improvements and new features, IT organizations shortsightedly under-invest in maintaining existing applications. Exacerbating this, when an application drifts so far from modern standards, there really is no choice but to replace at a significant premium over the cost to maintain the application in the first place.
+
+Additionally, consider the opportunity cost for a bad user experience. Every minute users spend frustrated with an application that doesn't work or is unnecessarily cumbersome is time and money down the drain for your organization.  
+
+![Renovation](/images/posts/2018-11/renovation.jpg)
+
+  
+Finally, by doing a big bang update, instead of incrementally improving the application, you have a much higher risk that the new solution will not solve the problem and instead just introduce new ones. The best source of information on how to solve a problem is current user data and since your new application may look nothing like your current application, well you may solve one problem or you may create five more.  
+  
+## Rejecting the Neglect Benefit Myth
+
+  
+Even from a cost perspective, the cost of not maintaining an application and having to replace it can be greater than to simply maintain the application in the first place.
+
+Let's the example of Company A, which builds an application. They rely on outside consultants for expertise but cultivate internal expertise to support the platform. They keep a steady state team involved to continually make updates and every year ensure that the application is in line with company and Industry best practices. They bring in consultants periodically to perform larger updates and upgrades, but always keep a steady state to ensure effective maintenance and updates.
+
+Company B build a similar application with a similar consulting team but unlike Company A, they attempt to minimize costs by splitting time between multiple resources and never truly cultivating internal expertise to support the application. The application is "supported" but only in so much as it doesn't crash too often... initially. The team makes big minor tweaks or improvements based on business requests, but the software is not kept up to date and in quickly becomes obsolete both from a vendor and a best-practices perspective. Because no one internally understands the application, documentation, if it was there in the first place, gets lost or is not understood. So, when inevitably the decision becomes to just replace the application, the new implementer must not only reproduce the functionality, but completely redefine all of the requirements.  
+
+And the cycle repeats; Company B wonders why their applications are out of date and difficult to use and therefore invests large capital budgets to create Application+ which solves three of the five issues with the application and introduces two more.  
+  
+
+![Cost Estimates](/images/posts/2018-11/cost-estimates.png)
+
+  
+If we take a reasonable cost of a consulting and internal costs and stretch it out over 4 years, assuming the application gets replaced in 3 years for Company B but only requires incremental updates for Company A, Company B spends $50,000 _more_ to get an application which spends 2/3 of its life is out of date. And when they replace it instead of a continually improved application they get a new set of problems.  
+  
+## How to Avoid Application Decay
+
+  
+Combating urban decay takes a village and it should be no surprise that combating application to today requires one as well. Many people within your organization need to come together to successfully avoid application decay. This includes technical and business leadership, architects and business owners.  
+  
+### Starting at the Top
+
+  
+Preventing application decay starts with the top, organizational policies should be put in place to ensure applications are updated within a reasonable window, not right before the end of life. Generally, applications should only be allowed to drift two years off the latest release or the latest Long Term Support LTS release, depending on the support mechanism in question.
+
+Additionally, when budgeting and planning, it is critical to consider maintenance, not just implementation costs, and the factor support to continuously maintain and improve applications instead of just planning for capital for new projects. While this may incur additional cost in the short run, the medium and long term returns will outweigh the costs.  
+  
+### Architecting for Maintenance
+
+  
+Architects need to consider what solution is most appropriate (not necessarily the coolest) to solve a problem. In building terms this may mean a two-bedroom ranch, not a 10 bathroom mansion, but personally, I find building something that gets used to be far more satisfying than over-engineering an empty house.
+
+Additionally, thinking in terms application decomposition will help to build a more flexible application with reusable services, rather than a brittle application monolith. Not to say that you should introduce integration complexity for the sake of it, but as any Lego builder knows building something out of many small pieces is quicker and easier than trying to find that one perfect, giant piece.  
+  
+### Owning a Successful Product... Long Term
+
+  
+Product owners need to be enabled and willing to be continuous agents of change and advocates for their application. Product Owners need to keep the architects and developers aligned to ensure the product is built with support in mind and is not so overly complex or monolithic that it will be difficult to support.  
+
+None of us want to contribute to application delay, by planning for maintenance up front, keeping software up to date and following service oriented practices we can ensure our hard work results in functional, used applications rather than business eyesores.  
+  

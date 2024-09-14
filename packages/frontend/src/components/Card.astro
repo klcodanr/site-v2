@@ -1,0 +1,38 @@
+---
+
+---
+
+<div class="card">
+  <slot />
+</div>
+<style is:global>
+  .card {
+    flex: 1;
+    border: 1px solid silver;
+    border-radius: 0.5em;
+    padding: 0;
+    justify-content: space-between;
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+  }
+
+  .card:first-child {
+    justify-self: start;
+  }
+
+  .card:hover {
+    filter: opacity(85%);
+  }
+</style>
+
+<script>
+  document.querySelectorAll(".card").forEach((card) => {
+    const link = card.querySelector("a")?.href;
+    if (link) {
+      card.addEventListener("click", () => {
+        window.location.href = link;
+      });
+    }
+  });
+</script>

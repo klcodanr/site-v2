@@ -1,0 +1,67 @@
+---
+title: 1st Party Adobe Launch with ACS AEM Commons
+description: The latest version of ACS AEM Commons, version 4.4.0, includes a
+  new feature to fetch remote files and serve them via AEM. The primary use case
+  I implemented this feature for was to automatically download the Launch by
+  Adobe script so it can be served from the primary domain.
+hideInNav: false
+tags:
+  - Adobe Launch
+  - Adobe Analytics
+  - Adobe Target
+  - ACS AEM Commons
+  - Adobe Experience Manager
+pubDate: 2020-01-27
+display: post
+image: /images/posts/2020-01/Bypassing-Ad-Blockers.jpg
+published: true
+---
+
+  
+Adobe has supported CNAME configuration for Adobe Analytics and Adobe Target for some time now, but unfortunately doesn't provide the same for Launch by Adobe. The [latest version of ACS AEM Commons, version 4.4.0](https://github.com/Adobe-Consulting-Services/acs-aem-commons/releases), includes a [new feature to fetch remote files and serve them via AEM](https://adobe-consulting-services.github.io/acs-aem-commons/features/file-fetcher/index.html). The primary use case I implemented this feature for was to automatically download the Launch by Adobe script so it can be served from the primary domain.  
+  
+## Why do we need to serve Launch from our domain?
+
+  
+Protecting consumer privacy and providing an excellent consumer experience is a delicate balance. The confluence of [Safari's Intelligent Tracking Prevention](https://helpx.adobe.com/analytics/kb/adobe-analytics-anditp.html), the [widespread adoption of adblockers](https://www.emarketer.com/content/demanding-a-better-ad-experience) and [Google Chrome's coming blocking of third party cookies](https://blog.chromium.org/2020/01/building-more-private-web-path-towards.html) have limited Digital Marketer's ability to optimize and personalize experiences as progressively they make it harder to effectively measure and optimize user interactions.
+
+Research has shown, however, that the problem is not that consumers are blanket against personalization or even advertising but that they despise _badly done_ advertising and personalization.  
+  
+
+![Types of Digital/Mobile Ads US Consumers Find Annoying, Jan 2019 - eMarketer](/images/posts/2020-01/Ad-Chart.png)
+
+  
+How do we as Digital Marketer's deliver better ads and experiences? Again, based on the market research, the major pain points for consumers are irrelevance and performance. Both of which we can address with the Adobe Experience Cloud suite of tools. 
+
+Performance [is a full, separate discussion](https://blogs.perficientdigital.com/2017/11/30/5-tips-to-maximize-adobe-experience-cloud-performance/), so let's focus on the basics we need to be able to create personalized, relevant experiences. With the Adobe Experience Cloud, this means having Adobe Analytics, Launch and Target working to effectively personalize our digital experiences. But how do we ensure that if Ad Blockers or even the browser themselves can block the cookies we use or even the tools themselves?  
+  
+
+  
+
+## CNAMEs with Analytics and Target 
+
+  
+Adobe has an answer for Adobe Analytics and Adobe Target. Each tool supports setting up and serving the scripts from a CNAME record on your own domain. This changed the cookies from third to first party from the browser's perspectives and bypasses the domain name lists in Ad Blockers. For more information read:  
+
+* [CNAME support in Adobe Analytics](https://docs.adobe.com/content/help/en/core-services/interface/ec-cookies/cookies-first-party.html)
+* [CNAME support in Adobe Target](https://docs.adobe.com/content/help/en/target/using/implement-target/before-implement/implement-cname-support-in-target.html)
+All of this is good, but if an Ad Blocker blocks \*adobedtm.com\* the Launch doesn't fire and the whole thing falls apart.  
+  
+Unfortunately, Adobe does not provide a CNAME'ing solution for Launch, so we have to either proxy or otherwise download the Launch script, which is where the new ACS AEM Commons feature comes in.  
+  
+
+  
+
+## Syncing Launch into AEM with the ACS AEM Commons File Fetch
+
+  
+The [File Fetch service](https://adobe-consulting-services.github.io/acs-aem-commons/features/file-fetcher/index.html) is configured via OSGi, so work with development teams to configure the URL for the Launch script and the path within AEM Assets to save the file. Based on the configuration, the File Fetch service will fetch a file from a URL, load the file into AEM Assets as a dam:Asset and then replicate the asset. It uses the HTTP responses status and will not perform any updates if Launch returns a 304 status code so it will only update when needed.
+
+Since the Launch script is automatically replicated on update, you should not need further Dispatcher cache configuration, however you should ensure that the client side cache headers will not cache the Launch script.  
+  
+
+![File Fetch Configuration](/images/posts/2020-01/File-Fetch-Configuration.png)
+
+  
+From there, include the Launch script from AEM Assets via the path like you would for any other Launch script and to browsers and visitors, Adobe Analytics, Launch by Adobe and Adobe Target are all indistinguishable from any other scripts on the website.  
+  

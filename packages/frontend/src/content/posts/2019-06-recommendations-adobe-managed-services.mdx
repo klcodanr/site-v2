@@ -1,0 +1,132 @@
+---
+title: An Outsider's Recommendations for Adobe Managed Services
+description: Some concrete recommendations to better fit Adobe Managed Services
+  to customers diverse needs based on my experience as an AEM Architect and
+  DevOps expert
+hideInNav: false
+tags:
+  - DevOps
+  - Continuous Integration
+  - Adobe Managed Services
+  - Adobe Experience Cloud
+  - Cloud Manager
+pubDate: 2019-06-06
+display: post
+image: /images/posts/2019-04/metamorphosis.jpg
+published: true
+---
+
+  
+
+I'll start this by saying imagination is easy, execution is difficult. Having worked with and observed Adobe Managed Services (AMS), it's pretty clear that Adobe has a particular customer need in mind. Based on my experience, I've brainstormed a few ideas that would help meet the needs of all customers.
+
+Adobe's customers vary widely in their maturity and goals. A one size fits all solution, as presented by AMS, does not fit every customer need. Especially for customers on the far ends of the maturity curve.
+
+For less mature customers, AMS provides application-level support but does not provide the technical guidance an inexperienced customer needs to be productive with the Adobe Experience Cloud. Instead, customers are expected to have a some deep technical proficiency with the tools. This is a challenge without a partner engaged or internal subject matter experts.
+
+On the other end of the spectrum, customers experienced with Continuous Integration and Delivery (CI/CD) are stymied by the limited CI options and infrastructure management provided by AMS solution and Cloud Manager.
+
+For many customers, AEM is one part of a larger digital experience platform. Thus, having a proprietary deployment stack outside of the company's control is not a desirable solution.
+
+I propose making the following three changes to better serve all of Adobe's customers:
+
+1. Introduce refined offerings to serve the different levels of customer maturity (more on this later)
+2. Refocus the goal of Cloud Manager from code deployment to platform management and align it to the customer maturity levels
+3. Institute AMS as a single point of support for the customer's Adobe Experience Cloud products (e.g. Analytics, Target, Campaign, etc)
+  
+
+![Leaves Changing Colors](/images/posts/2019-04/leaves-colors.jpg)
+
+  
+
+## New Offerings
+
+  
+Instead of the current static approach, three tiers based on customer maturity and goals would provide the right solution for almost any customer need.  
+  
+### Tier 1: Adobe Experience Turnkey
+
+  
+At the lower end of the maturity curve and well suited for mid-market customers, Adobe Experience Turnkey would be a limited, but quick to market and easy to support solution for customers without extensive IT support. This offering would be templatized and would allow a customer to deploy AEM without ever having to think about servers. Instead, AMS would handle all infrastructure, maintenance and deployments.
+
+Similar to Brand Portal, customers would not be able to customize many features of AEM but can manage their content. For Adobe to support this solution would require the development of tooling for the configuration of the AEM Dispatcher and horizontal scaling mechanisms. However, would be an enormous boon to customer speed to market and reducing maintenance effort.
+
+ Since the customer need not be concerned with servers, charging for AEM with a server-based model would not make sense. Instead, moving to a usage-based model would allow AMS to scale infrastructure to meet customer needs while providing a cost-effective solution for the customer.  
+  
+### Tier 2: Adobe Experience PaaS
+
+  
+Adobe Experience PaaS would provide a best of both worlds' scenario for customers with an existing IT infrastructure, but not looking to take on the complexity of managing an AEM installation or the associated infrastructure. Similar to Adobe Experience Turnkey, Adobe Experience PaaS would be templatized at the server level and customers would have limited options in customizing the low-level infrastructure. However, customers would have much more extensive options to customize their applications.
+
+In Adobe Experience PaaS, the customer could use their own CI tools. Cloud Manager would be used for deploying infrastructure and build artifacts. But, unlike the current iteration of Cloud Manager, it would not perform the builds. Instead, Cloud Manager would have a RESTful API for the customer's CI tool to post the deployment artifacts. Cloud Manager would then deploy the artifacts with a Blue/Green pipeline to ensure zero down time.
+
+Since customers are in control of the instances with Adobe Experience PaaS, pricing would be based on a combination of instance hours and traffic. The pricing should be above the individual server level, instead, thinking of AEM instances or environments as units.  
+  
+### Tier 3: Adobe Experience Advanced
+
+  
+Some organizations want to be in the cloud, but own their own destiny. For these organizations, having the AEM infrastructure hosted by Adobe is preferred, but they need server level access. This, of course, comes with some limitations, as they would not have the uptime SLA's from AMS, but AMS would still provide support on a response time SLA.
+
+Customers with Adobe Experience Advanced would have full access to do what they wish within their AEM environment including deployments, updates, integrations and customizations. This would be similar to the current AMS offering, with the added benefit and responsibility of full production access.
+
+Unlike the other two options, Adobe Experience Advanced would be priced similar to the current AMS offerings on a software plus server basis.  
+  
+
+![A SpaceX Rocket taking off](/images/posts/2019-04/spacex-530585-unsplash.jpg)
+
+  
+
+## Cloud Manager
+
+  
+Cloud Manager suffers from the same problems as AMS, by trying to serve everyone it misses many customer needs. 
+
+  
+### Challenging Customer Needs
+
+  
+I have had a chance to (attempt to) use Cloud Manager on a project as well as attending webinars presented by Adobe on Cloud Manager. Based on what I've seen, there are potential challenges for customers attempting to use Cloud Manager:  
+  
+#### Single Repository Support
+
+Cloud Manager only supports a single code repository for staging deployments. This will be a challenge for customers with a multi-tenant setup or who have created an Application Ecosystem type project structure. This can be worked around by simply deploying built artifacts to Cloud Manager, but defeats the purpose and value of the tool. It also does not easily adopt to existing customers repository models and thus more sophisticated customers may be reticent to event purchase AMS because of this limitation.  
+  
+#### Black Box
+
+Unlike customer hosted or most cloud CI tools, Cloud Manager operates as a black box. While it will report on expected problems, based on previous project experience, it will not report unexpected problems, leaving implementation teams with no real recourse to diagnose the deployment issues.  
+  
+#### Lack of Customizability
+
+Most moderately mature implementation teams already have some preferred CI tooling, Cloud Manager doesn't integrate with these in a meaningful way and duplicates functionality already available in [Jenkins,](https://jenkins.io/) [GitLab](https://about.gitlab.com/) or [CircleCI](https://circleci.com/). As with diagnosing issues, Cloud Manager does not allow extensive customization, of the build process or validation include static code analysis.  
+  
+### Aligning Cloud Manager to Customer Needs
+
+  
+Cloud Manager is problematic for moderately and advanced Adobe customers. Conversely, for Turnkey customers, having constraints and basic CI tooling would be beneficial.
+
+For Turnkey customers, Cloud Manager would provide build and deployment services. Additionally, it could be the single source of truth for their Adobe Managed Cloud deployment.
+
+Since moderately experienced and advanced customers already have CI tools, Cloud Manager's role would be more limited. For PaaS customers, Cloud Manager would enable deploying (but not building) code as well as managing environments. And for Advanced customers, Cloud Manager would primarily manage environments.
+
+By scaling the capabilities of Cloud Manager along with the customers capabilities, Adobe will best serve every type of customer with a solution that augments rather than hindering their process.  
+  
+
+![A waiter bringing drinks](/images/posts/2019-04/service.jpg)
+
+  
+
+## Single Source of Support
+
+  
+With the breadth of Adobe's products, it is natural for their support experts to not be able to cover every product. However, it is frustrating as a customer and an integrator to have different places to go to get support depending on the product. Product integration points are especially challenging as the customer or implementer has to determine how to solve a problem with separate input from two different product support teams.
+
+Instead of instructing customers to contact customer care, open a Daycare ticket or contact SPP help, AMS should be the single point of contact to coordinate all support activities. Thus, making this process seamless to the end customer. 
+
+This would include the onboarding process as well. Instead of the customer working with the Target and Analytics and AEM teams, the AMS team would coordinate the customer's onboarding to the entire Adobe Experience Cloud.
+
+  
+## Adobe Managed Services for Any Client
+
+  
+With this new, more tailored solution, AMS would have a offering for any client situation and need. Indeed, Adobe could increase their penetration within clients by offering multiple solutions for different business needs.   
+  

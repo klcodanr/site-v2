@@ -1,0 +1,174 @@
+---
+title: Sending Email with the Adobe CQ API
+description: Learn how to send emails using the Adobe CQ API
+hideInNav: false
+tags:
+  - Adobe CQ
+  - How To
+pubDate: 2012-08-20
+display: post
+image: /images/posts/2012-08-20-sending-email-adobe-cq-api/configure-day-cq-mail-service.png
+published: true
+---
+
+Sending emails through Adobe CQ can be easy, however there really isn’t an example which brings the entire process together. This blog post will guide you through the process of configuring Adobe CQ to send email, creating a component for sending email, creating an email template and finally creating a servlet which will send the email.
+
+First, though, what are the benefits of the Adobe CQ Email API? The Adobe CQ API provides a method for sending emails through a centrally configured service. You can send emails of multiple types and you can even create authorable templates so developers do not need to be involved in creating and updating email templates.
+
+### Configuring CQ Mail Service
+
+The first step to sending emails through Adobe CQ is to configure the Day CQ Mail Service. To do this, log into to the OSGi Console at `server`:`port`/system/console/configMgr and look for a service called Day CQ Mail Service. Select the service and you should see a screen like the below:
+
+![Configuring the Day CQ Mail Service](/images/posts/2012-08-20-sending-email-adobe-cq-api/configure-day-cq-mail-service.png)
+
+Enter [all of the relevant information](http://wem.help.adobe.com/enterprise/en%5FUS/10-0/wem/administering/notification.html#Configuring%20the%20Mail%20Service "Configuring the Day CQ Mail Service") for your current SMTP provider. If you don’t have or can’t easily get SMTP set up within your organization, a Gmail account works for testing.
+
+Once you have the Day CQ Mail Service configured you should be able to send emails through Adobe CQ. If, later on you run into problems with getting a null Message Gateway, you probably entered something incorrectly here.
+
+### Creating an Email Component
+
+If you haven’t read up on creating components, [please do so now](http://dev.day.com/docs/en/cq/current/developing/components.html "Developing Components Intro").
+
+Create a new component called contact and set the following as the JSP code:
+
+```
+<%@page import="com.day.cq.wcm.api.WCMMode" %>
+<cq:includeClientLib categories="email.sample" />
+<cq:setContentBundle />
+<form name="contact" id="contact" action="${resource.path}.email.html" method="get">
+	<fieldset>
+		<legend><fmt:message key="Contact Us" /></legend>
+		<label for="email"><fmt:message key="Email" /></label>
+		<input type="email" id="email" name="email" />
+		<label for="subject"><fmt:message key="Subject" /></label>
+		<input type="text" id="subject" name="subject" />
+		<label for="message"><fmt:message key="Message" /></label>
+		<textarea id="message" name="message"></textarea>
+		<input type="submit" value="<fmt:message key="Submit" />" />
+	</fieldset>
+</form>
+<c:if test="<%= WCMMode.fromRequest(request) == WCMMode.EDIT %>">
+	<h3>Success Message</h3>
+	<cq:include path="success" resourceType="foundation/components/textimage" />
+	<br style="clear:both"/>
+	<h3>Failure Message</h3>
+	<cq:include path="fail" resourceType="foundation/components/textimage" />
+</c:if>
+
+```
+
+This component will render out a simple form for the user to submit their contact information. And when in author mode it will display text and image components for the author to enter the success and failure messages. We can then style and add JavaScript to the form as needed.
+
+In the dialog for the component, create two fields, the first being a pathfield for the author to select the email template to use for the contact form and the second being a multifield of email address for the recipients of the email.
+
+![Email Component Dialog](/images/posts/2012-08-20-sending-email-adobe-cq-api/email-sample-dialog.png)
+
+### Creating the Email Template
+
+Once you have created the email component, it’s time to create the email template. CQ will use this template to create the email instance to send, you can think of it like a mail merge template.
+
+The templates are simple text files. They begin with email headers, followed by a blank line, followed by the content of the email. The content of the email will be send out as the HTML and Text versions of the email. 
+
+Below is an example of an email to send for our contact form. All of the text in the format $`SOMEVALUE` will be replaced with the variable matching the name inside the brackets. These variables can be passed in through the request or retrieve programatically. One of the tricky things is, if you have multiple recipients, you cannot use the headers to specify them. Each header is interpreted as a single value, so you will get an exception if you put multiple emails in the to, from, cc or bcc fields.
+
+```
+From: admin@myco.com
+Subject: Contact Form Submission
+
+We have received a contact request with the information below:
+<br/>
+Email: ${email}
+<br/>
+Subject: ${subject}
+<br/>
+Message: ${message}
+
+```
+
+Once you have created your email template, upload it into a folder under /etc/notifications using the CQ Tools manager.
+
+### Creating the HTML Email Servlet
+
+Once you have created the template, create the form which will send the email. Start off the class with a reference to the [MessageGatewayService](http://dev.day.com/docs/en/cq/current/javadoc/com/day/cq/mailer/MessageGatewayService.html "Adobe CQ Message Gateway Service JavaDoc"). This service will be used to retrieve the message gateway. \` \`
+
+```
+@Reference
+private MessageGatewayService messageGatewayService; `
+
+```
+
+Next, load the parameters from the request. The map of parameters will be used to replace all of the variables in the email template. You can also programatically set parameters here as well.
+
+```
+@SuppressWarnings("unchecked")
+final Enumeration<String> parameterNames = request.getParameterNames();
+final Map<String, String> parameters = new HashMap<String, String>();
+while (parameterNames.hasMoreElements()) {
+  final String key = parameterNames.nextElement();
+  parameters.put(key, request.getParameter(key));
+}
+
+```
+
+Then retrieve the Email Template from our the configuration value in the component instance.
+
+```
+String template = properties.get("emailTemplate","/notset");
+Resource templateRsrc = request.getResourceResolver().getResource(template);
+if (templateRsrc.getChild("file") != null) {
+   templateRsrc = templateRsrc.getChild("file");
+}
+if (templateRsrc == null) {
+   throw new IllegalArgumentException("Missing template: " + template);
+}
+
+```
+
+And create a [Mail Template](http://dev.day.com/docs/en/cq/current/javadoc/com/day/cq/commons/mail/MailTemplate.html "Adobe CQ Mail Template JavaDoc") from the template file. You can then pass in the properties as a [Apache Commons StrLookup](http://commons.apache.org/lang/api-2.4/org/apache/commons/lang/text/StrLookup.html "Apache Commons StrLookup JavaDoc"). The String Lookup will be used to replace all of the variables in the template with the values from the request.
+
+```
+final MailTemplate mailTemplate = MailTemplate.create(templateRsrc.getPath(),
+			   templateRsrc.getResourceResolver().adaptTo(Session.class));
+final HtmlEmail email = mailTemplate.getEmail(StrLookup.mapLookup(properties),
+			   HtmlEmail.class);
+
+```
+
+Since the email template does not gracefully handle multiple recipients, we will loop through the recipients specified in the component instance and add them individually to the email.
+
+```
+log.debug("Adding recipients");
+final String[] recipients = properties.get("recipients", new String[0]);
+for (final String recipient : recipients) {
+   email.addTo(recipient);
+}
+
+```
+
+Once this is all complete, retrieve the [HTML Email](http://commons.apache.org/email/api-1.0/org/apache/commons/mail/HtmlEmail.html "Apache Commons Email HTML Email JavaDoc") [Message Gateway](http://dev.day.com/docs/en/cq/current/javadoc/com/day/cq/mailer/MessageGateway.html "Adobe CQ Message Gateway JavaDoc") and send the email. \` \`
+
+```
+this.messageGateway = this.messageGatewayService.getGateway(HtmlEmail.class);
+this.messageGateway.send(email);
+
+```
+
+Based on whether or not the sending of the email succeeded, we can retrieve the appropriate message we set in the page and write the message to the response.
+
+```
+String result = "success";
+if(!succeeded){
+  result = "fail";
+}
+final Resource message = request.getResource().getChild(result);
+if (message != null) {
+   response.getWriter().write(message.adaptTo(ValueMap.class).get("text", ""));
+} else {
+   log.error("Message text for " + result + " not set");
+}
+
+```
+
+Once you create the servlet, you should be able to send emails from your Contact component. You will want to do further validation than is shown in this example and probably make the contact form work with AJAX. 
+
+Hopefully, you can now appreciate how easy and powerful the Adobe CQ Email API is and how it can be useful on your next project.

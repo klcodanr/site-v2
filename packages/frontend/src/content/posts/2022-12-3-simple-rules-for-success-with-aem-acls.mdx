@@ -1,0 +1,162 @@
+---
+title: 3 Simple Rules for a Successful AEM Access Control Model
+description: Follow these three rules for setting up a sustainable Apache
+  Jackrabbit Oak Access Control model
+hideInNav: false
+tags:
+  - Apache Jackrabbit Oak
+  - Security
+  - Adobe Experience Manager
+  - AEM as a Cloud Service
+pubDate: 2022-12-13
+display: post
+image: /images/posts/2022-12/access-control-hero.jpg
+published: true
+---
+
+  
+
+Access Control Lists or ACLs in AEM are both extraordinarily powerful and _can be_ extremely complex. Luckily there are a few rules you can follow as a part of your AEM implementation to keep your ACL setup simple and easy to maintain.
+
+Why are ACLs such a common stumbling-block for AEM projects and a common cause of customer issues? As mentioned, the model is powerful, but with that power comes significant complexity in behavior and evaluation. AEM's ACLs are powered by Apache Jackrabbit Oak's [Authorization and Access Control module](https://jackrabbit.apache.org/oak/docs/security/authorization.html). This module is pluggable, allowing custom [permissions](https://jackrabbit.apache.org/oak/docs/security/permission.html#api-extensions), [restrictions](https://jackrabbit.apache.org/oak/docs/security/authorization/restriction.html) and [even whole Authorization models](https://jackrabbit.apache.org/oak/docs/security/authorization/composite.html). All of this flexibility introduces tremendous complexity when understanding the Authorization Model in an AEM instance.
+
+But even if you just leverage the default ACL model, things can get complex quickly. This is due to two compounding complexities:
+
+* **Hierarchy** \- the JCR / Oak at it's core is a hierarchical repository and therefore the ACL model is also hierarchical. As anyone who's set up \*nix style permissions can tell you, granting permissions in a deep hierarchy is tough to get right
+* **Inheritance** \- on top of the hierarchy inheritance, ACLs also support inheritance based on group membership
+
+With these two complexities, in order to determine the access for a user, you need to both understand the ACLs applied at any parent level in the tree as well as all of the ACLs applied via the users group membership, including indirect group membership at each level.
+
+Understandably, this can lead to access control problems, but there's one other, less expected issue this can cause: query problems. As previously discussed in [Demystifying Oak Search Part 3: Five Indexing Gotchas,](/posts/2022/07/demystifying-oak-search-part-3-five-indexing-gotchas.html) permissions are evaluated as a part the search process, after the results are retrieved from the index, but before they are surfaced to the user. This can lead to a nasty side effect if a user cannot see large portions of a tree where they get traversal errors when searching as Oak needs to read a large number of nodes to check the users ACL before finding results that both match the query and are visible to the user.
+
+This leads us to our first rule:
+
+  
+
+## Rule #1 - Align the Content Architecture to the Access Control Model
+
+  
+What I mean by this, is ensure that content with similar access controls is organized in the same folders, ideally at as low of a level in the hierarchy as possible. This allows for tighter searches and limits the complexity of the Access Controls required to achieve the desired Access Control Model. 
+
+For example, let's consider two different sample Access Control setups, in the first setup, we organize based on top-level brands which are used as the primary Access Control determination:  
+  
+
+```
+/content
+    /simple-solutions
+        /rep:acl
+            /allow read for employees
+        /global
+            /rep:acl
+                /allow write for team-marketing
+        /brand-alpha
+            /rep:acl
+                /allow write for team-brand-alpha
+            /marketing-collateral
+                /rep:acl
+                    /allow write for team-marketing
+            /product-documentation
+                /rep:acl
+                    /allow write for team-documentation
+        /brand-secret
+            /rep:acl
+                /deny read for employees
+                /allow read, write for team-brand-secret
+```
+
+  
+
+In our second model, instead, content is organized by function first and brand second, which drastically increases the number of required Access Controls:
+
+```
+/content
+    /complex-solutions
+        /rep:acl
+            /allow read for employees
+        /marketing-collateral
+            /rep:acl
+                /allow write for team-marketing
+            /global
+            /brand-alpha
+                /rep:acl
+                    /allow write for team-brand-alpha
+            /brand-secret
+                /rep:acl
+                    /deny read for employees
+                    /deny write for team-marketing
+                    /allow read, write for team-brand-secret
+        /product-documentation
+            /rep:acl
+                /allow write for team-documentation
+            /global
+            /brand-alpha
+                /rep:acl
+                    /allow write for team-brand-alpha
+            /brand-secret
+                /rep:acl
+                    /deny read for employees
+                    /deny write for team-marketing
+                    /allow read, write for team-brand-secret
+```
+
+  
+In this contrived example, not aligning the Content Architecture to the Access Control model increases the number of required ACLs from 7 to 11\. Especially problematically, it increases the number of deny Access Control Entries (ACEs), which brings us to our second rule:  
+  
+## Rule #2: Avoid Deny ACEs
+
+  
+It is better to grant access than deny it as denies "break" the inheritance and hierarchy rules of allow ACEs and especially when users have multiple relevant group memberships makes it extremely difficult to understand the effective permissions.  
+  
+
+![You had me at rep:denyACE]( /images/posts/2022-12/deny-ace.png)
+
+  
+Doubtless, there are use-cases where judicious use of denies can be useful, such as the first Access Control model above, but they should be limited and as coarse as possible. Having many or nested denies is a sure sign of a problematic Access Control model.
+
+[Order](https://jackrabbit.apache.org/oak/docs/security/permission/evaluation.html) is especially important when setting up deny ACEs. Therefore, you need to consider the order in which you put your ACEs. For example, if you had _parent-group_ and which had a member _child-group_ and you wanted to allow read for _child-group_ but not _parent-group_:  
+  
+
+```
+# This would not work because the ACE for parent-group has higher precedence than the one for child-group
+/content
+    /rep:acl
+        /allow read for child-group
+        /deny read for parent-group
+
+# This is the correct order
+/content
+    /rep:acl
+        /deny read for parent-group
+        /allow read for child-group
+
+```
+
+  
+
+Denies are hard enough to correctly use with group ACEs but with user ACEs things get really challenging to evaluate, thus we have our third rule:
+
+  
+## Rule #3 - Avoid Users ACEs
+
+  
+In Oak, [user ACEs are evaluated before group ACEs](https://jackrabbit.apache.org/oak/docs/security/permission/evaluation.html). This means group-based deny ACEs are overridden by user-based allow ACEs. For example, given the example below:  
+  
+
+```
+/content
+    /rep:acl
+        /allow read for an-employee[at]complex-solutions.com
+    /super-secret
+        /deny read for group-employees
+
+```
+
+It would be reasonable to expect that _an-employee\[at\]complex-solutions.com_ couldn't see _/content/super-secret_, but since user ACEs have higher precedence than group ACEs this is not the case.
+
+ In addition, having many user-based ACEs makes maintenance and comprehension of Access Controls a nightmare as quite quickly the number of different ACEs can get out of hand since you're creating one per user instead of a group of users.
+
+  
+## Final Tip: YAGNI
+
+  
+Content and Digital Asset Management should be a democratizing enabler for your organizations, granting the ability to more people to create and deliver experiences. While regulatory, confidentiality and legal reasons do exist to restrict access, starting with the least complex Access Control model possible is frequently enough. You may well find after all that complex Access Control model... well... [You Aren't Gonna Need It](https://martinfowler.com/bliki/Yagni.html).

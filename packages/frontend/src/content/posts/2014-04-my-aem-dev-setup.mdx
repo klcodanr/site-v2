@@ -1,0 +1,48 @@
+---
+title: My AEM Development Setup
+description: Discusses how I structure my computer to support easy and flexible
+  AEM Development.
+hideInNav: false
+tags:
+  - Adobe Experience Manager
+  - CQ5
+  - DevOps
+pubDate: 2014-04-28
+display: post
+image: /images/posts/shared/aem.png
+published: true
+---
+
+I'm pretty particular about how I like to lay out my computer for development. Ideally a good setup would:
+
+* Exist within my user's home directory
+* Contain short but meaningful folder names
+* Allow for multiple versions of an application
+
+To support this I create three folders:
+
+* `dev` \- contains some app data and development utilities
+* `git` \- contains all of my GIT repositories
+* `scripts` \- contains custom shell scripts
+
+The git and scripts folders are pretty straight forward. The git folder contains all of the GIT repositories I have worked on while the scripts folder contains a number of shell scripts.
+
+The dev folder is where things get more interesting. This folder contains a separate folder for each development application I use. For example in the case of AEM, I have a folder called cq for all of my AEM installations. Underneath this folder I create a separate folder for each version of the software. That way, you can run multiple versions of an application without having to delete anything. Once I'm done, my folder structure looks like this:
+
+* _/git_  
+   * _/project_
+* _/dev_  
+   * _/cq_  
+         * _/5.5_  
+         * _/5.6.1_
+
+I've also made a script to manage the CQ installations. The script allows you to easily start, stop and reset a CQ instance. In this particular case, by reset, I mean delete the contents of the crz-quickstart folder. This can often be easier when developing on CQ than attempting to recover from such problems, such as incorrect node types, corrupted repositories or incompatible client applications. Ideally as well, every client project should be a single installation step allowing for a quick setup in a clean CQ installation.
+
+The script also does some other really nice things like:
+
+* Support multiple publishers - the script can look for publish instances to start by checking a regular expression against sibiling folders of the author instance
+* Debugging support - The script can start CQ with debugging support and even supports automatically incrementing the ports on the publishers so you can debug any of the started instances
+
+This script does expect the folder structure I've described above, but once you have that in place it makes managing your CQ instances very simple and painless. You can [clone a gist of the script](https://gist.github.com/klcodanr/11345896) from GitHub.
+
+Happy Developing!

@@ -1,0 +1,92 @@
+---
+title: "Maven CQ5 Package Build: Updating Properties.xml"
+description: Shows how to update the VLT Properties.xml in a Maven Build
+hideInNav: false
+tags:
+  - Adobe CQ
+  - Apache Maven
+  - How To
+pubDate: 2012-06-18
+display: post
+image: /images/posts/shared/maven.png
+published: true
+---
+
+This article describes the process of adding and automatically updating a CQ5 Package properties.xml as a part of a Maven build.
+
+## Why do I need a Properties.xml?
+
+Certain CQ5.4 Hotfixes are known to cause issues where packages without a properties.xml will not install properly. If you attempt to install a package into a CQ instance with the affected Hotfix, you will see this error:
+
+```
+java.lang.NullPointerException
+at com.day.jcr.vault.packaging.impl.InstallHookProcessor.registerHooks(InstallHookProcessor.java:80)
+at com.day.jcr.vault.packaging.impl.ZipVaultPackage.prepareExtract(ZipVaultPackage.java:303)
+at com.day.jcr.vault.packaging.impl.JcrPackageImpl.extract(JcrPackageImpl.java:341)
+at com.day.jcr.vault.packaging.impl.JcrPackageImpl.install(JcrPackageImpl.java:314)
+at com.day.crx.packaging.impl.J2EEPackageManager.consoleInstall(J2EEPackageManager.java:304)
+at com.day.crx.packaging.impl.J2EEPackageManager.doPost(J2EEPackageManager.java:152)
+at com.day.crx.packaging.impl.PackageManagerServlet.doPost(PackageManagerServlet.java:73)
+at com.day.crx.j2ee.CRXHttpServlet.doPost(CRXHttpServlet.java:127)
+
+```
+
+Adobe recommends you contact support regarding this issue. You can read more about which hotfixes may be affected in the [Knowledge Base](http://dev.day.com/content/kb/home/Crx/Hotfixes/crx-2-2/hotfixpack.html "Adobe CQ Knowledge Base").
+
+If you cannot otherwise resolve the issue, the easiest course is to add the properties.xml into the package as part of your build.
+
+## Adding the Properties.xml
+
+The first step to adding the properties.xml is to create the file in your META-INF/vault directory. This will be the same directory containing the filter.xml.
+
+By default, the properties.xml contains state information we don’t want persisted into source control, such as what user last installed the package and how many times it has been built. The stripped down properties.xml contains the information needed to install the package, but nothing more:
+
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<properties>
+    <comment>FileVault Package Properties</comment>
+    <entry key="name">{PROJECT_NAME}</entry>
+    <entry key="version">PROJECT_VERSION</entry>
+    <entry key="dependencies" />
+    <entry key="packageFormatVersion">2</entry>
+    <entry key="group">{PROJECT_GROUP}</entry>
+</properties>
+
+```
+
+Next, replace the `{PROJECT_NAME}` and `{PROJECT_GROUP}` placeholders with the appropriate values for your package. Leave the PROJECT\_VERSION placeholder as is.
+
+## Updating the Package Version
+
+Since we’re using Maven to build the package automatically, we will need to update the package version automatically. Otherwise, we’d will have to manually keep it in sync with the version in the POM, which leaves plenty of room for errors.
+
+Luckily, there is a Maven plugin called [Maven Replacer Plugin](http://code.google.com/p/maven-replacer-plugin/ "Maven Replacer Plugin") for just this purpose. Add the plugin configuration below to have Maven automatically update the package version with every build.
+
+```
+<plugin>
+    <groupId>com.google.code.maven-replacer-plugin</groupId>
+    <artifactId>replacer</artifactId>
+    <version>1.5.0</version>
+    <executions>
+        <execution>
+            <phase>prepare-package</phase>
+            <goals>
+                <goal>replace</goal>
+            </goals>
+        </execution>
+    </executions>
+    <configuration>
+        <file>target/classes/META-INF/vault/properties.xml</file>
+        <replacements>
+            <replacement>
+                <token>PROJECT_VERSION</token>
+                <value>${project.version}</value>
+            </replacement>
+        </replacements>
+    </configuration>
+</plugin>
+
+```
+
+Once you have all of these steps complete you should be able to install your Maven built plugin into systems affected by the Hotfix issues.

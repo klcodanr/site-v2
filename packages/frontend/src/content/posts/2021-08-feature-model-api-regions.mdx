@@ -1,0 +1,85 @@
+---
+title: "But it works in the Dependency Finder!? "
+description: AEM as a Cloud Service uses a new feature of Apache Sling, the
+  Sling Feature Model API Regions - how this feature may effect your dependency
+  use in AEM
+hideInNav: false
+tags:
+  - Apache Sling
+  - Feature Model
+  - AEM as a Cloud Service
+pubDate: 2021-08-24
+display: post
+image: /images/posts/2021-08/Why.jpg
+published: true
+---
+
+  
+
+Let's say I wanted to use the Microsoft Azure API's from my AEM application in Cloud Service.
+
+After checking the bundles in AEM, I notice the bundle _org.apache.jackrabbit.oak-segment-azure_ exposes the API packages I need. Awesome!
+
+![Oak Azure Segment Storage Bundle in the OSGi Console](/images/posts/2021-08/Oak-Segment-Azure-Bundle.png)
+
+  
+
+Just to double check (or maybe first) I can use the Package Dependencies OSGi console to see if the package is exported and get the dependency information. I see the dependency there as well:
+
+  
+
+![Package Dependencies showing the Azure Dependency](/images/posts/2021-08/Package-Dependencies-Azure.png)
+
+  
+
+But, when I try to use the API I get an error indicating OSGi can't resolve the Azure imports? What is going on!?
+
+  
+
+![Groovy Console Failing to Import Class](/images/posts/2021-08/Groovy-Console-Error.png)
+
+  
+
+## Some History
+
+  
+Most developers that have worked with CQ5 or AEM 6 are pretty familiar with an API surface that resembles the wild west.  
+
+Since OSGi only cares if a package is exported from a bundle, it was possible to use features of AEM dependencies or core bundles as long as they were exported, even if they weren't meant for customer use.   
+
+Since customers can (and do) reach into these unintended exports, upgrades become significantly harder due to the scope expansion beyond the intended API. This leads to challenges in supporting and enhancing AEM not to mention removing deprecated functionality.   
+
+To address this, Adobe has [provided tooling, guidance and new constraints](https://experienceleague.adobe.com/docs/experience-manager-65/deploying/upgrading/sustainable-upgrades.html?lang=en) to make the upgrade process more sustainable and reliable.
+
+  
+## Sling OSGi Feature Model API Regions
+
+  
+The latest iteration of these safeguards is [Sling OSGi Feature Model API regions](https://github.com/apache/sling-org-apache-sling-feature-extension-apiregions/blob/master/docs/api-regions.md). With the API Regions, the application will enforce rules about what packages can be called from another package at runtime.  
+
+This is done by defining a region for the packages in the feature definition at build time. The [API Regions Runtime Component](https://github.com/apache/sling-org-apache-sling-feature-apiregions/) then reads the generated region definitions and uses the definition to filter a bundle's required packages at runtime using an [OSGi ResolverHook](https://docs.osgi.org/javadoc/osgi.core/7.0.0/org/osgi/framework/hooks/resolver/ResolverHook.html) [implementation](https://github.com/apache/sling-org-apache-sling-feature-apiregions/blob/master/src/main/java/org/apache/sling/feature/apiregions/impl/ResolverHookImpl.java).
+
+If a bundle is not explicitly granted access to an API Region it can only import packages within the global region.  
+
+In our case, what we're seeing is that even though this package is exported from the bundle, it is not exported in the feature containing _org.apache.jackrabbit.oak-segment-azure_ so when OSGi attempts to resolve the package, it gets rejected by the API Regions Runtime Component's OSGi ResolverHook. 
+
+  
+
+  
+
+## So what do I do?
+
+  
+[Knowing is half the battle.](https://www.youtube.com/watch?v=pele5vptVgc) Once you are sure the issue is from the API regions of your bundle you can either embed the dependency in your bundle, use another dependency or find a similar class exported in the [AEM SDK](https://experienceleague.adobe.com/docs/experience-manager-cloud-service/implementing/developing/aem-as-a-cloud-service-sdk.html).   
+
+To help you verify the issue, I've created a [Groovy script](https://gist.github.com/klcodanr/28385db0ce6df72be36a4f60b433a8ec) to dump the region settings. You can run the script in the [AEM Groovy Console](https://github.com/icfnext/aem-groovy-console).   
+
+![Screenshot of the AEM Groovy Console](/images/posts/2021-08/Groovy-Console.png)
+
+  
+
+The output includes all of the packages in the regions and the bundle to API region mappings. Depending on your AEM as a Cloud Service SDK version, it should look something [like this](https://gist.githubusercontent.com/klcodanr/28385db0ce6df72be36a4f60b433a8ec/raw/7177ddbe45782882f54e2dbfbc65cfdbcf36e101/sample-output.txt).
+
+ Hopefully this helps you diagnose why import resolution issues in AEM as a Cloud Service and understand the reason behind the Apache Sling Feature Model API Regions.
+
+Cover image: Diego Luna and Michael Peña - Lucca Comics & Games 2018 [Niccolò Caranti](https://commons.wikimedia.org/wiki/File:Diego%5FLuna%5Fand%5FMichael%5FPe%C3%B1a%5F-%5FLucca%5FComics%5F%26%5FGames%5F2018%5F04.jpg), [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0), via Wikimedia Commons

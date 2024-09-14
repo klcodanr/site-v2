@@ -1,0 +1,42 @@
+---
+title: WYSIWYG HTML Source Editor Considered Harmful
+description: Why the WYSIWYG HTML Source Editor can be harmful to a CMS
+  implementation and what developers can do to work around it
+hideInNav: false
+tags:
+  - Web Content Management
+  - Adobe CQ
+  - WYSIWYG
+pubDate: 2012-11-25
+display: post
+image: ""
+published: true
+---
+
+Most Web Content Management system’s Rich Text or WYSIWYG editors have an optional feature to allow authors to directly edit the HTML instead of using the WYSIWYG. Among one of the first decisions made on a WCMS implementation project is to enable or disable this feature. Proponents of the HTML editor argue for author flexibility and for freedom to directly enter markup. I would argue, however, the HTML editor should not be enabled.
+
+## What’s Wrong with the HTML Source Editor?
+
+Allowing authors to directly edit the HTML contents of a page is a dangerous proposal; it defeats the purpose of the templating features of the WCM system, increases the complexity of supporting the system and indicates a failure of the WYSIWYG or a failure to decompose the requirements for the site.
+
+### Authors Not Designers
+
+When authors and Content Administrators are allowed to directly update the markup for a section, they are no longer required to follow the standards created by the templating system in your WCM implementation. The code they generate may or may not be standards compliant and may not comply with the branding guidelines for your organization.
+
+This defeats one of the most fundimental features of a WCMS, the ability to standardize content and enforce standards.
+
+### One-Offs
+
+When authors, or even worse administrators start updating pages by directly updating the HTML markup, they can start adding functional code directly into the page instead of using componentized widgets. This creates a nightmare for maintaining these pieces of functionality as the code is not in proper version control and the code is not centralized. I’ve actually seen clients create dynamic features, such as modal popups directly in a HTML editor. Imagine having to figure out how to update the code for that component as a new maintainer!
+
+Even if authors are not creating dynamic functionality through the HTML editor, they can still create HTML markup or inline styles which will make maintaining the content and look and feel of the site more difficult.
+
+### What we have here… is a failure to communicate
+
+Every time an author has to use the HTML editor, the process has failed. Either the WYSIWYG has done something wrong, the CSS style sheets aren’t sufficiently expressive, they don’t have the tools they need within the WYSIWYG or there was a component which should have been created.
+
+## What can be done?
+
+Since use of the HTML editor represents risk, every WCM implementation project should attempt to minimize or eliminate its use. Every project should include a task in the discovery phase to work with authors and the business to document what features the authors will need in the WYSIWYG editor and if/how the HTML editor is used in their current implementation. Based on this, the project delivery team can derive additional components and WYSIWYG widgets and enable all the features authors need to do their jobs.
+
+WCMS vendors should do a better of job of making their WYSIWYG editor customizable. It’s easily one of the most important features in a WCMS, but it often seems to be treated as a black box or the process for customizing the WYSIWYG is not sufficiently documented. This may even mean allowing for full on replacement of the WYSIWYG.

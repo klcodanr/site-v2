@@ -1,0 +1,84 @@
+---
+title: Architecting a Taxonomy for Articles in AEM
+description: One of the most common content structures in Content Management is
+  articles. Articles are self-contained pieces of content relating to a single
+  subject.
+hideInNav: false
+tags:
+  - Content Strategy
+  - Web Content Management
+  - Adobe Experience Manager
+pubDate: 2018-07-17
+display: post
+image: /images/posts/2018-07/article-cover.jpg
+published: true
+---
+
+One of the most common content structures in Content Management is articles. Articles are self-contained pieces of content relating to a single subject. This can range from blog posts, to knowledge base articles, to news articles. 
+
+  
+Articles pose a challenge in Content Management as they don't follow the content structure of the rest of the website, there usually is a large number of articles and articles still live within the site. In table or database based Content Management Systems, generating unique but usable URLs can be a challenge as the content is generally stored in a flat structure, but should have SEO friendly URL. In Adobe Experience Manager (AEM), the content is stored in the repository in a hierarchical Content Structure, and having too many child notes can cause both authoring and performance problems, so articles can be especially challenging to support.  
+
+  
+
+![Bridge Foundation](/images/posts/2018-07/foundation-bridge.jpg)
+
+  
+## Principles for Organizing Articles
+
+  
+In order to design a Content Strategy for articles, there are some key considerations when organizing the articles:  
+
+  
+The first thing to consider is the volume of content. This includes both the existing content and the expected growth of the content. Small volumes simply may not need much of an organizational structure, as navigating the content tree is both quick and easy. On the opposite end, handling millions of articles requires significant thought on how to structure the content to ensure the number of child nodes is not a concern and the content structure is navigable and understandable to users.
+
+  
+As soon as you define how much content you expect to deal with, consider the nature of the articles you are publishing. Are they time-based or are they organized or by concept or category? Does the parent hierarchy have meaning for search engine optimization? Usually, the nature of the articles will help determine what organizational structure is most helpful for categorizing.  
+
+  
+Finally, you need to determine what could be an organizing data point. This data point must be immutable, singular and meaningful. Some examples could include publication date, primary category or business unit. You should also consider what data points can be used for searching or filtering articles. Although these data points may not be the primary data point, having a rich filtering capability helps users immensely.  
+
+  
+Taking all of these pieces of information together, you can determine the content structure that best supports your needs. 
+
+  
+
+![Shipping Containers](/images/posts/2018-07/shipping-containers.jpg)
+
+  
+## Common Article Structures
+
+  
+Some common article content structures include:
+
+  
+### Blog Posts
+
+  
+This can include traditional blocks as well as corporate messaging, which may not have all the blog features but is designed for the same short-form, date-sensitive articles as any other blog. Usually blog posts are organized by date. Depending on the number of articles being published you may only need the year and the month, unless you are publishing a large number of articles within a month. The advantage to having only the year and month is you end up with shorter URLs and the content tree is easier to navigate for authors.
+
+  
+### Press Releases
+
+  
+Press releases are another common type of content. Unlike blog content that is more social in nature, press releases are generally more infrequent, are often longer and have much more organizational impact. For many organizations merely providing a year would be sufficient for organizing press releases, as an organization rarely publishes enough press releases within a year to be difficult to navigate or to cause performance problems.
+
+  
+### Knowledge Bases
+
+  
+Knowledge bases are often poorly organized, so spending extra time here will yield tremendous increases in the usability of your knowledge base. If your knowledge base relates to content that is tied to a specific version of something, for example a software product, including that version in the content structure will make it significantly easier for users to navigate. Leveraging AEM Live Copy or multi-site management can help with keeping those content structures in sync so you have all the relevant content for every version.
+
+  
+As knowledge base articles generally fall into a conceptual taxonomy, designating a primary category will allow for both organizing the articles for users and creating a clean content structure. Tags can be used as secondary categories for navigating between articles.
+
+  
+
+![Next Step: Content Production](/images/posts/2018-07/writing.jpg)
+
+## Next Steps
+
+
+Content Production is the other key aspect to creating a well-functioning Content Management System. Having a well-defined Content Strategy will help you determine the Content Production strategy for producing and maintaining your articles. You can find out more in my white paper:
+
+[How to Find Zen in Content Production](https://www.perficient.com/insights/guides/2018/how-to-find-zen-in-content-production)  

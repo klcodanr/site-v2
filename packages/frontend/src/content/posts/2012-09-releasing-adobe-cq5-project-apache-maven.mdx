@@ -1,0 +1,155 @@
+---
+title: Releasing an Adobe CQ5 Project with Apache Maven
+description: Learn how easy it is to get a complete copy of your Adobe CQ configuration
+hideInNav: false
+tags:
+  - Adobe CQ
+  - Apache Maven
+  - How To
+pubDate: 2012-09-18
+display: post
+image: /images/posts/shared/maven.png
+published: true
+---
+
+[Apache Maven’s release plugin](http://maven.apache.org/plugins/maven-release-plugin/) is a powerful tool for automatically incrementing version, tagging code and creating a release. Unfortunately, this plugin is not very forgiving and doesn’t do a good job of telling you what you did wrong when it fails. 
+
+Setting up Maven to release your CQ5 project can seem daunting, but if you follow a few simple rules it can be easy to set up and save you a ton of time in the long run. The following steps should help you to get your project set up to be released through Apache Maven.
+
+### 1\. Create the Correct Folder Structure (SVN Only)
+
+Inside your source control management (SCM) system, ensure that you have your folder structure configured correctly. You must have a folder structure like this:
+
+```
+{repo_root}/project/trunk/project
+    /tags
+    /branches
+
+```
+
+This is the folder structure expected by the Maven Release Plugin. Note, that the repo root doesn’t necessarily have to actually be the root of the repository, it just is an arbirtrary starting point under which you place your project.
+
+### 2\. Add the Release Info to the Root POM
+
+Update the root POM to contain the required information for your release. Module POMs do not need to contain this formation.
+
+#### 2.1 SCM Info
+
+You need to tell Maven where to connect to, to create the tag. For this, create the following tags inside your POM:
+
+```
+<scm>
+    <url>{HOST}{PATH}</url>
+    <connection>scm:{SCM_SYSTEM}:{HOST}{PATH}</connection>
+</scm>
+
+```
+
+The tricky part here is that the path varies depending on which SCM you are using. For Subversion you need to make this the root for the project, below trunk, for example:
+
+```
+<scm>
+    <url>https://svn.myco.com/repo1/myproject/trunk/myproject</url>
+    <connection>scm:svn:https://svn.myco.com/repo1/myproject/trunk/myproject</connection>
+</scm>
+
+```
+
+Whereas in systems where tags are not stored as folders, your path would not likely include trunk, it would be the same as the project SCM location. For example:
+
+**GIT**
+
+```
+<scm>
+    <url>ssh://git.myco.com/myproject</url>
+    <connection>scm:git:ssh://git.myco.com/myproject</connection>
+</scm>
+
+```
+
+\*\*hg (Mercurial) \*\*
+
+```
+<scm>
+    <url>https://hg.myco.com/myproject</url>
+    <connection>scm:hg:https://hg.myco.com/myproject</connection>
+</scm>
+
+```
+
+When using a distributed SCM like GIT or Mercurial you should use the remote repository as the SCM Url, not your local repository.
+
+If you haven’t taken the [SCM Usage poll](http://labs.sixdimensions.com/poll/what-primary-scm-system-you-use-your-cq5-projects), please do, I’d like to tailor these articles to what people actually use.
+
+#### 2.2 Add Distribution Management
+
+Distribution Management tells Maven where to put your released code. Generally, for CQ projects, this will be a private Maven repository. If you organization does not have a maven repository, this can be any sort of addressable location, including FTP shares and the filesystem.
+
+On smaller projects, I’ve even seen Dropbox used initially to share released files within the team:
+
+```
+<distributionManagement>
+    <repository>
+        <id>filesystem</id>
+        <url>file://${user.home}/Dropbox/builds</url>
+    </repository>
+</distributionManagement>
+
+```
+
+In order to get the Maven Release Plugin to function, you must have at least one repository configured. You may have additional snapshots repositories and sites configured, but they are not requred.
+
+### 3\. Test a Commit in the Command Line
+
+Before you attempt to create a release, make sure you can committ to the repository using the command line client. Maven uses the command line client, so if you exclusively use the client built into your IDE, the command line client may not be properly configured.
+
+Simply commit any small change into the remote repository (commit & push for distributed SCMs) and if that goes successfully, you should have fewer problems down the line.
+
+### 4\. Force Using Maven Release 2.3%2B
+
+Older versions of the Maven release plugin do not work well with Windows. Therefore, in your root POM, include the latest version of the maven-release plugin as a plugin. This will fix an error where Maven gets confused by the mix of back and forward slashes in Windows paths.
+
+```
+<build>
+    <plugins>
+        <plugin>
+            <artifactId>maven-release-plugin</artifactId>
+            <version>2.3.2</version>
+        </plugin>
+    </plugins>
+</build>
+
+```
+
+### 5\. Don’t Install Your Packages/Bundles Automatically
+
+When Maven runs your release it will check out the tagged code and attempt to compile it to ensure that the release was successful. When it does this, it does not pass in the profiles or properities from the initial release call. This means that, if you use a [Maven plugin to deploy your CQ code](http://sixdimensions.github.io/cq-deploy-plugin/), you may install your packages/bundles multiple times, may try to install them on a server which doesn’t exist, or may not have the correct credentials.
+
+Therefore I would encourage you to put all of the plugins which install code into profiles so they have to be explicitly called. That way, it’s still easy to install them locally, but they do not install automatically during your release process.
+
+### 6\. Use the Command Line
+
+It can be tempting to use your IDE to create a release. This is a bad idea as the IDE adds a lot more potential for things happening which you aren’t aware of. Instead, use the command line to create releases. One thing to be careful of with Windows. Always use the upper case drive letter, if you navigate to your script using the lower case drive letter (aka c: instead of C:), this can cause an index of out bounds exception. 
+
+I usually create a script for my releases. Rather than using the same code as in my workspace, I delete everything, and check out a fresh copy, then perform the release. On Linux, this looks something like:
+
+```
+echo "Setting environment variables..."
+export JAVA_HOME=/opt/java/jdk1.6.0_30
+echo "Cleaning Workspace..."
+rm -rf myproject
+echo "Checking out TRUNK..."
+svn co http://svn.myco.com/repo1/myproject/trunk/myproject/
+cd myproject
+echo "Preparing release..."
+mvn release:clean release:prepare
+echo "Performing release..."
+mvn release:perform
+echo "Release Complete!"
+cd ..
+
+```
+
+### In Conclusion
+
+Using the Maven release plugin is a real must have for any good sized Adobe CQ project. I hope this article helps you get your project set up to use the Apache Maven Release plugin. If you have any tips or things you ran into, please leave some comments below.

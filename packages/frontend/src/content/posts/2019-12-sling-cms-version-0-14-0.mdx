@@ -1,0 +1,139 @@
+---
+title: "Sling CMS Version 0.14.0: New Capabilities and Experience Improvements"
+description: The latest release of Sling CMS, 0.14.0, brings tremendous new
+  capabilities and dramatic improvements to the authoring experience.
+hideInNav: false
+tags:
+  - Apache Sling
+  - Web Content Management
+  - Open Source
+pubDate: 2019-12-09
+display: post
+image: /images/posts/2019-12/release.jpg
+published: true
+---
+
+  
+It's been awhile since the last release of [Sling CMS](https://github.com/apache/sling-org-apache-sling-app-cms). The latest release, [0.14.0](https://github.com/apache/sling-org-apache-sling-app-cms/releases/tag/org.apache.sling.cms-0.14.0), brings tremendous new capabilities and dramatic improvements to the authoring experience to Sling CMS.  
+  
+## New Capabilities
+
+  
+Release 0.14.0 brings some exciting new capabilities to supplement the core content management features of Sling CMS to handle common web use cases.  
+  
+## New Capability #1: Forms
+
+  
+The [Sling CMS Reference](https://github.com/apache/sling-org-apache-sling-app-cms/blob/master/docs/reference.md) project already includes a lot of the base components, but didn't have a good solution for building forms. Conceptually, forms are composed of three parts:  
+  
+#### Form Value Providers
+
+[](https://www.javadoc.io/doc/org.apache.sling/org.apache.sling.cms.reference/latest/org/apache/sling/cms/reference/forms/FormValueProvider.html)
+
+[Form value providers](https://www.javadoc.io/doc/org.apache.sling/org.apache.sling.cms.reference/latest/org/apache/sling/cms/reference/forms/FormValueProvider.html) provide the default values for the form. An example form value provider is included in the reference app, which [loads the form values from the user's profile](https://www.javadoc.io/doc/org.apache.sling/org.apache.sling.cms.reference/latest/org/apache/sling/cms/reference/forms/impl/providers/UserProfileFormValueProvider.html).
+
+Form Value Providers are implemented as a Sling CMS Component coupled with a Java Class implementing the FormValueProvider interface.   
+  
+#### Form Fields
+
+Form fields are used to display the actual fields in the form. Examples provided include:  
+* Honeypot - A simple spam prevention hidden field
+* Selection - Support for checkboxes, selects and radio buttons
+* Textarea - Simple textarea
+* Textfield - Textfields including HTML5 validation
+Form Fields are implemented as a Sling CMS Component coupled with a Java Class implementing the [FieldHandler](https://www.javadoc.io/static/org.apache.sling/org.apache.sling.cms.reference/0.14.0/org/apache/sling/cms/reference/forms/FieldHandler.html) interface. The FieldHandler implementation should handle all of the aspects of handing the field including validation.  
+  
+#### Form Actions
+
+Form actions handle the results of the form submission. Similar to the other form components, they are composed of a Sling CMS Component and an OSGi component implementing the [FormAction](https://www.javadoc.io/static/org.apache.sling/org.apache.sling.cms.reference/0.14.0/org/apache/sling/cms/reference/forms/FormAction.html) interface. 
+
+There are three implementations provided with the reference application, including:  
+
+* [Send Email](https://www.javadoc.io/static/org.apache.sling/org.apache.sling.cms.reference/0.14.0/org/apache/sling/cms/reference/forms/impl/actions/SendEmailAction.html) \- Simple text email sender, can include form fields
+* [Update Profile](https://www.javadoc.io/static/org.apache.sling/org.apache.sling.cms.reference/0.14.0/org/apache/sling/cms/reference/forms/impl/actions/UpdateProfileAction.html) \- Update the logged in user's profile data
+* [User Generated Content](https://www.javadoc.io/static/org.apache.sling/org.apache.sling.cms.reference/0.14.0/org/apache/sling/cms/reference/forms/impl/actions/UserGeneratedContentAction.html) \- Creates a Sling CMS UGC from form data
+  
+### New Capability #2: Image Transformations
+
+  
+Image transformations were initially introduced in Sling CMS 0.12.0, however they got a rebuild and enhancement in Sling CMS 0.14.0\. The new image transformations are based on [Sling Context-Aware Configuration](https://sling.apache.org/documentation/bundles/context-aware-configuration/context-aware-configuration.html) created at /conf/\[conf-name\]/files/transformations.   
+  
+Each configuration is a series of instructions on how to transform a source image into the target using the [Thumbnailator library](https://github.com/coobird/thumbnailator). Currently, there are two supported transformations:  
+* Size - resize the image to fit within a width and height
+* Crop - Crop the image to fit within a width and height, specifying a crop direction
+
+Image Transformations are stored underneath sling:File assets as renditions and internally are used by Sling CMS to render the grid view. 
+
+  
+## Authoring Experience Improvements
+
+  
+I use Sling CMS for my [personal site](https://www.danklco.com), so the authoring experience has a direct impact on my productivity. The focus of this release was to make tangible improvements.  
+  
+### Improvement #1: Drag and Drop Component Re-Ordering
+
+  
+One of the more annoying features of Sling CMS before this release was that to reorder components, you had to use the move icon and could only move them within their current container.
+
+With the latest release you can reorder components within a container or into other containers by just grabbing their edit bar. 
+
+  
+ Some of the authoring experience improvements include:  
+* Drag and Drop Component Reordering
+* Slimmer edit bars
+* New grid view for Sites and Static Content
+  
+
+![Drag and Drop](/images/posts/2019-12/Drag-Drop-Reorder.gif)
+
+  
+
+### Improvement #2: New Grid View for Sites & Static Content
+
+  
+In previous versions of Sling CMS, the only view of content was a tabular display. This worked pretty well for text content, but wasn't visually appealing for images / assets. The new grid view is default for Sites and Static content, but can be toggled off or set as not default in the user settings.  
+  
+
+![New Sling CMS Grid View](/images/posts/2019-12/New-Grid-View.png)
+
+  
+
+#### Improvement #3: User / Group Console
+
+  
+Previously, to modify users and groups, you had to leave the Sling CMS look and feel and use the Composum User / Group management tool With Sling CMS 0.14.0, Sling CMS now has a console for managing users and groups.
+
+  
+
+![Sling CMS User / Group Console](/images/posts/2019-12/User-Groups.png)
+
+  
+
+### Improvement #4+: UI Tweaks
+
+  
+I've tweaked the user experience for the editor to make a number of small changes and generally make it cleaner and more modern looking.   
+  
+## Developer Quickstart
+
+  
+Sling CMS is already easy to setup with the Vagrant and Docker images as well as it being a single JAR download. With the release of Sling CMS 0.14.0, developers will be able to create projects for Sling CMS with a single command:  
+  
+
+```
+mvn archetype:generate  \\
+  -DarchetypeGroupId=org.apache.sling \\
+  -DarchetypeArtifactId=org.apache.sling.cms.archetype \\
+  -DarchetypeVersion=0.14.0
+```
+
+  
+
+With the new Sling CMS Archetype, creating a site in Sling CMS creating a new site with Sling CMS takes just over two minutes:
+
+  
+
+![Sling CMS Create a Site](/images/posts/2019-12/Sling-CMS-Create-Site.gif)
+
+  
+Looking to get started with Sling CMS? [Download the latest release from GitHub.](https://github.com/apache/sling-org-apache-sling-app-cms/releases/tag/org.apache.sling.cms-0.14.0)

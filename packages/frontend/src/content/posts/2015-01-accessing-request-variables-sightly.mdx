@@ -1,0 +1,44 @@
+---
+title: Accessing Request Variables in Sightly
+description: Shares a few approaches to accessing request variables in Sightly.
+hideInNav: false
+tags:
+  - Sightly
+  - Apache Sling
+  - AEM 6
+pubDate: 2015-01-23
+display: post
+image: /images/posts/shared/sightly.png
+published: true
+---
+
+You can implement some interesting stuff in [Sightly](http://docs.adobe.com/docs/en/aem/6-0/develop/sightly.html), the newest templating language for Adobe Experience Manager, including [Tower of Hanoi](http://stackoverflow.com/questions/27544676/how-to-implement-tower-of-hanoi-in-aem-sightly). At the same time, there are a few practical applications which are not available in Sightly, including [accessing request scoped variables](http://stackoverflow.com/questions/25430981/are-there-requestscope-variables-in-sightly) in Sightly. While [Gabriel's](http://stackoverflow.com/users/735899/gabriel-walt) suggested approaches in the [Stack Overflow post](http://stackoverflow.com/questions/25430981/are-there-requestscope-variables-in-sightly) are absolutely correct in this situation, there are still certain situations where request variables can be very useful. 
+
+A good example is for sharing a variable across multiple components which is expensive to retrieve. This could be the results of a database query or web service call, pretty much anything you'd need on multiple components, but don't want to keep fetching. Using the naive approach of re-retrieving the value for each component using the same data on a page, can drastically increase the amount of time required to serve a request.
+
+Currently, your options for accessing request variables in Sightly are:
+
+### Pass Data Through Selectors / Suffix
+
+This is one the appraches described by Gabriel and is a good approach for small string properties, however it assumes that you will not be using selectors for rendering purposes and is not useful for any more complicated data structure. Generally, the use of selectors should be defined at a project level. In fact, it is a common requirement to only allow specific selectors, as selectors could potentially be used as a form of DDOS attack for generating server load or causing a server to fill up due to a large number of requests with unique selectors.
+
+### Store Data in the JCR
+
+Another approach again suggested by Gabriel is to just access variables from other JCR nodes. This is a very good approach for data which can be persisted into the JCR, but isn't practical for complex data structures or transactional results. Additionally, there are some limitations around resource traversal in Sightly which can make this option difficult.
+
+### Build a Use-API Class
+
+Sightly provides the [Use-API](http://docs.adobe.com/docs/en/aem/6-0/develop/sightly/use-api-in-java.html) for injecting custom beans into the Sightly template. This is a valid option, but requires custom development for any variable access.
+
+## A Better Solution
+
+Instead of the options above, it would be better to create a general purpose solution. The solution below uses a [Sling Adapter](http://sling.apache.org/documentation/the-sling-engine/adapters.html) to adapt [SlingHttpServletRequests](https://sling.apache.org/apidocs/sling7/org/apache/sling/api/SlingHttpServletRequest.html) into an instance of a map with the keys and values being request attributes. This implementation should work in nearly any environment, but if you are using [Sling Models](http://sling.apache.org/documentation/bundles/models.html) in your project, you can make it a model instead to not require a separate AdapterFactory class.
+
+Once you have this in place, you can use the the RequestAttr map to retrieve the request attribute values as such:
+
+```
+<div data-sly-use.requestAttr="com.sixd.sly.RequestAttr"></div>
+<h1>Inner Sightly ${requestAttr.key}</h1>
+```
+
+Hopefully, this post helps show you the different options for sharing data between components in Sightly and how with some clever use of Adapters or Models you can really unlock the potential of Sightly. If you have any questions or corrections, please leave a comment below!

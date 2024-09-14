@@ -1,0 +1,48 @@
+---
+title: Dumping CQ Configuration
+description: Learn how easy it is to get a complete copy of your Adobe CQ configuration
+hideInNav: false
+tags:
+  - Adobe CQ
+  - How To
+pubDate: 2012-09-07
+display: post
+image: /images/posts/shared/CQ5.png
+published: true
+---
+
+Often when providing remote support, you may want to send a complete snapshot of a CQ instance’s configuration and state to others to help debugging. Generating a report of the complete status of the OSGi configuration, environment state and logs is as easy as invoking a single url. 
+
+The OSGi console will generate a report of the following items when you invoke: `SERVER`:`PORT`/system/console/config/configuration-status.zip
+
+* All Log Files
+* Wire Admin
+* Threads
+* System Properties
+* Sling Thread Pools
+* Sling Settings
+* Sling Servlet Filters
+* Sling Scheduler Jobs
+* Sling Resource Resolver Map Entries
+* Sling Referrer Filters
+* Sling Properties
+* Sling Eventing Queue
+* Available Sling Adaptors
+* Services & their properties
+* Registered Script Engines
+* CRX Configuration
+* Product/Licensing Information
+* Preferences/Permissions (if Available)
+* Java Package Admin
+* Installed Bundles
+* Memory Usage
+* Log Configuraiton
+* JMX/MBeans Configuration
+* Http WhiteBoard
+* GFX Information
+* Declarative Services Components
+* Configuraitons
+* CQ4 Migration Configuration
+* Bundle Information
+
+You can also get a text file with the same information, except the log files, by invoking `SERVER`:`PORT`/system/console/config/configuration-status.txt.

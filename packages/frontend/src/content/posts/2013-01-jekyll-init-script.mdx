@@ -1,0 +1,21 @@
+---
+title: Jekyll Init Script
+description: A simple init script for automatically starting/stopping Jekyll
+hideInNav: false
+tags:
+  - Jekyll
+pubDate: 2013-01-07
+display: post
+image: /images/posts/shared/jekyll.png
+published: true
+---
+
+ Recently, I embarked on converting this site to use [Jekyll](https://github.com/mojombo/jekyll) as a replacement for a 'real' CMS.
+
+ Overall, the experience has been great, Jekyll has been more than sufficient to manage the templating of pages and I could see how it could be leveraged for a larger site. One thing I was not able to find was a decent init script for running Jekyll as a Linux service. Jekyll can run until interrupted, automatically picking up changes and re-generating the pages. I could run it as a background task, but that seemed awkward as I would have to start it whenever the server restarted.
+
+ So I created my own. It executes Jekyll, specifying the source and target destination and then pipes the output to a log file at /var/log/jekyll.log. It also creates a PID file under /var/run/jekyll.pid, which it uses to get status and stop the service. Right now it's not terribly intelligent, there's no checking to see if the service is already started for example.
+
+ This script has been tested with CentOS 5.8, but I don't see why it couldn't be ported to other distros. Simply place this script in the /etc/init.d directory on your server, update the relevant properties and register it as a service with chkconfig of the equivalent command for your distro.
+
+[See the script GitHub Gist](https://gist.github.com/4459175) 
