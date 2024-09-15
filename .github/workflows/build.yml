@@ -10,8 +10,6 @@ concurrency:
 jobs:
   BuildApp:
     runs-on: ubuntu-latest
-    env:
-      SMTP_CONFIG: ${{ secrets.SMTP_CONFIG }}
     steps:
       - name: Git clone the repository
         uses: actions/checkout@v4
@@ -50,6 +48,12 @@ jobs:
           ./node_modules/.bin/sst deploy --stage PR-${PR_NUMBER}
         env:
           PR_NUMBER: ${{ github.event.number }}
+      - name: Set Secret
+        run: |
+          ./node_modules/.bin/sst secrets set SMTP_CONFIG ${SMTP_CONFIG} --stage PR-${PR_NUMBER}
+        env:
+          PR_NUMBER: ${{ github.event.number }}
+          SMTP_CONFIG: ${{ secrets.SMTP_CONFIG }}
       - name: Add Deploy URL Comment
         id: deploy-url
         uses: actions/github-script@v7
