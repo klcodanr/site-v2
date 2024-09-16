@@ -8,6 +8,7 @@
     "build": "./node_modules/.bin/sst build",
     "dev": "sst dev",
     "dev:site": "cd packages/frontend && npm run dev",
+    "test": "cd packages/frontend && npm run test",
     "lint": "npm run lint --ws"
   },
   "devDependencies": {

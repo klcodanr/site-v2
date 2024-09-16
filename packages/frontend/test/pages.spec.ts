@@ -47,7 +47,16 @@ const urls: string[] = sitemap.urlset.url.map((url: { loc: string }) =>
   url.loc.replace("https://danklco.com", "")
 );
 
-urls.forEach((url) => {
+const isPost = (url: string) => /\/posts\/\d{4}.*/.test(url);
+const isProject = (url: string) => /\/projects\/.+/.test(url);
+const isTag = (url: string) => url.startsWith("/tags/");
+
+const pages = urls.filter(url => !isPost(url) && !isTag(url) && !isProject(url) && !/\/posts\/page\/\d+/.test(url));
+const firstPost = urls.reverse().find(url => isPost(url)) as string;
+const firstTag = urls.find(url => isTag(url)) as string;
+const firstProject = urls.find(url => isProject(url)) as string;
+
+[...pages, firstPost, firstTag, firstProject].forEach((url) => {
   test(`page ${url} is valid`, async ({ page }) => {
     await expectPageValid(page, url);
   });

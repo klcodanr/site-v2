@@ -10,11 +10,10 @@ export default defineConfig({
   },
   retries: 2,
   use: {
-    baseURL: "http://localhost:4321/",
+    baseURL: "http://localhost:4321",
   },
   testDir: "test",
   projects: [
-    /* Test against desktop browsers */
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
