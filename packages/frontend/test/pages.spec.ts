@@ -5,7 +5,7 @@ import { XMLParser } from "fast-xml-parser";
 // import AxeBuilder from "@axe-core/playwright"; // 1
 
 async function expectPageValid(page: Page, url: string) {
-  await page.goto(url === "/" ? "" : url);
+  await page.goto(url === "/" ? "" : url, { waitUntil: "domcontentloaded" });
 
   await expect(page).toHaveTitle(/.*\| DanKlco.com/);
 
