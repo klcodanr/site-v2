@@ -11,7 +11,7 @@
         "@types/aws-lambda": "^8.10.134",
         "@types/node": "^20.11.24",
         "@types/nodemailer": "^6.4.15",
-        "sst": "^2.43.4",
+        "sst": "^3.1.11",
         "@typescript-eslint/eslint-plugin": "^8.1.0",
         "@typescript-eslint/parser": "^8.1.0",
         "eslint": "^8.56.0"
