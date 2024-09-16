@@ -5,7 +5,7 @@ import { XMLParser } from "fast-xml-parser";
 // import AxeBuilder from "@axe-core/playwright"; // 1
 
 async function expectPageValid(page: Page, url: string) {
-  await page.goto(url);
+  await page.goto(url === "/" ? "" : url);
 
   await expect(page).toHaveTitle(/.*\| DanKlco.com/);
 
@@ -51,10 +51,16 @@ const isPost = (url: string) => /\/posts\/\d{4}.*/.test(url);
 const isProject = (url: string) => /\/projects\/.+/.test(url);
 const isTag = (url: string) => url.startsWith("/tags/");
 
-const pages = urls.filter(url => !isPost(url) && !isTag(url) && !isProject(url) && !/\/posts\/page\/\d+/.test(url));
-const firstPost = urls.reverse().find(url => isPost(url)) as string;
-const firstTag = urls.find(url => isTag(url)) as string;
-const firstProject = urls.find(url => isProject(url)) as string;
+const pages = urls.filter(
+  (url) =>
+    !isPost(url) &&
+    !isTag(url) &&
+    !isProject(url) &&
+    !/\/posts\/page\/\d+/.test(url)
+);
+const firstPost = urls.reverse().find((url) => isPost(url)) as string;
+const firstTag = urls.find((url) => isTag(url)) as string;
+const firstProject = urls.find((url) => isProject(url)) as string;
 
 [...pages, firstPost, firstTag, firstProject].forEach((url) => {
   test(`page ${url} is valid`, async ({ page }) => {
