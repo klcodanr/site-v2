@@ -8,6 +8,7 @@ export default defineConfig({
     timeout: 120 * 1000,
     reuseExistingServer: !process.env.CI,
   },
+  outputDir: "playwright-report",
   retries: 2,
   use: {
     baseURL: "http://localhost:4321",
