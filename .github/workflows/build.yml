@@ -26,7 +26,10 @@ jobs:
         run: npm ci
       - name: Lint
         run: npm run lint --ws
-      - name: Build
+      - name: Build Site
+        working-directory: ./packages/frontend
+        run: npm run build
+      - name: Build Infrastructure
         run: 
           ./node_modules/.bin/sst build --stage PR-${PR_NUMBER}
         env:
@@ -43,7 +46,7 @@ jobs:
           name: playwright
           path: ./packages/frontend/playwright/
           retention-days: 30
-      - name: Deploy app
+      - name: Deploy Preview
         run: |
           ./node_modules/.bin/sst deploy --stage PR-${PR_NUMBER}
         env:
