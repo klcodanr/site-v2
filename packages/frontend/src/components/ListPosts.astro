@@ -43,7 +43,7 @@ const pages = Array.from({ length: allPosts.length / 12 }, (_, idx) => ({
       {pages.map((page) => {
         return (
           <li>
-            <a href={`/posts/page/${page.params.page}`}>
+            <a href={`/posts/page/${page.params.page}/`}>
               {parseInt(page.params.page, 10) + 1}
             </a>
           </li>

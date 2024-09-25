@@ -50,7 +50,7 @@ const nextPost = posts[idx + 1];
               tags.map((tag: string) => (
                 <li>
                   <a
-                    href={`/tags/${tag.replace(/[^a-zA-Z0-9]/g, "-").toLowerCase()}`}
+                    href={`/tags/${tag.replace(/[^a-zA-Z0-9]/g, "-").toLowerCase()}/`}
                   >
                     {tag}
                   </a>
@@ -67,14 +67,14 @@ const nextPost = posts[idx + 1];
     <div class="post-nav">
       {
         prevPost && (
-          <Button link={`/posts/${prevPost.slug}`}>
+          <Button link={`/posts/${prevPost.slug}/`}>
             ← {prevPost.data.title}
           </Button>
         )
       }{!prevPost && <span />}
       {
         nextPost && (
-          <Button link={`/posts/${nextPost.slug}`}>
+          <Button link={`/posts/${nextPost.slug}/`}>
             {nextPost.data.title} →
           </Button>
         )

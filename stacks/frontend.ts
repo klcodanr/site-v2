@@ -1,4 +1,4 @@
-import { Api, AstroSite, Config, Function, StackContext } from "sst/constructs";
+import { Api, Config, Function, StackContext, StaticSite } from "sst/constructs";
 
 export default function Site({ stack }: StackContext) {
   // define the secrets
@@ -23,9 +23,8 @@ export default function Site({ stack }: StackContext) {
   });
 
   // Create the Astro site
-  const site = new AstroSite(stack, "Site", {
-    path: "packages/frontend/",
-    bind: [api],
+  const site = new StaticSite(stack, "Site", {
+    path: "packages/frontend/dist/",
     environment: {
       PUBLIC_API_URL: api.url,
     },
