@@ -2,4 +2,3 @@ node_modules/
 /test-results/
 /playwright/
 /blob-report/
-/playwright/.cache/

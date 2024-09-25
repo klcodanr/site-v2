@@ -57,8 +57,8 @@ const pages = urls.filter(
     !isTag(url) &&
     !isProject(url) &&
     !/\/posts\/page\/\d+/.test(url)
-);
-const firstPost = urls.reverse().find((url) => isPost(url)) as string;
+).reverse();
+const firstPost = urls.find((url) => isPost(url)) as string;
 const firstTag = urls.find((url) => isTag(url)) as string;
 const firstProject = urls.find((url) => isProject(url)) as string;
 
