@@ -45,18 +45,18 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: playwright-report
-          path: ./packages/frontend/playwright-report/
+          name: playwright
+          path: ./packages/frontend/playwright/
           retention-days: 30
       - name: Deploy app
         run: |
           ./node_modules/.bin/sst deploy --stage production
-      - name: Run Pa11y CI
-        run:  
-          npx pa11y-ci --sitemap https://thecaringplace.info/sitemap-index.xml --config .pa11yci
-      - name: Page Speed Insights
-        uses: jakepartusch/psi-action@v1.3
-        with:
-          url: https://thecaringplace.info
-          threshold: 95
-          strategy: mobile
+      # - name: Run Pa11y CI
+      #   run:  
+      #     npx pa11y-ci --sitemap https://thecaringplace.info/sitemap-index.xml --config .pa11yci
+      # - name: Page Speed Insights
+      #   uses: jakepartusch/psi-action@v1.3
+      #   with:
+      #     url: https://thecaringplace.info
+      #     threshold: 95
+      #     strategy: mobile

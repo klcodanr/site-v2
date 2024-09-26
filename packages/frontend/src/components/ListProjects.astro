@@ -25,7 +25,7 @@ const projects = await getCollection("projects");
                 <h3>{project.data.title}</h3>
                 <p>{project.data.description}</p>
                 <div>
-                  <Button link={`/projects/${project.slug}`}>Read more</Button>
+                  <Button link={`/projects/${project.slug}/`}>Read more</Button>
                 </div>
               </CardBody>
             </Card>
@@ -44,7 +44,7 @@ const projects = await getCollection("projects");
               <header>
                 <h3>
                   <a
-                    href={`/projects/${project.slug}`}
+                    href={`/projects/${project.slug}/`}
                     title={project.data.title}
                   >
                     {project.data.title}

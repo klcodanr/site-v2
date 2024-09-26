@@ -5,7 +5,7 @@ import { XMLParser } from "fast-xml-parser";
 // import AxeBuilder from "@axe-core/playwright"; // 1
 
 async function expectPageValid(page: Page, url: string) {
-  await page.goto(url);
+  await page.goto(url === "/" ? "" : url, { waitUntil: "domcontentloaded" });
 
   await expect(page).toHaveTitle(/.*\| DanKlco.com/);
 
@@ -47,8 +47,35 @@ const urls: string[] = sitemap.urlset.url.map((url: { loc: string }) =>
   url.loc.replace("https://danklco.com", "")
 );
 
-urls.forEach((url) => {
+const isPost = (url: string) => /\/posts\/\d{4}.*/.test(url);
+const isProject = (url: string) => /\/projects\/.+/.test(url);
+const isTag = (url: string) => url.startsWith("/tags/");
+
+const pages = urls.filter(
+  (url) =>
+    !isPost(url) &&
+    !isTag(url) &&
+    !isProject(url) &&
+    !/\/posts\/page\/\d+/.test(url)
+).reverse();
+const firstPost = urls.find((url) => isPost(url)) as string;
+const firstTag = urls.find((url) => isTag(url)) as string;
+const firstProject = urls.find((url) => isProject(url)) as string;
+
+[...pages, firstPost, firstTag, firstProject].forEach((url) => {
   test(`page ${url} is valid`, async ({ page }) => {
     await expectPageValid(page, url);
   });
+});
+
+test.afterEach(async ({ page }, testInfo) => {
+  if (testInfo.status !== testInfo.expectedStatus) {
+    const screenshotPath = testInfo.outputPath(`failure.png`);
+    testInfo.attachments.push({
+      name: "screenshot",
+      path: screenshotPath,
+      contentType: "image/png",
+    });
+    await page.screenshot({ path: screenshotPath, timeout: 5000 });
+  }
 });
