@@ -1,0 +1,81 @@
+---
+const { message } = Astro.props;
+---
+
+<div class="container">
+  <div class="progress">
+    <div class="top"></div>
+    <div class="bottom"></div>
+  </div>
+  <div class="message">{message || "Loading..."}</div>
+</div>
+
+<style>
+  .container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+  }
+  .progress {
+    height: 89.6px;
+    width: 44.8px;
+    animation: progress-qm7mjxmd 2s ease infinite;
+  }
+
+  .top,
+  .bottom {
+    background-color: #dbdcef;
+    background-image: linear-gradient(var(--blue), var(--blue));
+    background-size: 44.8px 44.8px;
+    background-repeat: no-repeat;
+    width: 44.8px;
+    height: 44.8px;
+  }
+
+  .top {
+    background-position: 0 0;
+    animation: progress-sn28olmd 2s ease infinite;
+    -webkit-clip-path: polygon(0% 0%, 100% 0%, 50% 100%);
+  }
+
+  .bottom {
+    background-position: 0 44.8px;
+    animation: progress-jxmr0amd 2s ease infinite;
+    -webkit-clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+  }
+
+  .bottom::after {
+    content: "";
+    position: absolute;
+    width: 2.2px;
+    height: 44.8px;
+    left: 21.299999999999997px;
+    background-image: linear-gradient(var(--blue), transparent);
+  }
+
+  @keyframes progress-sn28olmd {
+    95%,
+    100% {
+      background-position: 0 44.8px;
+    }
+  }
+
+  @keyframes progress-jxmr0amd {
+    95%,
+    100% {
+      background-position: 0 0;
+    }
+  }
+
+  @keyframes progress-qm7mjxmd {
+    0%,
+    95% {
+      transform: rotate(0deg);
+    }
+
+    100% {
+      transform: rotate(180deg);
+    }
+  }
+</style>

@@ -2,6 +2,7 @@
 import "../styles/form.css";
 import { Icon } from "astro-icon/components";
 import Button from "./Button.astro";
+import Loader from "./Loader.astro";
 
 const endpoint = import.meta.env.PUBLIC_API_URL;
 ---
@@ -17,11 +18,13 @@ const endpoint = import.meta.env.PUBLIC_API_URL;
 </div>
 <hr />
 
+<div id="contact-message"></div>
 <form
   enctype="multipart/form-data"
   method="post"
   class="form"
   action={`${endpoint}/contact`}
+  id="contact-form"
   data-analytics-id="Contact"
 >
   <fieldset>
@@ -51,6 +54,9 @@ const endpoint = import.meta.env.PUBLIC_API_URL;
     </div>
   </fieldset>
 </form>
+<div id="contact-loader" hidden>
+  <Loader message="Sending message..." />
+</div>
 
 <style>
   .d-none {
@@ -62,3 +68,58 @@ const endpoint = import.meta.env.PUBLIC_API_URL;
     justify-content: center;
   }
 </style>
+
+
+<script>
+  let dirty = false;
+
+  const formEl = document.getElementById("contact-form");
+  const loaderEl = document.getElementById("contact-loader") as HTMLElement;
+  const messageEl = document.getElementById("contact-message") as HTMLElement;
+  if (formEl) {
+    const form = formEl as HTMLFormElement;
+    form.querySelectorAll("input, select, textarea").forEach((input) => {
+      input.addEventListener("change", () => {
+        if (!dirty) {
+          dirty = true;
+          form.classList.add("dirty");
+        }
+      });
+    });
+    form.querySelectorAll("button").forEach((button) => {
+      button.addEventListener("click", () => {
+        if (!dirty) {
+          dirty = true;
+          form.classList.add("dirty");
+        }
+      });
+    });
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      messageEl.textContent = "";
+      if (!form.checkValidity()) {
+        form.classList.add("dirty");
+        return;
+      }
+      const data = new FormData(form);
+      const body = JSON.stringify(Object.fromEntries(data.entries()));
+      formEl.hidden = true;
+      loaderEl.hidden = false;
+
+      fetch(form.action, {
+        method: "POST",
+        body,
+      }).then((res) => {
+        loaderEl.hidden = true;
+        if (res.ok) {
+          messageEl.innerText = "Message sent successfully!";
+        } else {
+          formEl.hidden = false;
+          messageEl.innerText = "Failed to send message, please try again.";
+        }
+      });
+    });
+  }
+</script>
+
