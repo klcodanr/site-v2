@@ -26,10 +26,7 @@ jobs:
         run: npm ci
       - name: Lint
         run: npm run lint --ws
-      - name: Build Site
-        working-directory: ./packages/frontend
-        run: npm run build
-      - name: Build Infrastructure
+      - name: Build App
         run: 
           ./node_modules/.bin/sst build --stage PR-${PR_NUMBER}
         env:
