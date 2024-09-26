@@ -24,8 +24,9 @@ export default function Site({ stack }: StackContext) {
 
   // Create the Astro site
   const site = new StaticSite(stack, "Site", {
-    path: "packages/frontend/dist/",
-    buildCommand: "cd packages/frontend && npm run build",
+    path: "packages/frontend/",
+    buildOutput: "dist",
+    buildCommand: "npm run build",
     environment: {
       PUBLIC_API_URL: api.url,
     },
