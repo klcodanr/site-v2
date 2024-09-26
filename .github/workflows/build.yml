@@ -66,12 +66,12 @@ jobs:
             const fs = require('fs')
             const body = fs.readFileSync('./.sst/outputs.json', 'utf-8');
             const outputs = JSON.parse(body);
-            const siteUrl = outputs[`PR-${process.env.PR_NUMBER}-thecaringplace-info-Site`].SITEURL;
+            const siteUrl = outputs[`PR-${process.env.PR_NUMBER}-danklco-Site`].SITEURL;
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `🚀 Build Successful!\n\nPreview URL: ${siteUrl}`
+              body: `🚀 Preview Deployed!\n\nPreview URL: ${siteUrl}`
             })
             return siteUrl;
         env:
