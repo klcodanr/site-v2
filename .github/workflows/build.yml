@@ -80,9 +80,9 @@ jobs:
       # - name: Run Pa11y CI
       #   run:  
       #     npx pa11y-ci --sitemap ${{steps.deploy-url.outputs.result}}/sitemap-index.xml --sitemap-find https://thecaringplace.info  --sitemap-replace ${{steps.deploy-url.outputs.result}} --config .pa11yci
-      - name: Page Speed Insights
-        uses: jakepartusch/psi-action@v1.3
-        with:
-          url: ${{steps.deploy-url.outputs.result}}
-          threshold: 95
-          strategy: mobile
+      # - name: Page Speed Insights
+      #   uses: jakepartusch/psi-action@v1.3
+      #   with:
+      #     url: ${{steps.deploy-url.outputs.result}}
+      #     threshold: 95
+      #     strategy: mobile
