@@ -19,7 +19,10 @@ const project = Astro.props;
 
 <Project {...project.data}>
   <article>
-	<Button link="/my-work/">&lt;&nbsp;Back to My Work</Button>
+    
+    <Button link="/my-work/">&lt;&nbsp;Back to My Work</Button>
+    <br/><br/>
+    
     <div class="hero-image">
       <img src={project.data.image} alt={project.data.title} />
     </div>

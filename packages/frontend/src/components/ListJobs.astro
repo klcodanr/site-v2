@@ -14,9 +14,11 @@ const jobs = (await getCollection("jobs"));
         <section>
           <header>
             <h3>
-              {job.data.company} — {job.data.location}
-              <span class="pull-right">
-                {job.data.start} - {job.data.end}
+              <span>
+                {job.data.company}&nbsp;— {job.data.location}
+              </span>
+              <span>
+                {job.data.start}&nbsp;- {job.data.end}
               </span>
             </h3>
           </header>
@@ -36,8 +38,17 @@ const jobs = (await getCollection("jobs"));
 </ul>
 
 <style>
+  h3 {
+    display:flex;
+    gap: 1em;
+    justify-content: space-between;
+  }
   li {
     margin: 0;
     list-style: none;
+  }
+  ul {
+    margin: 0;
+    padding: 0;
   }
 </style>
