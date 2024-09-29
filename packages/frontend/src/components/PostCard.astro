@@ -21,7 +21,7 @@ const { post } = Astro.props;
   </div>
   <CardBody>
     <div>
-      <h3>{post.data.title}</h3>
+      <h2>{post.data.title}</h2>
       <FormattedDate date={post.data.pubDate} />
     </div>
     <p>{post.data.description}</p>
@@ -30,3 +30,10 @@ const { post } = Astro.props;
     </div>
   </CardBody>
 </Card>
+
+<style>
+  h2 {
+    margin: 0;
+    font-size: xx-large;
+  }
+</style>

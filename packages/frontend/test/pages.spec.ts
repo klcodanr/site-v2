@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import type { Page } from "playwright";
 import { readFileSync } from "fs";
 import { XMLParser } from "fast-xml-parser";
-// import AxeBuilder from "@axe-core/playwright"; // 1
+import AxeBuilder from "@axe-core/playwright";
 
 async function expectPageValid(page: Page, url: string) {
   await page.goto(url === "/" ? "" : url, { waitUntil: "domcontentloaded" });
@@ -31,12 +31,11 @@ async function expectPageValid(page: Page, url: string) {
   const footer = page.getByRole("contentinfo");
   await expect(footer).toBeVisible();
 
-  // TODO Re-enable once accessability issues are fixed
-  // if (!url.startsWith("/posts")) {
-  //   const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
+  if (!url.startsWith("/posts")) {
+    const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
 
-  //   expect(accessibilityScanResults.violations).toEqual([]);
-  // }
+    expect(accessibilityScanResults.violations).toEqual([]);
+  }
 }
 
 const sitemapXml = readFileSync("dist/sitemap-0.xml", "utf-8");
@@ -51,13 +50,15 @@ const isPost = (url: string) => /\/posts\/\d{4}.*/.test(url);
 const isProject = (url: string) => /\/projects\/.+/.test(url);
 const isTag = (url: string) => url.startsWith("/tags/");
 
-const pages = urls.filter(
-  (url) =>
-    !isPost(url) &&
-    !isTag(url) &&
-    !isProject(url) &&
-    !/\/posts\/page\/\d+/.test(url)
-).reverse();
+const pages = urls
+  .filter(
+    (url) =>
+      !isPost(url) &&
+      !isTag(url) &&
+      !isProject(url) &&
+      !/\/posts\/page\/\d+/.test(url)
+  )
+  .reverse();
 const firstPost = urls.find((url) => isPost(url)) as string;
 const firstTag = urls.find((url) => isTag(url)) as string;
 const firstProject = urls.find((url) => isProject(url)) as string;

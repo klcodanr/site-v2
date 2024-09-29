@@ -18,4 +18,17 @@ export default defineConfig({
   ],
   redirects,
   output: "static",
+
+  markdown: {
+    shikiConfig: {
+      theme: "github-dark-high-contrast",
+      transformers: [
+        {
+          pre: (node) => {
+            delete node.properties.tabindex;
+          },
+        },
+      ],
+    },
+  },
 });

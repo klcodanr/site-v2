@@ -22,7 +22,7 @@ const projects = (await getCollection("projects")).reverse();
                 <img src={project.data.image} alt={project.data.title} />
               </div>
               <CardBody>
-                <h3>{project.data.title}</h3>
+                <h2>{project.data.title}</h2>
                 <p>{project.data.description}</p>
                 <div>
                   <Button link={`/projects/${project.slug}/`}>Read more</Button>
@@ -83,8 +83,13 @@ const projects = (await getCollection("projects")).reverse();
 </div>
 
 <style>
+  h2 {
+    margin: 0;
+    font-size: xx-large;
+  }
   h3 {
     display:flex;
+    font-size: xx-large;
     gap: 1em;
     justify-content: space-between;
   }
