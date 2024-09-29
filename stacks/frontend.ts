@@ -1,4 +1,10 @@
-import { Api, Config, Function, StackContext, StaticSite } from "sst/constructs";
+import {
+  Api,
+  Config,
+  Function,
+  StackContext,
+  StaticSite,
+} from "sst/constructs";
 
 export default function Site({ stack }: StackContext) {
   // define the secrets
@@ -18,8 +24,7 @@ export default function Site({ stack }: StackContext) {
     accessLog: {
       retention: "one_week",
     },
-    customDomain:
-      stack.stage === "production" ? "api.danklco.com" : undefined,
+    customDomain: stack.stage === "production" ? "api.danklco.com" : undefined,
   });
 
   // Create the Astro site
@@ -30,6 +35,7 @@ export default function Site({ stack }: StackContext) {
     environment: {
       PUBLIC_API_URL: api.url,
     },
+    errorPage: "404.html",
     customDomain:
       stack.stage === "production"
         ? {
@@ -37,6 +43,27 @@ export default function Site({ stack }: StackContext) {
             domainAlias: "www.danklco.com",
           }
         : undefined,
+    assets: {
+      fileOptions: [
+        {
+          files: "**",
+          cacheControl: "max-age=0,no-cache,no-store,must-revalidate",
+        },
+        {
+          files: [
+            "**/*.js",
+            "**/*.css",
+            "**/*.woff",
+            "**/*.png",
+            "**/*.jpg",
+            "**/*.jpeg",
+            "**/*.gif",
+            "**/*.svg",
+          ],
+          cacheControl: "max-age=31536000,public,immutable",
+        },
+      ],
+    },
   });
 
   // Add the site's URL to stack output
