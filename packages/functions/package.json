@@ -14,7 +14,7 @@
         "sst": "^2.43.4",
         "@typescript-eslint/eslint-plugin": "^8.1.0",
         "@typescript-eslint/parser": "^8.1.0",
-        "eslint": "^8.56.0"
+        "eslint": "^9.11.1"
     },
     "dependencies": {
         "nodemailer": "^6.9.14",
