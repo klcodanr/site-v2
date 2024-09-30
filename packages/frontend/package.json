@@ -4,7 +4,9 @@
   "version": "0.0.1",
   "scripts": {
     "astro": "astro",
-    "build": "astro check && astro build",
+    "build": "npm run build:astro && npm run build:redirects",
+    "build:astro": "astro check && astro build",
+    "build:redirects": "node ./scripts/generate-redirects.mjs",
     "lint": "eslint .",
     "dev": "astro dev",
     "preview": "astro preview",
