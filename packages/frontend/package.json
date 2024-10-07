@@ -24,7 +24,7 @@
     "astro-icon": "^1.1.1",
     "astro-pagefind": "^1.6.0",
     "astro-sst": "2.41.5",
-    "sst": "^2.43.4",
+    "sst": "^3.1.67",
     "typescript": "^5.5.4"
   },
   "devDependencies": {
