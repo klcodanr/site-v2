@@ -46,6 +46,7 @@ jobs:
         env:
           PR_NUMBER: ${{ github.event.number }}
       - name: Set Secret
+        if: ${{ !github.event.pull_request.head.repo.fork }}
         run: |
           ./node_modules/.bin/sst secrets set SMTP_CONFIG ${SMTP_CONFIG} --stage PR-${PR_NUMBER}
         env:
