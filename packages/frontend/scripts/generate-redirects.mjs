@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 import { mkdir, writeFile } from "fs/promises";
 import { dirname, join } from "path";
 import redirects from "./redirects.mjs";
