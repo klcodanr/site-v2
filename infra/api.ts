@@ -6,7 +6,7 @@ const logging = {
   retention: "1 week",
 } as const;
 
-const api = new sst.aws.ApiGatewayV2("Api", {
+export const api = new sst.aws.ApiGatewayV2("Api", {
   accessLog: {
     retention: "1 week",
   },
@@ -27,5 +27,3 @@ api.route("$default", {
   handler: "packages/functions/src/default.handler",
   logging,
 });
-
-export default api;

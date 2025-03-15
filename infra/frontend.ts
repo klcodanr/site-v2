@@ -1,8 +1,8 @@
 /// <reference path="../.sst/platform/config.d.ts" />;
 
-import api from './api';
+import {api} from './api';
 
-const site = new sst.aws.StaticSite("Site", {
+export const site = new sst.aws.StaticSite("Site", {
   dev: {
     command: "npm run dev",
     url: "http://localhost:4321",
@@ -24,5 +24,3 @@ const site = new sst.aws.StaticSite("Site", {
         }
       : undefined,
 });
-
-export default site;
