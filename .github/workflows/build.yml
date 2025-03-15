@@ -10,6 +10,10 @@ concurrency:
 jobs:
   BuildApp:
     runs-on: ubuntu-latest
+    env:
+      SMTP_CONFIG: ${{ secrets.SMTP_CONFIG }}
+      SST_PRINT_LOGS: 1
+      SST_STAGE: PR-${{ github.event.number }}
     steps:
       - name: Git clone the repository
         uses: actions/checkout@v4
@@ -25,33 +29,26 @@ jobs:
       - name: Install Dependencies
         run: npm ci
       - name: Lint
-        run: npm run lint --ws
-      # - name: Install Playwright Browsers
-      #   working-directory: ./packages/frontend
-      #   run: npx playwright install --with-deps
-      # - name: Run Playwright tests
-      #   working-directory: ./packages/frontend
-      #   run: |
-      #     npm run build
-      #     npm run test
-      - uses: actions/upload-artifact@v4
+        run: npm run lint
+      - name: Build
+        run: npm run build
+      - name: Install Playwright Browsers
+        working-directory: ./packages/frontend
+        run: npx playwright install --with-deps
+      - name: Run Playwright tests
+        working-directory: ./packages/frontend
+        run: npm run test
+      - name: Upload Playwright Report
+        uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: playwright
-          path: ./packages/frontend/playwright/
-          retention-days: 30
-      - name: Deploy Preview
-        run: |
-          ./node_modules/.bin/sst deploy --stage PR-${PR_NUMBER}
-        env:
-          PR_NUMBER: ${{ github.event.number }}
+          name: playwright-report
+          path: ./packages/frontend/playwright-report/
+          retention-days: 7
       - name: Set Secret
-        if: ${{ !github.event.pull_request.head.repo.fork }}
-        run: |
-          ./node_modules/.bin/sst secrets set SMTP_CONFIG ${SMTP_CONFIG} --stage PR-${PR_NUMBER}
-        env:
-          PR_NUMBER: ${{ github.event.number }}
-          SMTP_CONFIG: ${{ secrets.SMTP_CONFIG }}
+        run: ./node_modules/.bin/sst secret set SMTP_CONFIG ${{ secrets.SMTP_CONFIG }}
+      - name: Deploy app
+        run: npm run deploy
       - name: Add Deploy URL Comment
         id: deploy-url
         uses: actions/github-script@v7
@@ -60,24 +57,29 @@ jobs:
           script: |
             const fs = require('fs')
             const body = fs.readFileSync('./.sst/outputs.json', 'utf-8');
-            const outputs = JSON.parse(body);
-            const siteUrl = outputs[`PR-${process.env.PR_NUMBER}-danklco-Site`].SITEURL;
+            const parsedJson = JSON.parse(body);
+            console.log(parsedJson);
+            const siteUrl = parsedJson.site;
+            const apiUrl = parsedJson.api;
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `🚀 Preview Deployed!\n\nPreview URL: ${siteUrl}`
+              body: `🚀 Build Successful!\n\nPreview URL: ${siteUrl}\n\nAPI URL: ${apiUrl}`
             })
             return siteUrl;
-        env:
-          PR_NUMBER: ${{ github.event.number }}
-      # TODO re-enable once the accessibility issues are fixed
-      # - name: Run Pa11y CI
-      #   run:  
-      #     npx pa11y-ci --sitemap ${{steps.deploy-url.outputs.result}}/sitemap-index.xml --sitemap-find https://thecaringplace.info  --sitemap-replace ${{steps.deploy-url.outputs.result}} --config .pa11yci
-      # - name: Page Speed Insights
-      #   uses: jakepartusch/psi-action@v1.3
-      #   with:
-      #     url: ${{steps.deploy-url.outputs.result}}
-      #     threshold: 95
-      #     strategy: mobile
+      - name: Check API Health
+        run: |
+          API_ENDPOINT=$(cat .sst/outputs.json | jq -r '.api')
+          curl --fail-with-body $API_ENDPOINT/ping
+          curl --fail-with-body $API_ENDPOINT/health
+      - name: Run Pa11y CI
+        run:  
+          npx pa11y-ci --sitemap ${{steps.deploy-url.outputs.result}}/sitemap-index.xml --sitemap-find https://thecaringplace.info  --sitemap-replace ${{steps.deploy-url.outputs.result}} --config .pa11yci
+      - name: Page Speed Insights
+        uses: jakepartusch/psi-action@v1.3
+        with:
+          url: ${{steps.deploy-url.outputs.result}}
+          threshold: 95
+          strategy: mobile
+          key: ${{ secrets.PAGESPEED_API_KEY }}
