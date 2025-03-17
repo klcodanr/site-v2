@@ -3,7 +3,7 @@
 export default $config({
   app(input) {
     return {
-      name: "thecaringplace-info",
+      name: "danklco-com",
       home: "aws",
       removal: input?.stage === "production" ? "retain" : "remove",
       providers: {
