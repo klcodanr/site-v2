@@ -14,7 +14,7 @@ const compat = new FlatCompat({
 });
 export default [
   {
-    ignores: ["**/node_modules", "**/dist", ".astro/**"],
+    ignores: ["**/node_modules", "**/dist", ".astro/**", "playwright/**"],
   },
   ...compat.extends(
     "eslint:recommended",
