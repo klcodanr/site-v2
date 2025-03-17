@@ -15,6 +15,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       SMTP_CONFIG: ${{ secrets.SMTP_CONFIG }}
+      SST_PRINT_LOGS: 1
+      SST_STAGE: production
     steps:
       - name: Git clone the repository
         uses: actions/checkout@v4
@@ -31,6 +33,8 @@ jobs:
         run: npm ci
       - name: Lint
         run: npm run lint --ws
+      - name: Set Secret
+        run: ./node_modules/.bin/sst secret set SMTP_CONFIG ${{ secrets.SMTP_CONFIG }}
       - name: Deploy app
         run: |
           ./node_modules/.bin/sst deploy --stage production
