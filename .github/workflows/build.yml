@@ -82,4 +82,4 @@ jobs:
           url: ${{steps.deploy-url.outputs.result}}
           threshold: 95
           strategy: mobile
-          key: ${{ secrets.PAGESPEED_API_KEY }}
+          key: ${{ secrets.PSI_API_KEY }}
