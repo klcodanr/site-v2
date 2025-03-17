@@ -5,7 +5,8 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "./node_modules/.bin/sst build",
+    "build": "npm run build --ws",
+    "deploy": "sst deploy --print-logs",
     "dev": "sst dev",
     "dev:site": "cd packages/frontend && npm run dev",
     "test": "cd packages/frontend && npm run test",
@@ -17,6 +18,6 @@
     "typescript": "5.5.4"
   },
   "dependencies": {
-    "sst": "^2.43.4"
+    "sst": "^3.4.32"
   }
 }

@@ -36,7 +36,7 @@ Interestingly, I found that _mvn clean_ after failed builds seemed to often resu
 
 To run the conversion, I can execute _mvn clean install -Dbnd.baseline.skip=true_. Once the process is complete, the feature files can be found under _target/fm_ and you can validate by downloading the Feature Model Launcher and running:  
   
-java -jar org.apache.sling.feature.launcher-1.1.4.jar -f target/slingfeature-tmp/feature-slingcms.json
+java -jar org.apache.sling.feature.launcher-1.1.4.jar -f target/slingfeature-tmp/feature-slingcms.json
 
   
 One feature file will be created per Provisioning Model file and the contents of the Provisioning Model file will be transformed into the format used by the Feature Model.
@@ -64,8 +64,6 @@ The outcome of all this is a consolidated Feature Model and Feature Archive for 
 Quick segue about Feature Archives. By default the Sling Feature Model will download dependencies as artifacts from the Maven repository. To avoid having to download files at runtime, package private artifacts or to enable Sling Features to run offline Sling Feature Model supports Feature ARchives or FAR files. The FAR file packages the Feature descriptor and binary dependencies into a ZIP archive.  
 
 Feature Archives can be used in the same manner as Feature Models, reference the path to the Feature Archive instead of the Feature Model in the -f or -sf flags for the Sling Feature Launcher.
-
-###   
 
 ### Resolving Feature Errors
 

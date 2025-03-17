@@ -12,6 +12,9 @@ export default defineConfig({
   retries: 2,
   use: {
     baseURL: "http://localhost:4321",
+    trace: 'on-first-retry',
+    video: 'on-first-retry',
+    screenshot: 'only-on-failure',
   },
   testDir: "test",
   projects: [

@@ -1,17 +1,25 @@
-import type { SSTConfig } from "sst";
-import FrontEnd from "./stacks/frontend";
+/// <reference path="./.sst/platform/config.d.ts" />
 
-export default {
-  config(input) {
+export default $config({
+  app(input) {
     return {
-      name: "danklco",
-      region: "us-east-2",
-      profile: "danklco",
-      removal: input?.stage === "production" ? "retain" : "remove",
+      name: "danklco-com",
       home: "aws",
+      removal: input?.stage === "production" ? "retain" : "remove",
+      providers: {
+        aws: {
+          region: "us-east-2",
+        }
+      }
     };
   },
-  stacks(app) {
-    app.stack(FrontEnd);
+
+  async run() {
+    const {api} = await import("./infra/api");
+    const {site} = await import("./infra/frontend");
+    return {
+      site: site.url,
+      api: api.url,
+    };
   },
-} satisfies SSTConfig;
+});

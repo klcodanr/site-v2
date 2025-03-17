@@ -1,12 +1,10 @@
 ---
-import { type CollectionEntry, getCollection } from "astro:content";
+import { getCollection } from "astro:content";
 import Button from "../components/Button.astro";
 import FormattedDate from "../components/FormattedDate.astro";
 import Grid from "../components/Grid.astro";
 import Content from "./Content.astro";
 import PostCard from "../components/PostCard.astro";
-
-type Props = CollectionEntry<"posts">["data"];
 
 const { title, pubDate, image, tags } = Astro.props;
 const { slug } = Astro.params;

@@ -1,5 +1,5 @@
 ---
-import { type CollectionEntry, getCollection } from "astro:content";
+import { getCollection } from "astro:content";
 import Project from "../../layouts/Project.astro";
 import FormattedDate from "../../components/FormattedDate.astro";
 import Button from "../../components/Button.astro";
@@ -11,9 +11,6 @@ export async function getStaticPaths() {
     props: project,
   }));
 }
-
-type Props = CollectionEntry<"projects">;
-
 const project = Astro.props;
 ---
 
