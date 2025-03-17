@@ -16,7 +16,7 @@ jobs:
     env:
       SMTP_CONFIG: ${{ secrets.SMTP_CONFIG }}
       SST_PRINT_LOGS: 1
-      SST_STAGE: production
+      SST_STAGE: prod
     steps:
       - name: Git clone the repository
         uses: actions/checkout@v4

@@ -17,7 +17,7 @@ export const site = new sst.aws.StaticSite("Site", {
   },
   errorPage: "404.html",
   domain:
-    $app.stage === "production"
+    $app.stage === "prod"
       ? {
           name: "danklco.com",
           redirects: ["www.danklco.com"],
