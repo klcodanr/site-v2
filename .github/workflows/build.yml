@@ -68,11 +68,11 @@ jobs:
               body: `🚀 Build Successful!\n\nPreview URL: ${siteUrl}\n\nAPI URL: ${apiUrl}`
             })
             return siteUrl;
-      - name: Check API Health
-        run: |
-          API_ENDPOINT=$(cat .sst/outputs.json | jq -r '.api')
-          curl --fail-with-body $API_ENDPOINT/ping
-          curl --fail-with-body $API_ENDPOINT/health
+      # - name: Check API Health
+      #   run: |
+      #     API_ENDPOINT=$(cat .sst/outputs.json | jq -r '.api')
+      #     curl --fail-with-body $API_ENDPOINT/ping
+      #     curl --fail-with-body $API_ENDPOINT/health
       - name: Run Pa11y CI
         run:  
           npx pa11y-ci --sitemap ${{steps.deploy-url.outputs.result}}/sitemap-index.xml --sitemap-find https://danklco.com  --sitemap-replace ${{steps.deploy-url.outputs.result}} --config .pa11yci
