@@ -60,14 +60,14 @@ export const handler = async (
     console.log("About to send email", emailPayload);
 
     try {
+      
       const sender = new EmailSender();
 
       await sender.send({
-        from: "tech.thecaringplace@gmail.com",
-        to: "caringplc@yahoo.com",
-        cc: "tech.thecaringplace@gmail.com",
+        from: "daniel.klco@gmail.com",
+        to: "daniel.klco@gmail.com",
         replyTo: request.email,
-        subject: "TheCaringPlace.info Contact Form Submission",
+        subject: "DanKlco.com Contact Form Submission",
         text: Object.entries({ ...request, ...userInfo })
           .map(([key, value]) => `${key}: ${value}`)
           .join("\n"),

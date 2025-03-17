@@ -8,7 +8,6 @@ export default $config({
       removal: input?.stage === "production" ? "retain" : "remove",
       providers: {
         aws: {
-          // profile: "thecaringplace",
           region: "us-east-2",
         }
       }
