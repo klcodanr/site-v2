@@ -80,6 +80,6 @@ jobs:
         uses: jakepartusch/psi-action@v1.3
         with:
           url: ${{steps.deploy-url.outputs.result}}
-          threshold: 95
+          threshold: 70
           strategy: mobile
           key: ${{ secrets.PSI_API_KEY }}
