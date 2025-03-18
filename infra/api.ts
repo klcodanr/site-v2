@@ -11,7 +11,6 @@ export const api = new sst.aws.ApiGatewayV2("Api", {
     retention: "1 week",
   },
   cors: true,
-  domain: $app.stage === "prod" ? "api2.danklco.com" : undefined,
 });
 api.route("GET /health", {
   handler: "packages/functions/src/health.handler",

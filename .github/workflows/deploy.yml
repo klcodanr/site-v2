@@ -37,7 +37,7 @@ jobs:
         run: ./node_modules/.bin/sst secret set SMTP_CONFIG ${{ secrets.SMTP_CONFIG }}
       - name: Deploy app
         run: |
-          ./node_modules/.bin/sst deploy --stage production
+          ./node_modules/.bin/sst deploy --stage prod
       - name: Run Pa11y CI
         run:  
           npx pa11y-ci --sitemap https://danklco.com/sitemap-index.xml --config .pa11yci
