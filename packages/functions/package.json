@@ -11,14 +11,13 @@
     "devDependencies": {
         "@types/aws-lambda": "^8.10.134",
         "@types/node": "^20.11.24",
-        "@types/nodemailer": "^6.4.15",
         "sst": "^3.4.32",
         "@typescript-eslint/eslint-plugin": "^8.26.0",
         "@typescript-eslint/parser": "^8.25.0",
         "eslint": "^9.17.0"
     },
     "dependencies": {
-        "nodemailer": "^6.9.14",
+        "@aws-sdk/client-sesv2": "^3.758.0",
         "zod": "^3.23.8"
     }
 }

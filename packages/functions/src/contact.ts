@@ -64,9 +64,6 @@ export const handler = async (
       const sender = new EmailSender();
 
       await sender.send({
-        from: "daniel.klco@gmail.com",
-        to: "daniel.klco@gmail.com",
-        replyTo: request.email,
         subject: "DanKlco.com Contact Form Submission",
         text: Object.entries({ ...request, ...userInfo })
           .map(([key, value]) => `${key}: ${value}`)

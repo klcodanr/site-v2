@@ -9,9 +9,10 @@ declare module "sst" {
       "type": "sst.aws.ApiGatewayV2"
       "url": string
     }
-    "SMTP_CONFIG": {
-      "type": "sst.sst.Secret"
-      "value": string
+    "Email": {
+      "configSet": string
+      "sender": string
+      "type": "sst.aws.Email"
     }
     "Site": {
       "type": "sst.aws.StaticSite"

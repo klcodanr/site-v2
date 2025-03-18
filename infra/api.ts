@@ -1,6 +1,6 @@
 /// <reference path="../.sst/platform/config.d.ts" />
 
-import { smtpConfig } from "./secrets";
+import { email } from "./email";
 
 const logging = {
   retention: "1 week",
@@ -11,16 +11,16 @@ export const api = new sst.aws.ApiGatewayV2("Api", {
     retention: "1 week",
   },
   cors: true,
-  domain: $app.stage === "production" ? "api2.danklco.com" : undefined,
+  domain: $app.stage === "prod" ? "api2.danklco.com" : undefined,
 });
 api.route("GET /health", {
   handler: "packages/functions/src/health.handler",
-  link: [smtpConfig],
+  link: [email],
   logging,
 });
 api.route("POST /contact", {
   handler: "packages/functions/src/contact.handler",
-  link: [smtpConfig],
+  link: [email],
   logging,
 });
 api.route("$default", {

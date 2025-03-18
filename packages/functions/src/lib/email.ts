@@ -1,49 +1,33 @@
 import { Resource } from "sst";
-import { createTransport } from "nodemailer";
-import type { Transporter } from "nodemailer";
-import type SMTPConnection from "nodemailer/lib/smtp-connection";
+import { SESv2Client, SendEmailCommand } from "@aws-sdk/client-sesv2";
+import assert from "assert";
 
 export type EmailMessage = {
-    from: string;
-    to: string;
-    cc?: string;
-    replyTo?: string;
-    subject: string;
-    text: string;
-    html?: string;
+  subject: string;
+  text: string;
 };
 
-function parseSmtpConfig() {
-    let decoded: string;
-    try {
-        decoded = Buffer.from(Resource.SMTP_CONFIG.value, "base64").toString("utf-8");
-    } catch (error) {
-        console.error("Cannot decode invalid SMTP configuration", {value: Resource.SMTP_CONFIG.value, error});
-        throw error;
-    }
-
-    try {
-        return JSON.parse(decoded);
-    } catch (error) {
-        console.error("Cannot parse invalid SMTP configuration as JSON", {decoded, error});
-        throw error;
-    }
-}
+const client = new SESv2Client();
 
 export class EmailSender {
-  private smtpConfig: SMTPConnection.Options;
-  private transport: Transporter;
-
-  constructor() {
-    this.smtpConfig = parseSmtpConfig();
-    this.transport = createTransport(this.smtpConfig);
-  }
-  
   async send(message: EmailMessage) {
-    await this.transport.sendMail(message);
+    await client.send(
+      new SendEmailCommand({
+        FromEmailAddress: Resource.Email.sender,
+        Destination: {
+          ToAddresses: [Resource.Email.sender],
+        },
+        Content: {
+          Simple: {
+            Subject: { Data: message.subject },
+            Body: { Text: { Data: message.text} },
+          },
+        },
+      })
+    );
   }
 
   async test() {
-    await this.transport.verify();
+    assert(Resource.Email.sender);
   }
 }
