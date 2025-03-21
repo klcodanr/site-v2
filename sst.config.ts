@@ -5,7 +5,7 @@ export default $config({
     return {
       name: "danklco-com",
       home: "aws",
-      removal: input?.stage === "production" ? "retain" : "remove",
+      removal: input?.stage === "prod" ? "retain" : "remove",
       providers: {
         aws: {
           region: "us-east-2",
