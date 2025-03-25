@@ -4,7 +4,7 @@ import ListPosts from "../../../components/ListPosts.astro";
 import Content from "../../../layouts/Content.astro";
 
 export async function getStaticPaths() {
-  const posts = (await getCollection("posts")).filter((p) => p.data.published);
+  const posts = (await getCollection("posts")).filter((p) => p.data.published && !p.data.hideInNav);
 
   const pages = posts.length / 12;
   return Array.from({ length: pages }, (_, idx) => ({

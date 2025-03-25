@@ -11,6 +11,7 @@ const { slug } = Astro.params;
 
 const posts = (await getCollection("posts"))
   .filter((p) => p.data.published)
+  .filter((p) => !p.data.hideInNav)
   .sort(
     (a, b) =>
       new Date(b.data.pubDate || new Date()).getTime() - new Date(a.data.pubDate || new Date()).getTime()

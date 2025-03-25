@@ -10,6 +10,7 @@ const stop = limit ? actualStart + limit : 12 + actualStart;
 
 let allPosts = (await getCollection("posts"))
   .filter((p) => p.data.published)
+  .filter((p) => !p.data.hideInNav)
   .sort((a, b) => (b.data.pubDate?.valueOf() || 0) - (a.data.pubDate?.valueOf() || 0));
 
 if (display) {
