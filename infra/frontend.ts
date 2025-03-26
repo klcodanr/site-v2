@@ -20,7 +20,7 @@ export const site = new sst.aws.StaticSite("Site", {
         cacheControl: "max-age=31536000,public,immutable"
       },
       {
-        files: "**/*.html",
+        files: ["**/*.html", "**/*.json", "**/*.xml", "**/*.txt"],
         cacheControl: "max-age=0,no-cache,no-store,must-revalidate"
       }
     ],
