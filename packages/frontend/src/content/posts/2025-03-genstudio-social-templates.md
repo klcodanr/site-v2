@@ -1,12 +1,13 @@
 ---
 title: Creating Social Templates in GenStudio
 description: Learn how to create a social template for GenStudio for Performance Marketing 
-hideInNav: true
+hideInNav: false
 tags:
   - Adobe GenStudio
   - Adobe Genstudio for Performance Marketing
   - Generative AI
-pubDate: 2025-03-24
+  - HTML
+pubDate: 2025-03-26
 display: post
 published: true
 image: /images/posts/2025-03/Responsive-Template.png
@@ -112,7 +113,7 @@ In this ad, we need to tell GenStudio the dimensions to which to crop the image 
 
 ### Time to math!
 
-Social ads in GenStudio are 300px wide, below are the ad sizes for the supported aspect ratios:
+Social ads in GenStudio edited in a view that is scaled to 300px wide, below are the ad sizes for the supported aspect ratios:
 
 | Aspect Ratio | Height (px) |
 | ------- | ------- |
@@ -120,7 +121,7 @@ Social ads in GenStudio are 300px wide, below are the ad sizes for the supported
 | 4:5 | 375 |
 | 9:16 | 533.3 |
 
-The template below will add 100px tall bar above the image in the ad and fill the remaining area with the image.
+The template below will add 100px tall bar above the image in the ad and fill the remaining area with the image. Note that the generated image will keep the same aspect ratio and ratio between elements but will be larger than the preview in GenStudio.
 
 ```html
 <!DOCTYPE html>
