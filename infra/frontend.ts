@@ -16,13 +16,13 @@ export const site = new sst.aws.StaticSite("Site", {
     textEncoding: "utf-8",
     fileOptions: [
       {
+        files: "**",
+        cacheControl: "max-age=0,no-cache,no-store,must-revalidate",
+      },
+      {
         files: ["**/*.css", "**/*.js", "**/*.png", "**/*.jpg", "**/*.svg", "**/*.gif", "**/*.webp", "**/*.woff", "**/*.mp4" ],
         cacheControl: "max-age=31536000,public,immutable"
       },
-      {
-        files: ["**/*.html", "**/*.json", "**/*.xml", "**/*.txt"],
-        cacheControl: "max-age=0,no-cache,no-store,must-revalidate"
-      }
     ],
   },
   environment: {
