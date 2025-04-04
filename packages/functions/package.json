@@ -13,7 +13,7 @@
         "@types/node": "^20.11.24",
         "sst": "^3.10.11",
         "@typescript-eslint/eslint-plugin": "^8.28.0",
-        "@typescript-eslint/parser": "^8.25.0",
+        "@typescript-eslint/parser": "^8.28.0",
         "eslint": "^9.17.0"
     },
     "dependencies": {
