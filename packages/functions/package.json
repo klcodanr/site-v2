@@ -17,7 +17,7 @@
         "eslint": "^9.24.0"
     },
     "dependencies": {
-        "@aws-sdk/client-sesv2": "^3.758.0",
+        "@aws-sdk/client-sesv2": "^3.782.0",
         "zod": "^3.23.8"
     }
 }
