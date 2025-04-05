@@ -15,7 +15,7 @@
   "devDependencies": {
     "@tsconfig/node20": "^20.1.5",
     "dotenv": "^16.4.5",
-    "typescript": "5.5.4"
+    "typescript": "5.8.3"
   },
   "dependencies": {
     "sst": "^3.10.11"
