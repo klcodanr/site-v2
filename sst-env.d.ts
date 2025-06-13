@@ -16,7 +16,6 @@ declare module "sst" {
     }
     "Site": {
       "type": "sst.aws.StaticSite"
-      "url": string
     }
   }
 }
