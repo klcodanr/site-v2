@@ -1,0 +1,69 @@
+---
+title: Easily Synchronize GitHub Repository Settings with github-settings-sync
+description: Learn how to quickly and reliably configure multiple GitHub repositories with a single command.
+hideInNav: false
+tags:
+  - GitHub
+  - Automation
+  - Best Practices
+  - Development
+pubDate: 2025-06-28
+display: post
+published: true
+image: /images/posts/2025-06/jacob-diehl-59XYRjyDPxo-unsplash.jpg
+---
+
+Configuring GitHub repositories across multiple projects or teams can be tedious and error-prone. Manual setup is slow, inconsistent, and hard to maintain at scale.
+
+**github-settings-sync** is a CLI tool that lets you automate and standardize repository settings across all repositories in a GitHub organization. With a single command, you can apply consistent settings, collaborators, branch protection rules, and more.
+
+## Key Features
+
+- Sync repository settings across all repos in an organization
+- Manage collaborators and their roles
+- Configure branch protection rules
+- Push local files (like `.nvmrc`, `renovate.json`, etc.) to multiple repos
+- Run locally or integrate into CI/CD pipelines
+
+## How It Works
+
+Configuration is handled via a JSON file. See the [package documentation](https://www.npmjs.com/package/github-settings-sync#user-content-settings-file) for the full schema and examples.
+
+You control which repositories are affected using CLI flags:
+
+- `-n, --name-pattern <pattern>`: Regex to match repository names
+- `-l, --label <label>`: Only process repositories with this label
+- `--lang, --language <language>`: Only process repositories with this primary language
+
+**Example:**
+
+```bash
+# Sync settings for all JavaScript repos in your org
+github-settings-sync --org my-org --settings node-settings.json --lang javascript
+
+# Sync settings for all Java repos in your org
+github-settings-sync --org my-org --settings java-settings.json --lang java
+```
+
+## Installation
+
+Install globally:
+
+```bash
+npm install -g github-settings-sync
+```
+
+Or run as a one-off with npx:
+
+```bash
+npx github-settings-sync <args>
+```
+
+## Contribute or Give Feedback
+
+Have ideas or want to request a feature? Open an issue or pull request:
+
+https://github.com/klcodanr/github-settings-sync
+
+Cover photo by <a href="https://unsplash.com/@jacob_diehl_film?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash">Jacob Diehl</a> on <a href="https://unsplash.com/photos/a-wooden-table-with-plates-and-glasses-on-it-59XYRjyDPxo?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash">Unsplash</a>
+      
