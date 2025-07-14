@@ -19,7 +19,7 @@
     "@astrojs/rss": "^4.0.7",
     "@astrojs/sitemap": "^3.3.0",
     "@playform/compress": "^0.2.0",
-    "astro": "^5.10.1",
+    "astro": "^5.11.0",
     "astro-compress": "^2.3.8",
     "astro-icon": "^1.1.1",
     "astro-pagefind": "^1.6.0",
