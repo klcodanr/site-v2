@@ -29,7 +29,7 @@
     "@axe-core/playwright": "^4.10.2",
     "@iconify-json/mdi": "^1.2.0",
     "@playwright/test": "^1.54.2",
-    "@typescript-eslint/eslint-plugin": "^8.39.0",
+    "@typescript-eslint/eslint-plugin": "^8.41.0",
     "@typescript-eslint/parser": "^8.34.1",
     "astro-capo": "^0.0.1",
     "eslint": "^9.33.0",
