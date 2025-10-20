@@ -9,7 +9,7 @@
         "typecheck": "tsc -noEmit"
     },
     "devDependencies": {
-        "@types/aws-lambda": "^8.10.152",
+        "@types/aws-lambda": "^8.10.156",
         "@types/node": "^24.2.1",
         "sst": "^3.17.10",
         "@typescript-eslint/eslint-plugin": "^8.43.0",
