@@ -3,7 +3,7 @@
 ---
 
 <div class="ratio ratio-16x9">
-  {/* eslint-disable-next-line astro/jsx-a11y/media-has-caption */}
+  <!-- {/* eslint-disable-next-line astro/jsx-a11y/media-has-caption */}
   <video
     autoplay="autoplay"
     muted="muted"
@@ -17,15 +17,18 @@
     <source type="video/mp4" src="/videos/Site-Hero-Low.mp4" media="all and (max-width:768px)" />
     <source type="video/mp4" src="/videos/Site-Hero.mp4" />
     <source type="video/webm" src="/videos/Site-Hero.webm" />
-  </video>
+  </video> -->
+  <img src="/images/Site-Hero-Poster.png" alt="Site Hero Poster" />
 </div>
 
 <style>
   .ratio > * {
     width: 100%;
     height: 100%;
+    border-radius: 0;
   }
   .ratio-16x9 {
     --bs-aspect-ratio: 56.25%;
   }
+
 </style>
