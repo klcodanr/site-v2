@@ -28,7 +28,7 @@
   "devDependencies": {
     "@axe-core/playwright": "^4.10.2",
     "@iconify-json/mdi": "^1.2.0",
-    "@playwright/test": "^1.54.2",
+    "@playwright/test": "^1.57.0",
     "@typescript-eslint/eslint-plugin": "^8.50.1",
     "@typescript-eslint/parser": "^8.45.0",
     "astro-capo": "^0.0.1",
