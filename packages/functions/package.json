@@ -18,6 +18,6 @@
     },
     "dependencies": {
         "@aws-sdk/client-sesv2": "^3.864.0",
-        "zod": "^4.0.5"
+        "zod": "^4.3.6"
     }
 }
