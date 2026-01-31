@@ -18,7 +18,7 @@
     "@astrojs/mdx": "^4.3.5",
     "@astrojs/rss": "^4.0.15",
     "@astrojs/sitemap": "^3.7.0",
-    "@playform/compress": "^0.2.0",
+    "@playform/compress": "^0.2.1",
     "astro": "^5.17.1",
     "astro-compress": "^2.3.8",
     "astro-icon": "^1.1.1",
