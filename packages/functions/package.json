@@ -9,12 +9,12 @@
         "typecheck": "tsc -noEmit"
     },
     "devDependencies": {
-        "@types/aws-lambda": "^8.10.156",
+        "@types/aws-lambda": "^8.10.160",
         "@types/node": "^24.2.1",
         "sst": "^3.17.38",
-        "@typescript-eslint/eslint-plugin": "^8.50.1",
+        "@typescript-eslint/eslint-plugin": "^8.54.0",
         "@typescript-eslint/parser": "^8.45.0",
-        "eslint": "^9.33.0"
+        "eslint": "^9.39.2"
     },
     "dependencies": {
         "@aws-sdk/client-sesv2": "^3.978.0",

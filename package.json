@@ -13,8 +13,8 @@
     "lint": "npm run lint --ws"
   },
   "devDependencies": {
-    "@tsconfig/node20": "^20.1.6",
-    "dotenv": "^17.2.1",
+    "@tsconfig/node20": "^20.1.8",
+    "dotenv": "^17.2.3",
     "typescript": "5.9.3"
   },
   "dependencies": {
