@@ -1,0 +1,189 @@
+---
+title: "Schema-First Applications with Zod"
+description: "Learn about the new Asset Import API in AEM Assets that enables programmatic import of assets from external URLs"
+pubDate: 2025-06-12
+tags: ["Typescript", "Schema", "OpenAPI", "Zod"]
+display: post
+published: true
+image: ""
+hideInNav: false
+---
+
+One of the inevitable challenges with creating applications and APIs is validating the data at the edge of the application. The most obvious use case is for validating requests and responses but any time data passes across your application boundary it should be validated including persistence.
+
+This is where Zod comes in. Zod is a Typescript-first library for creating schemas. Using Zod you can define the schema, validate objects against the schema and infer types, but that’s just the start! 
+
+## Schema-First Development
+
+As you’d expect, schema-first development starts with defining your application’s data structure in the form of Zod Schemas.
+
+For example say I was creating an application to manage social posts I could represent the posts like:
+
+```typescript
+export const idSchema = z.string().min(1);
+export const postStatusSchema = z.enum(["draft", "scheduled", "published"]);
+
+export const postSchema = z.object({
+    accountId: idSchema,
+    content: z.string().min(1).max(280),
+    created: z.coerce.date(),
+    createdBy: z.email(), 
+    posted: z.coerce.date(),
+    image: z.url(),
+    postId: idSchema,
+    status: postStatusSchema,
+    tags: z.array(z.string().min(1).max(24)).max(10).default([])
+    updated:z.coerce.date(),
+    updatedBy: z.email(),
+});
+```
+
+I can then derive sub-schemas for creation and updates to omit fields that aren’t client controlled:
+
+```typescript
+export const updatePostSchema = postSchema.omit({
+    created: true,
+    createdBy: true,
+    updated: true
+    updatedBy: true
+});
+export const createPostSchema = updatePostSchema.omit({
+    postId: true
+});
+```
+
+Then you infer Typescript types:
+
+```typescript
+export type Post = z.infer<typeof postSchema>;
+export type UpdatePost = z.infer<typeof updatePostSchema>;
+export type CreatePost = z.infer<typeof createPostSchema>;
+```
+
+## Persistence with Schemas
+
+Persisting with schemas does work best when with object storage as the entire object will be materialized at once but either way the approach is similar. 
+
+First create a persistence wrapper that interacts with the underlying storage and uses the Zod schema and types to interact with the the underlying storage.
+
+For example using DynamoDB
+
+```typescript
+export class PostPersistence {
+    private readonly client: DynamoDBDocumentClient;
+    
+    constructor(private readonly tableName: string, private readonly userId: string) {
+        this.client = DynamoDBDocumentClient.from(new DynamoDBClient());
+    }
+
+    create(post: CreatePost): Promise<Post> {
+        const parsed = createPostSchema.parse(post);
+        const now = new Date().toISOString();
+        const newPost = {
+            ...parsed,
+            postId: randomUUID(),
+            created: this.userId,
+            createdAt: now.toISOString(),
+            updated: this.userId,
+            updatedAt: now.toISOString(),
+        };
+
+        await client.send(
+            new PutCommand({
+                TableName: this.tableName,
+                Item: newPost
+            })
+        );
+        return newPost;
+    }
+
+    delete(postId: string): Promise<void> {
+        await ddb.send(
+            new DeleteCommand({
+                TableName: this.tableName,
+                Key: { postId }
+            })
+        );
+    }
+
+    get(postId: string): Promise<Post> {
+        const output = await ddb.send(
+            new GetCommand({
+                TableName: this.tableName,
+                Key: { postId }
+            })
+        );
+        if (!output.Item) {
+            return json(404, { message: "Post not found" });
+        }
+        return postSchema.parse(output.Item);
+    }
+
+    list(cursor?: string): Promise<{
+        data: Post[],
+        count: number,
+        cursor?: string,
+    }> {
+        let ExclusiveStartKey = undefined;
+        if (cursor) { 
+            ExclusiveStartKey = JSON.parse(Buffer.from(cursor, "base64").toString("utf-8"));
+        }
+        const output = await ddb.send(
+            new ScanCommand({
+                TableName: this.tableName,
+                Limit: 50,
+                ExclusiveStartKey,
+            })
+        );
+
+        const data = (output.Items ?? []).map((item) => PostSchema.parse(item));
+
+        return { 
+            data, 
+            count: data.length
+            cursor: Buffer.from(JSON.stringify(output.LastEvaluatedKey), "utf-8").toString("base64"),
+        };
+    }
+
+    update(post: UpdatePost): Promise<Post> {
+        const existing = await this.get(post.postId);
+        if (!existing) {
+            throw new NotFoundError("Post not found");
+        }
+        const parsed = updatePostSchema.parse(post);
+        const merged = PostSchema.parse({
+            ...existing,
+            ...parsed,
+            updated: now.toISOString(),
+            updatedBy: this.userId,
+        });
+        await ddb.send(
+            new PutCommand({
+                TableName: this.tableName,
+                Item: merged
+            })
+        );
+        return merged;
+    }
+}
+
+```
+
+One of the great features about using Zod schemas in the persistence layer is that you can automatically filter out internal attributes, for example additional indexed fields materialized for DynamoDB filtering.
+
+## Schemas in the API
+
+Now that the persistence layer is using the schemas you can use the same schema definitions in a your OpenAPI schema definition using Zod to OpenAPI schema plugins for your API server.
+
+For example you could do the following in Hono with the [plugin name]:
+
+Or with Fastify with [plugin name]:
+
+## Schemas on the Frontend
+
+It’s one thing to have the backend all using consistent types and schemas but with Zod you can extend this consistency into the frontend, using the same schemas to parse responses and types within your frontend codebase.
+
+[…example…]
+
+Checkout the Example App
+I’ve consolidated the technique discussed in this post in an example app using Hono on SST with DynamoDb for persistence and PNPM and Turborepo for orchestration. Check it out!
