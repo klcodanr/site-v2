@@ -1,6 +1,6 @@
 ---
 title: Creating Social Templates in GenStudio
-description: Learn how to create a social template for GenStudio for Performance Marketing 
+description: Learn how to create a social template for GenStudio for Performance Marketing
 hideInNav: false
 tags:
   - Adobe GenStudio

@@ -8,10 +8,15 @@ tags:
   - Adobe Experience Manager
   - Adobe CQ
   - SLF4J
-pubDate: 2014-08-15
+pubDate: 2014-08-15T00:00:00.000Z
 display: post
 image: /images/posts/shared/axis3.jpg
 published: true
+redirects:
+  - /posts/2014/08/debugging-axis-1-4-in-slf4j.html
+  - /posts/2014/08/15/debugging-axis-1-4-in-slf4j/
+  - /posts/2014/08/15/debugging-axis-1-4-in-slf4j
+  - /posts/2014/08/15/debugging-axis-1-4-in-slf4j.html
 ---
 
 In my previous blog post, I discussed [getting Apache Axis 1.4 working in AEM](/posts/2014-08-running-axis-1-4-in-aem.html). One of the more interesting things about Axis 1.4 is that it's not easy to log the actual request from the client and response from the server. You can configure the [LogHandler](https://axis.apache.org/axis/java/apiDocs/org/apache/axis/handlers/LogHandler), however it is somewhat problematic in AEM to configure due to the classpath complexity in OSGi and it will only log to the system outputstream. This is problematic in AEM as the stdout.log isn't setup by default when runnning in server mode and when running locally will not roll. Intead of this, I would suggest registering a custom SLF4J Log Handler to log the request and response to the AEM SLF4J logs.

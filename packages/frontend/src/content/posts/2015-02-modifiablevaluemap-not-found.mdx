@@ -1,18 +1,20 @@
 ---
-title: "404 ModifiableValueMap Not Found: Considerations in Using
-  ModifiableValueMaps in an API"
-description: Running into a null pointer exception when using a
-  ModifiableValueMap and not sure why? This blog post pulls back the covers and
-  offers some alternative ideas.
+title: '404 ModifiableValueMap Not Found: Considerations in Using ModifiableValueMaps in an API'
+description: Running into a null pointer exception when using a ModifiableValueMap and not sure why? This blog post pulls back the covers and offers some alternative ideas.
 hideInNav: false
 tags:
   - Apache Sling
   - Sling CRUD API
   - ModifiableValueMap
-pubDate: 2015-02-17
+pubDate: 2015-02-17T00:00:00.000Z
 display: post
-image: ""
+image: ''
 published: true
+redirects:
+  - /posts/2015/02/modifiablevaluemap-not-found.html
+  - /posts/2015/02/17/modifiablevaluemap-not-found/
+  - /posts/2015/02/17/modifiablevaluemap-not-found
+  - /posts/2015/02/17/modifiablevaluemap-not-found.html
 ---
 
 So let's just say you are designing an API which allows both reading and writing of attributes for a [Resource](https://sling.apache.org/apidocs/sling7/org/apache/sling/api/resource/Resource.html). Of course, you want to use consistent code to persist the values, so you use the (relatively) new [CRUD features in the Sling API](http://sling.apache.org/documentation/the-sling-engine/sling-api-crud-support.html) to both get and set the property values. To save code, you might use a [ModifiableValueMap](http://sling.apache.org/apidocs/sling7/org/apache/sling/api/resource/ModifiableValueMap.html) for both operations, which works great in author as an administrative user.
