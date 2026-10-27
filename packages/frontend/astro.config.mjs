@@ -3,6 +3,7 @@ import mdx from "@astrojs/mdx";
 import pagefind from "astro-pagefind";
 import sitemap from "@astrojs/sitemap";
 import icon from "astro-icon";
+import astroRedirects from "./scripts/astro-redirects.mjs";
 
 export default defineConfig({
   site: "https://danklco.com",
@@ -11,6 +12,7 @@ export default defineConfig({
     sitemap(),
     pagefind(),
     icon(),
+    astroRedirects(),
     (await import("astro-compress")).default({
       SVG: false,
     }),

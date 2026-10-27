@@ -1,17 +1,19 @@
 ---
-title: "New in Apache Sling: FSClassLoader Console"
-description: In AEM 6.1, the default repository based ClassLoader was replaced
-  with the new FSClassLoader (File System ClassLoader). This post talks about
-  how this affects developers as well as introducing a new OSGi console to help
-  developers debug issues in JSP development.
+title: 'New in Apache Sling: FSClassLoader Console'
+description: In AEM 6.1, the default repository based ClassLoader was replaced with the new FSClassLoader (File System ClassLoader). This post talks about how this affects developers as well as introducing a new OSGi console to help developers debug issues in JSP development.
 hideInNav: false
 tags:
   - Apache Sling
   - AEM 6.1
-pubDate: 2015-06-23
+pubDate: 2015-06-23T00:00:00.000Z
 display: post
 image: /images/posts/2015-06-22-new-apache-sling-fs-classloader-console/class-list.png
 published: true
+redirects:
+  - /posts/2015/06/new-apache-sling-fs-classloader-console.html
+  - /posts/2015/06/23/new-apache-sling-fs-classloader-console/
+  - /posts/2015/06/23/new-apache-sling-fs-classloader-console
+  - /posts/2015/06/23/new-apache-sling-fs-classloader-console.html
 ---
 
 In AEM 6.1, the default repository based ClassLoader was replaced with the new FSClassLoader (File System ClassLoader). This ClassLoader offers higher performance and throughput, however it removes a valuable tool for developers to debug errors in JSP scripts. In previous versions of AEM, developers could navigate to /var/classes and drill down through the heirarchy to find the Java file generated from the JSP scripts. In AEM 6.1, as the class and java files are now stored in the filesystem, this is no longer possible.

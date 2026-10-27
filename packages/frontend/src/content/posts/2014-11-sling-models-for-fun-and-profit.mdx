@@ -1,17 +1,21 @@
 ---
 title: Sling Models for Fun and Profit
-description: Learn how Sling Models can make AEM development easier and more fun
-  by replacing spaghetti and boilerplate code with dynamic models.
+description: Learn how Sling Models can make AEM development easier and more fun by replacing spaghetti and boilerplate code with dynamic models.
 hideInNav: false
 tags:
   - Apache Sling
   - Sling Models
   - Best Practices
   - Adobe Experience Manager
-pubDate: 2014-11-21
+pubDate: 2014-11-21T00:00:00.000Z
 display: post
 image: /images/posts/2014-11-21-sling-models-for-fun-and-profit/configure-models-logger.png
 published: true
+redirects:
+  - /posts/2014/11/sling-models-for-fun-and-profit.html
+  - /posts/2014/11/21/sling-models-for-fun-and-profit/
+  - /posts/2014/11/21/sling-models-for-fun-and-profit
+  - /posts/2014/11/21/sling-models-for-fun-and-profit.html
 ---
 
 Recently, I finally had a chance to leverage [Sling Models](http://sling.apache.org/documentation/bundles/models.html) for a new project. If you are not familiar with Sling Models, they allow developers to inject methods and fields based on resource properties, other resources and OSGi services. For those developing in [AEM 6](http://docs.adobe.com/docs/en/aem/6-0/release-notes.html), Sling Models are available as part of the default installation, for those on older versions of AEM / CQ5, Sling Models are available [as downloadable bundles on the Sling website](http://sling.apache.org/downloads.cgi). Sling Models are a great way to do more with less code, thus you can "profit" by avoiding the costly technical debt from the large amount of boilerplate code required to access Sling content through POJOs or the spaghetti code when intermingling business logic for retrieving the same data directly from the underlying Resource or Node through a large codebase.

@@ -12,6 +12,7 @@ const posts = defineCollection({
 		hideInNav: z.boolean(),
 		display: z.string().optional(),
 		tags: z.array(z.string()),
+		redirects: z.array(z.string()).default([]),
 	}),
 });
 
@@ -25,6 +26,7 @@ const jobs = defineCollection({
 		role: z.string(),
 		start: z.string(),
 		tasks: z.array(z.string()),
+		redirects: z.array(z.string()).default([]),
 	}),
 });
 
@@ -44,6 +46,7 @@ const projects = defineCollection({
 		description: z.string().optional(),
 		hideInNav: z.boolean(),
 		tags: z.array(z.string()),
+		redirects: z.array(z.string()).default([]),
 	}),
 });
 

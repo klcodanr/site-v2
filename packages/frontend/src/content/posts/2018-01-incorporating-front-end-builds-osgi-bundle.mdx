@@ -1,7 +1,6 @@
 ---
 title: How to Incorporate Front End Builds into OSGi Bundles
-description: Shows how to integrate Front End built tools into an Apache Maven
-  based OSGi Bundle build process
+description: Shows how to integrate Front End built tools into an Apache Maven based OSGi Bundle build process
 hideInNav: false
 tags:
   - Apache Maven
@@ -9,10 +8,15 @@ tags:
   - Apache Sling
   - Gulp
   - Apache Felix
-pubDate: 2018-01-15
+pubDate: 2018-01-15T00:00:00.000Z
 display: post
 image: /images/posts/2018-01-15-incorporating-front-end-builds-osgi-bundle/packaging.jpg
 published: true
+redirects:
+  - /posts/2018/01/incorporating-front-end-builds-osgi-bundle.html
+  - /posts/2018/01/15/incorporating-front-end-builds-osgi-bundle/
+  - /posts/2018/01/15/incorporating-front-end-builds-osgi-bundle
+  - /posts/2018/01/15/incorporating-front-end-builds-osgi-bundle.html
 ---
 
 The [Sling Content Loader](https://sling.apache.org/documentation/bundles/content-loading-jcr-contentloader.html) allows for creating OSGi bundles which contain content loaded into the Sling Repository. This works well for static content but doesn't work so well for dynamic content. This includes when using modern Front End development tools to compile and minify Sass / JS, especially when integrating with the [Maven](https://maven.apache.org/) build process. Among the challenges are:
@@ -105,7 +109,7 @@ Then, add the following maven-resources-plugin configuration to copy the files i
 
 ## Including Generated Content in the Bundle
 
-You've got this all integrated into your build, your Gulp configuration is writing the generated files into target/classes/content/\[subpath\], you should be good to go right? Unfortunately, due to the way the [maven-bundle-plugin](http://felix.apache.org/documentation/subprojects/apache-felix-maven-bundle-plugin-bnd.html) works, it will not include your generated files! The maven-bundle-plugin calculates instructions and the Bundle Manifest, based on your project, and then delegates the work of building the bundle to [BND](/bnd.bndtools.org). The important point is: "based on your project". Since these folders don't exist in src (nor do we want generated code to exist there), the maven-bundle-plugin is not aware they exist.
+You've got this all integrated into your build, your Gulp configuration is writing the generated files into target/classes/content/\[subpath\], you should be good to go right? Unfortunately, due to the way the [maven-bundle-plugin](http://felix.apache.org/documentation/subprojects/apache-felix-maven-bundle-plugin-bnd.html) works, it will not include your generated files! The maven-bundle-plugin calculates instructions and the Bundle Manifest, based on your project, and then delegates the work of building the bundle to [BND](http://bnd.bndtools.org). The important point is: "based on your project". Since these folders don't exist in src (nor do we want generated code to exist there), the maven-bundle-plugin is not aware they exist.
 
 To make BND include the generated Front End code in the build, add the Include-Resources directive into the instructions for your maven-bundle-plugin configuration as such:
 
