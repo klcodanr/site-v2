@@ -22,7 +22,7 @@
     "astro-compress": "^2.3.8",
     "astro-icon": "^1.1.1",
     "astro-pagefind": "^1.8.3",
-    "js-yaml": "^4.1.1",
+    "js-yaml": "^5.5.0",
     "typescript": "^5.9.3"
   },
   "devDependencies": {
