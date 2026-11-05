@@ -16,5 +16,5 @@ if (excludeDay) {
 ---
 
 {date && (<time datetime={date.toISOString()}>
-  {date.toLocaleDateString("en-us", format)}
+  {date.toLocaleDateString("en-US", { ...format, timeZone: "UTC" })}
 </time>)}
