@@ -4,6 +4,7 @@ import { SITE_TITLE } from "../consts";
 ---
 
 <header>
+  <a class="skip-link" href="#main-content">Skip to content</a>
   <nav>
     <h2><a href="/">{SITE_TITLE}</a></h2>
     <div class="internal-links">
@@ -47,5 +48,17 @@ import { SITE_TITLE } from "../consts";
   nav a.active {
     text-decoration: none;
     border-bottom-color: white;
+  }
+  .skip-link {
+    position: absolute;
+    left: 1rem;
+    top: -4rem;
+    z-index: 100;
+    padding: .5rem 1rem;
+    background: white;
+    color: var(--gray-dark);
+  }
+  .skip-link:focus {
+    top: 1rem;
   }
 </style>

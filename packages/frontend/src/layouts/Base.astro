@@ -13,24 +13,9 @@ const { title, description } = Astro.props;
 
   <body>
     <Header />
-    <a class="skip-link" href="#main-content">Skip to content</a>
     <main id="main-content">
       <slot />
     </main>
     <Footer />
   </body>
 </html>
-<style is:global>
-  .skip-link {
-    position: absolute;
-    left: 1rem;
-    top: -4rem;
-    z-index: 100;
-    padding: .5rem 1rem;
-    background: white;
-    color: var(--gray-dark);
-  }
-  .skip-link:focus {
-    top: 1rem;
-  }
-</style>
