@@ -9,12 +9,13 @@ const { post } = Astro.props;
 
 <Card>
   <div class="img-container">
-    {post.data.image && <img src={post.data.image} alt={post.data.title} />}
+    {post.data.image && <img src={post.data.image} alt={post.data.title} loading="lazy" />}
     {
       !post.data.image && (
         <img
           src={`https://via.placeholder.com/600x300?text=${encodeURIComponent(post.data.title)}`}
           alt={post.data.title}
+          loading="lazy"
         />
       )
     }

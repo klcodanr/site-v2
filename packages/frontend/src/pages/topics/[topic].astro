@@ -1,0 +1,26 @@
+---
+import { getCollection } from "astro:content";
+import Content from "../../layouts/Content.astro";
+import Grid from "../../components/Grid.astro";
+import PostCard from "../../components/PostCard.astro";
+import { TOPICS } from "../../data/topics";
+
+export function getStaticPaths() {
+  return Object.entries(TOPICS).map(([topic, data]) => ({ params: { topic }, props: data }));
+}
+
+const { title, description, tags } = Astro.props;
+const posts = (await getCollection("posts"))
+  .filter((post) => post.data.published && !post.data.hideInNav)
+  .filter((post) => post.data.tags.some((tag) => tags.some((topicTag: string) => tag.toLowerCase() === topicTag.toLowerCase())))
+  .sort((a, b) => (b.data.pubDate?.valueOf() || 0) - (a.data.pubDate?.valueOf() || 0));
+---
+
+<Content title={title} description={description}>
+  <h1>{title}</h1>
+  <p>{description}</p>
+  <p>This topic hub collects my practical, first-hand experience and technical writing on {title}.</p>
+  <Grid>
+    {posts.map((post) => <PostCard post={post} />)}
+  </Grid>
+</Content>

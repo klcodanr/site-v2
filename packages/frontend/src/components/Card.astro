@@ -1,5 +1,4 @@
 ---
-
 ---
 
 <div class="card">
@@ -8,31 +7,44 @@
 <style is:global>
   .card {
     flex: 1;
-    border: 1px solid silver;
-    border-radius: 0.5em;
+    border: 1px solid var(--gray-light);
+    border-top: 5px solid var(--gray-dark);
+    border-radius: 0;
     padding: 0;
     justify-content: space-between;
     display: flex;
     flex-direction: column;
-    cursor: pointer;
+    overflow: hidden;
+    transition: transform 120ms ease, box-shadow 120ms ease;
   }
 
   .card:first-child {
     justify-self: start;
   }
 
-  .card:hover {
-    filter: opacity(85%);
+  .card:hover,
+  .card:focus-within {
+    transform: translateY(-0.2rem);
+    box-shadow: 0 0.5rem 1.25rem rgba(var(--black), 12%);
+  }
+
+  .card .card-body {
+    padding: 1.5em;
+  }
+
+  .card img {
+    border-radius: 0;
+  }
+
+  .card .img-container {
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+  }
+
+  .card .img-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
   }
 </style>
-
-<script>
-  document.querySelectorAll(".card").forEach((card) => {
-    const link = card.querySelector("a")?.href;
-    if (link) {
-      card.addEventListener("click", () => {
-        window.location.href = link;
-      });
-    }
-  });
-</script>

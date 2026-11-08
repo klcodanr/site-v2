@@ -19,7 +19,7 @@ const projects = (await getCollection("projects")).reverse();
           return (
             <Card>
               <div class="img-container">
-                <img src={project.data.image} alt={project.data.title} />
+                <img src={project.data.image} alt={project.data.title} loading="lazy" />
               </div>
               <CardBody>
                 <h2>{project.data.title}</h2>

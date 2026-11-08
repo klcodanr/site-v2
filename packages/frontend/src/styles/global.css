@@ -44,7 +44,7 @@ body {
 
 main {
   background-color: white;
-  width: calc(100% - 2em);
+  width: min(calc(100% - 2em), 72rem);
   max-width: 100%;
   min-height: calc(100vh - 100px);
   padding: 1em;
@@ -52,14 +52,6 @@ main {
 
 @media screen and (min-width: 1024px) {
   main {
-    width: calc(100% - 12em);
-    margin: 0 auto;
-  }
-}
-
-@media screen and (min-width: 2048px) {
-  main {
-    width: 2000px;
     margin: 0 auto;
   }
 }

@@ -8,6 +8,8 @@ const posts = defineCollection({
 		description: z.string().optional(),
 		pubDate: z.coerce.date().optional(),
 		image: z.string().optional(),
+		lastReviewed: z.coerce.date().optional(),
+		productVersion: z.string().optional(),
 		published: z.boolean(),
 		hideInNav: z.boolean(),
 		display: z.string().optional(),

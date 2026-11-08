@@ -2,10 +2,61 @@
 // Import the global.css file here so that it is included on
 // all pages through the use of the <BaseHead /> component.
 import '../styles/global.css';
+import { SITE_AUTHOR, SITE_DESCRIPTION, SITE_EXPERTISE, SITE_SAME_AS, SITE_TITLE } from '../consts';
 
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 
-const { title, description, image } = Astro.props;
+const {
+  title,
+  description = SITE_DESCRIPTION,
+  image,
+  type = 'website',
+  pubDate,
+  lastReviewed,
+  productVersion,
+  tags = [],
+  noindex = false,
+} = Astro.props;
+const pageDescription = description || SITE_DESCRIPTION;
+const imageURL = image ? new URL(image, Astro.site).toString() : undefined;
+const publishedTime = pubDate ? new Date(pubDate).toISOString() : undefined;
+const reviewedTime = lastReviewed ? new Date(lastReviewed).toISOString() : undefined;
+const graph = [
+  {
+    '@type': 'Person',
+    '@id': `${Astro.site}#person`,
+    name: SITE_AUTHOR,
+    url: Astro.site,
+    sameAs: SITE_SAME_AS,
+    jobTitle: 'Adobe Experience Manager Solution Architect and Consultant',
+    knowsAbout: SITE_EXPERTISE,
+  },
+  {
+    '@type': 'WebSite',
+    '@id': `${Astro.site}#website`,
+    url: Astro.site,
+    name: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    publisher: { '@id': `${Astro.site}#person` },
+  },
+  ...(type === 'article'
+    ? [{
+        '@type': 'BlogPosting',
+        '@id': `${canonicalURL}#article`,
+        url: canonicalURL,
+        mainEntityOfPage: { '@id': canonicalURL.toString() },
+        headline: title,
+        description: pageDescription,
+        author: { '@id': `${Astro.site}#person` },
+        publisher: { '@id': `${Astro.site}#person` },
+        ...(imageURL ? { image: imageURL } : {}),
+        ...(publishedTime ? { datePublished: publishedTime } : {}),
+        ...(reviewedTime ? { dateModified: reviewedTime } : {}),
+        ...(productVersion ? { about: { '@type': 'SoftwareApplication', name: productVersion } } : {}),
+        ...(tags.length ? { keywords: tags.join(', ') } : {}),
+      }]
+    : []),
+];
 ---
 
 <!-- Global Metadata -->
@@ -20,22 +71,32 @@ const { title, description, image } = Astro.props;
 
 <!-- Canonical URL -->
 <link rel="canonical" href={canonicalURL} />
+{noindex && <meta name="robots" content="noindex,follow" />}
 
 <!-- Primary Meta Tags -->
 <title>{title} | DanKlco.com</title>
-<meta name="title" content={title} />
-<meta name="description" content={description} />
+<meta name="title" content={`${title} | DanKlco.com`} />
+<meta name="description" content={pageDescription} />
 
 <!-- Open Graph / Facebook -->
 <meta property="og:type" content="website" />
-<meta property="og:url" content={Astro.url} />
+<meta property="og:url" content={canonicalURL} />
 <meta property="og:title" content={title} />
-<meta property="og:description" content={description} />
-{image && (<meta property="og:image" content={new URL(image, Astro.url)} />)}
+<meta property="og:description" content={pageDescription} />
+<meta property="og:site_name" content={SITE_TITLE} />
+<meta property="og:locale" content="en_US" />
+{imageURL && <meta property="og:image" content={imageURL} />}
+{imageURL && <meta property="og:image:alt" content={title} />}
+{type === 'article' && publishedTime && <meta property="article:published_time" content={publishedTime} />}
+{type === 'article' && reviewedTime && <meta property="article:modified_time" content={reviewedTime} />}
+{type === 'article' && tags.map((tag: string) => <meta property="article:tag" content={tag} />)}
 
 <!-- Twitter -->
-<meta property="twitter:card" content="summary_large_image" />
-<meta property="twitter:url" content={Astro.url} />
-<meta property="twitter:title" content={title} />
-<meta property="twitter:description" content={description} />
-{image && (<meta property="twitter:image" content={new URL(image, Astro.url)} />)}
+<meta name="twitter:card" content={imageURL ? "summary_large_image" : "summary"} />
+<meta name="twitter:url" content={canonicalURL} />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={pageDescription} />
+{imageURL && <meta name="twitter:image" content={imageURL} />}
+{imageURL && <meta name="twitter:image:alt" content={title} />}
+
+<script type="application/ld+json" set:html={JSON.stringify({ '@context': 'https://schema.org', '@graph': graph })} />
