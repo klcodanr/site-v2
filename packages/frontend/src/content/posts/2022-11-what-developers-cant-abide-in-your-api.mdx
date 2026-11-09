@@ -36,14 +36,10 @@ If you are going to expose a user interface to customers and call a back-end fro
 
 Having an undocumented API is both a security risk on your side if it's not evaluated for public consumption and a frustration for clients. 
 
-  
-
 ![Inconsistency](/images/posts/2022-11/inconsistent.jpg)
 
-  
 
 ## #2 Inconsistent Representation
-
   
 APIs should consistently represent entities and classes across requests. This means both that discrete units of data / content should be represented the same way, no matter what method using to retrieve them, but that endpoints should only return one type of entity.  
 
@@ -79,18 +75,15 @@ Examples of incoherent operations include:
 * HTTP PUTs which only take changed fields not a full entity
 * Delete via HTTP POST
 * Returning HTML for .json endpoints
-* Returning HTTP Status 200 error messages
-* Write on get methods
+* Returning HTTP status 200 with error messages in the response body
+* Write operations on GET requests
+
 This inconsistency is confusing to developers and confused developers get frustrated and make mistakes. Therefore whether writing a HTTP or language API, be coherent in the naming and method of operations.   
-  
 
 ![Large Book](/images/posts/2022-11/large-book.jpg)
 
-  
-
 ## #4 Requiring Documentation
 
-  
 Do not get me wrong, you must document your API. _But_ an API is like a joke, if you need to explain it, it's not good.
 
 Developers should be able to start using an API after reading a getting started document. Over-reliance on documentation versus consistency increases the mental load on developers, much less if you have to read a small novel to understand an API. 

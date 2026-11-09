@@ -26,4 +26,5 @@ pnpm-debug.log*
 # sst
 .sst
 
+# logs
 *.log

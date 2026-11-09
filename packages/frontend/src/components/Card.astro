@@ -15,6 +15,7 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    position: relative;
     transition: transform 120ms ease, box-shadow 120ms ease;
   }
 
@@ -26,6 +27,21 @@
   .card:focus-within {
     transform: translateY(-0.2rem);
     box-shadow: 0 0.5rem 1.25rem rgba(var(--black), 12%);
+  }
+
+  .card .card-link {
+    position: static;
+  }
+
+  .card .card-link::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+  }
+
+  .card .card-link:focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: -3px;
   }
 
   .card .card-body {

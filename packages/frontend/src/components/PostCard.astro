@@ -1,7 +1,6 @@
 ---
 import Card from "./Card.astro";
 import CardBody from "./CardBody.astro";
-import Button from "./Button.astro";
 import FormattedDate from "./FormattedDate.astro";
 
 const { post } = Astro.props;
@@ -22,13 +21,10 @@ const { post } = Astro.props;
   </div>
   <CardBody>
     <div>
-      <h2>{post.data.title}</h2>
+      <h2><a class="card-link" href={`/posts/${post.slug}/`} title={`Read ${post.data.title} by Dan Klco`}>{post.data.title}</a></h2>
       <FormattedDate date={post.data.pubDate} />
     </div>
     <p>{post.data.description}</p>
-    <div>
-      <Button link={`/posts/${post.slug}/`}>Read Post</Button>
-    </div>
   </CardBody>
 </Card>
 
@@ -36,5 +32,8 @@ const { post } = Astro.props;
   h2 {
     margin: 0;
     font-size: xx-large;
+  }
+  h2 a {
+    color: black
   }
 </style>

@@ -4,7 +4,6 @@ import Card from "./Card.astro";
 import CardBody from "./CardBody.astro";
 import FormattedDate from "./FormattedDate.astro";
 import Grid from "./Grid.astro";
-import Button from "./Button.astro";
 
 const { format } = Astro.props;
 
@@ -22,11 +21,8 @@ const projects = (await getCollection("projects")).reverse();
                 <img src={project.data.image} alt={project.data.title} loading="lazy" />
               </div>
               <CardBody>
-                <h2>{project.data.title}</h2>
+                <h2><a class="card-link" href={`/projects/${project.slug}/`} title={project.data.title}>{project.data.title}</a></h2>
                 <p>{project.data.description}</p>
-                <div>
-                  <Button link={`/projects/${project.slug}/`}>Read more</Button>
-                </div>
               </CardBody>
             </Card>
           );
