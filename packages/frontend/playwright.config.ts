@@ -3,15 +3,15 @@ import { defineConfig, devices } from "@playwright/test";
 export default defineConfig({
   reporter: [['html', { open: 'never', outputFolder: "playwright/report" }], ['list']],
   webServer: {
-    command: "npm run preview",
-    url: "http://localhost:4321/",
+    command: "npm run preview -- --port 4322",
+    url: "http://localhost:4322/",
     timeout: 120 * 1000,
     reuseExistingServer: !process.env.CI,
   },
   outputDir: "playwright/tests",
   retries: 2,
   use: {
-    baseURL: "http://localhost:4321",
+    baseURL: "http://localhost:4322",
     trace: 'on-first-retry',
     video: 'on-first-retry',
     screenshot: 'only-on-failure',

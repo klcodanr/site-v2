@@ -20,7 +20,7 @@ const endpoint = import.meta.env.PUBLIC_API_URL;
 </div>
 <hr />
 
-<div id="contact-message"></div>
+<div id="contact-message" role="status" aria-live="polite" tabindex="-1"></div>
 <form
   enctype="multipart/form-data"
   method="post"
@@ -33,19 +33,19 @@ const endpoint = import.meta.env.PUBLIC_API_URL;
     <legend>Send a message directly to me!</legend>
     <div class="field-group">
       <label for="name">Your Name</label>
-      <input type="text" class="form-control" name="name" id="name" required />
+      <input type="text" class="form-control" name="name" id="name" autocomplete="name" required />
     </div>
     <div class="field-group">
       <label for="email"> Your Email Address </label>
-      <input type="text" id="email" name="email" required />
+      <input type="email" id="email" name="email" autocomplete="email" required />
     </div>
     <div class="field-group">
       <label for="subject">Subject</label>
-      <input type="text" id="subject" name="subject" required />
+      <input type="text" id="subject" name="subject" autocomplete="off" required />
     </div>
     <div class="field-group">
       <label for="message"> Message </label>
-      <textarea rows="5" id="message" name="message" required></textarea>
+      <textarea rows="5" id="message" name="message" autocomplete="off" required></textarea>
     </div>
     <div class="d-none">
       <label for="contact_by_fax_only">Do not fill this out!</label>
@@ -116,12 +116,13 @@ const endpoint = import.meta.env.PUBLIC_API_URL;
         loaderEl.hidden = true;
         if (res.ok) {
           messageEl.innerText = "Message sent successfully!";
+          messageEl.focus();
         } else {
           formEl.hidden = false;
           messageEl.innerText = "Failed to send message, please try again.";
+          messageEl.focus();
         }
       });
     });
   }
 </script>
-
